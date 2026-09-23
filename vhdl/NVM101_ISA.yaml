@@ -14,7 +14,7 @@ instruction_formats:
   logic: { opcode: 6, _: 8, rs2: 6, rs1: 6, rd: 6 }
   logic_imm: { opcode: 6, value: 14, rs: 6, rd: 6 }
   jump_imm: { opcode: 6, i_target : 26 }
-  jump_ind: { opcode: 6, rs: 6, i_disp : 20 }
+  jump_ind: { opcode: 6, i_disp: 20, rs: 6 }
   compare: { opcode: 8, _: 6, rs2: 6, rs1: 6, _: 4, cr: 2 }
   compare_imm: { opcode: 8, value: 12, rs: 6, _: 4, cr: 2 }
   compare_vec: { opcode: 8, _: 6, vs2: 6, vs1: 6, _: 4, vcr: 2 }
@@ -180,13 +180,13 @@ instruction_categories:
     
   jump_imm:
     format: "jump_imm"
-    prefix: 54
+    prefix: 52
     operands: [ "i_target" ]
     unit: "FCU"
     
   jump_ind:
     format: "jump_ind"
-    prefix: 54
+    prefix: 52
     operands: [ "rs", "i_disp" ]
     unit: "FCU"
 

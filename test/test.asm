@@ -121,10 +121,10 @@ clear_vektori_loop:
 	drain
 	
 	vldib v4, s1, 10
-	sync
 	
 stop:
-	ba stop
+	ldi s0, -1
+	jmp s0, 0
 	nop
 	nop
 

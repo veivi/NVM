@@ -97,14 +97,14 @@ begin
     Clear(WB_Index) <= WB_Active;
   end process;
 
-  Set_P : process(DecodeStall, SB_Set, SB_Index, SB_Span)
+  Set_P : process(DecodeStall, ExecuteStall, SB_Set, SB_Index, SB_Span)
     variable Last : std_logic_vector(Log2NumOfRegs_C-1 downto 0);
   begin
     Set <= (others => '0');
     Last := std_logic_vector(to_unsigned(SB_Index, Log2NumOfRegs_C))
           or std_logic_vector(to_unsigned(SB_Span, Log2NumOfRegs_C));
     for I in SB_Index to to_integer(unsigned(Last)) loop
-      Set(I) <= SB_Set and not DecodeStall;
+      Set(I) <= SB_Set and not DecodeStall and not ExecuteStall;
     end loop; 
   end process;
 
