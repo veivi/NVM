@@ -1,0 +1,135 @@
+--
+--
+--
+
+library IEEE;
+use IEEE.std_logic_1164.all;
+use WORK.NVM101Interface.all;
+
+package NVM101Types is
+  type ALUOp_T is ( ALUOp_None_C,
+                    ALUOp_OR_C,
+                    ALUOp_AND_C,
+                    ALUOp_XOR_C,
+                    ALUOp_ADD_C,
+                    ALUOp_SUB_C,
+                    ALUOp_LSR_C,
+                    ALUOp_LSL_C,
+                    ALUOp_ASR_C,
+                    ALUOp_CMP_C,
+                    ALUOp_CMPU_C );
+
+  type ALUMode_T is ( ALU_RegReg_C, ALU_RegImm_C );
+
+  type Condition_T is ( Cond_LessThan_C, Cond_Equal_C, Cond_GreaterThan_C );
+
+  type ConditionVector_T is array (natural range <>) of Condition_T;
+  
+  type LoadStoreOp_T is ( LSOp_None_C,
+                          LSOp_LoadWord_C,
+                          LSOp_LoadLongSigned_C,
+                          LSOp_LoadLongUnsigned_C,
+                          LSOp_LoadByteSigned_C,
+                          LSOp_LoadByteUnsigned_C,
+                          LSOp_LoadShortSigned_C,
+                          LSOp_LoadShortUnsigned_C,
+                          LSOp_StoreWord_C,
+                          LSOp_StoreLong_C,
+                          LSOp_StoreByte_C,
+                          LSOp_StoreShort_C,
+                          LSOp_Sync_C );
+
+  type LoadStoreSize_T is ( LS_Byte_C,
+                            LS_Short_C,
+                            LS_Long_C,
+                            LS_Word_C );
+
+  type LoadStoreMode_T is ( LS_Displaced_C,
+                            LS_Indexed_C );
+  
+  type VectorLoadStoreMode_T is ( VLS_Imm_C,
+                                  VLS_Reg_C );
+
+  type FlowOp_T is ( FlowOp_None_C,
+                     FlowOp_BEQ_C,
+                     FlowOp_BNE_C,
+                     FlowOp_BLT_C,
+                     FlowOp_BLE_C,
+                     FlowOp_BGE_C,
+                     FlowOp_BGT_C,
+                     FlowOp_BA_C,
+                     FlowOp_BL_C,
+                     FlowOp_JMP_C,
+                     FlowOp_JMPL_C,
+                     FlowOp_JMPA_C,
+                     FlowOp_JMPAL_C);
+
+  type FenceOp_T is ( FenceOp_None_C,
+                      FenceOp_Fence_C,
+                      FenceOp_ReadFence_C,
+                      FenceOp_WriteFence_C);
+    
+  type ImmOp_T is ( ImmOp_None_C,
+                    ImmOp_Load_C );
+
+  subtype RegIndex_T is integer range 0 to 2**Log2MaxRegs_C-1;
+  
+  type RegIndexArray_T is array (natural range <>) of RegIndex_T;
+  
+  subtype RegSpan_T is integer range 0 to 2**Log2MaxSpan_C-1;
+  
+  subtype CondRegIndex_T is integer range 0 to 2**Log2NumOfCondRegs_C-1;
+  
+  type ControlWord_T is record
+    RF_RA_Active : std_logic;
+    RF_RA_Index : RegIndex_T;
+    RF_RB_Active : std_logic;
+    RF_RB_Index : RegIndex_T;
+    RF_RC_Active : std_logic;
+    RF_RC_Index : RegIndex_T;
+    RF_W_Active : std_logic;
+    RF_W_Index : RegIndex_T;
+    VRF_RA_Active : std_logic;
+    VRF_RA_Index : RegIndex_T;
+    VRF_RB_Active : std_logic;
+    VRF_RB_Index : RegIndex_T;
+    VRF_RC_Active : std_logic;
+    VRF_RC_Index : RegIndex_T;
+    VRF_W_Active : std_logic;
+    VRF_W_Index : RegIndex_T;
+    CR_Read_Active : std_logic;
+    CR_Read_Index : CondRegIndex_T;
+    CR_Write_Active : std_logic;
+    CR_Write_Index : CondRegIndex_T;
+    VCR_Read_Active : std_logic;
+    VCR_Read_Index : CondRegIndex_T;
+    VCR_Write_Active : std_logic;
+    VCR_Write_Index : CondRegIndex_T;
+    FCU_Operation : FlowOp_T;
+    LS_Operation : LoadStoreOp_T;
+    LS_Mode : LoadStoreMode_T;
+    LS_Span : RegSpan_T;
+    VLS_Operation : LoadStoreOp_T;
+    VLS_Mode : VectorLoadStoreMode_T;
+    VLS_Span : RegSpan_T;
+    ALU_Operation : ALUOp_T;
+    ALU_Mode : ALUMode_T;
+    VALU_Operation : ALUOp_T;
+    VALU_Mode : ALUMode_T;
+    Imm_Operation : ImmOp_T;
+    Fence_Operation : FenceOp_T;
+    Ext_Active : std_logic;
+    Ext_Operation : integer range 0 to 2**8-1;
+    Ext_Result : RegIndex_T;
+  end record;
+
+  constant DefaultControlWord_C : ControlWord_T :=
+    ( '0', 0, '0', 0, '0', 0, '0', 0,
+      '0', 0, '0', 0, '0', 0, '0', 0,
+      '0', 0, '0', 0,
+      '0', 0, '0', 0,
+      FlowOp_None_C, LSOp_None_C, LS_Displaced_C, 0, LSOp_None_C, VLS_Imm_C, 0,
+      ALUOp_None_C, ALU_RegReg_C, ALUOp_None_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
+      '0', 0, 0);
+end package;
+

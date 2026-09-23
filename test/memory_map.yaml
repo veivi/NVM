@@ -1,0 +1,15 @@
+
+segment_list:
+  rom0:
+    base: 0
+    size: 1024
+
+  ram0:
+    base: 1024
+    size: 1024
+
+section_mapping:
+  data: ram0
+  code: rom0
+  bss: ram0
+
