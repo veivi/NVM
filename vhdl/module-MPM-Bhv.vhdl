@@ -91,13 +91,17 @@ begin
   Storage_P : process(Clk)
     file file_pointer : text open write_mode is "MPM_report.txt";
     variable OutLine : line;
+    variable Something : boolean;
   begin
     if rising_edge(Clk) then
+      Something := false;
+      
       for P in 0 to NumOfPorts_C-1 loop
         if State(P) = Write_C then
-          write(OutLine, string'("Addr "));
-          write(OutLine, Addr(P)*2**Log2BPW_C);
-          write(OutLine, string'(" Data "));
+          Something := true;
+          
+          hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
+          write(OutLine, string'(" := "));
           
           for I in 2**Log2BPW_C-1 downto 0 loop
             if ByteSel(P)(I) = '1' then
@@ -109,9 +113,14 @@ begin
               write(OutLine, string'("__"));
             end if;
           end loop;
-          writeline(file_pointer, OutLine);
+
+          write(OutLine, string'(", "));
         end if;
       end loop;
+
+      if Something then
+        writeline(file_pointer, OutLine);
+      end if;
     end if;
   end process;
   
