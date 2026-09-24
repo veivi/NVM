@@ -101,7 +101,7 @@ begin
           Something := true;
           
           hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
-          write(OutLine, string'(" := "));
+          write(OutLine, string'(":"));
           
           for I in 2**Log2BPW_C-1 downto 0 loop
             if ByteSel(P)(I) = '1' then
@@ -114,16 +114,16 @@ begin
             end if;
           end loop;
 
-          write(OutLine, string'(", "));
+          write(OutLine, string'("|"));
         else
-          -- write(OutLine, string'("                   "));
+          write(OutLine, string'("      ~~      |"));
         end if;
       end loop;
 
       if Something then
         writeline(file_pointer, OutLine);
       else
-       -- OutLine := string'("");
+        deallocate(OutLine);
       end if;
     end if;
   end process;
