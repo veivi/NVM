@@ -101,7 +101,7 @@ begin
           Something := true;
           
           hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
-          write(OutLine, string'(":"));
+          write(OutLine, string'(":="));
           
           for I in 2**Log2BPW_C-1 downto 0 loop
             if ByteSel(P)(I) = '1' then
@@ -115,8 +115,24 @@ begin
           end loop;
 
           write(OutLine, string'("|"));
+          
+        elsif State(P) = Read_C then
+          Something := true;
+          
+          hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
+          write(OutLine, string'(" ~"));
+          
+          for I in 2**Log2BPW_C-1 downto 0 loop
+            if ByteSel(P)(I) = '1' then
+              hwrite(OutLine, Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C));
+            else
+              write(OutLine, string'("__"));
+            end if;
+          end loop;
+
+          write(OutLine, string'("|"));
         else
-          write(OutLine, string'("      ~~      |"));
+          write(OutLine, string'("               |"));
         end if;
       end loop;
 
