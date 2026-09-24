@@ -28,11 +28,15 @@ entity EIU is
        VWA_Index : in  RegIndex_T;
        Fence_Operation : in FenceOp_T;
        LoadsOutstanding : in std_logic;
-       StoresOutstanding : in std_logic;       
+       StoresOutstanding : in std_logic;
+       ALU_Operation : in ALUOp_T;
        LS_Operation : in LoadStoreOp_T;
        LS_Ready : in std_logic;
        VLS_Operation : in LoadStoreOp_T;
        VLS_Ready : in std_logic_vector(2**Log2VecSize_C-1 downto 0);
+       ExtC_Accept : in std_logic;
+       ExtC_Operation : in integer range 0 to 2**ExtOpSize_C-1;
+       ExtR_Present : in std_logic;
        
        DecodeStall : out std_logic;
        ExecuteStall : out std_logic);
@@ -51,6 +55,7 @@ architecture RTL of EIU is
   signal VLS_Ready_All : std_logic;
   signal VLS_Stall : std_logic;
   signal Fence_Stall : std_logic;
+  signal Ext_Stall : std_logic;
   signal VRF_ScoreboardFolded : std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
 begin
   --
@@ -123,8 +128,27 @@ begin
     end case;
   end process;
   
+  --
+  -- Vector Extension issue/result write conflict stall
+  --
+  
+  Ext_Stall <=
+    -- Ext issue stall?
+    not ExtC_Accept when ExtC_Operation /= 0
+    
+    -- Ext result write conflicts with ALUOp?
+    else ExtR_Present when ALU_Operation /= ALUOp_None_C else '0';
+
+  --
+  -- Decode stall detection
+  --
+  
   DecodeStall <= RA_Stall or RB_Stall or RC_Stall or WA_Stall
               or VRA_Stall or VRB_Stall or VRC_Stall or VWA_Stall;
 
-  ExecuteStall <= LS_Stall or VLS_Stall or Fence_Stall;
+  --
+  -- Execute stall detection
+  --
+  
+  ExecuteStall <= LS_Stall or VLS_Stall or Fence_Stall or Ext_Stall;
 end RTL;

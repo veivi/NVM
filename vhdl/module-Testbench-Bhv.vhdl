@@ -41,6 +41,20 @@ architecture Bhv of Testbench is
 
   signal DebugOut : std_logic_vector(WordSize_C-1 downto 0);
   
+  signal VectorC_Present : std_logic;
+  signal VectorC_Accept : std_logic;
+  signal VectorC_Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
+  signal VectorC_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal VectorC_OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal VectorC_OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal VectorC_OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+
+  -- Vector Unit Result
+
+  signal VectorR_Present : std_logic;
+  signal VectorR_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal VectorR_Result : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  
   subtype InstrWord_T is std_logic_vector(InstrSize_C-1 downto 0);
   type InstrArray_T is array (natural range <>) of InstrWord_T;
 
@@ -89,8 +103,41 @@ begin
              LCI_Data => LCI_Data,
              LCR_Present => LCR_Present,
              LCR_Tag => LCR_Tag,
-             LCR_Data => LCR_Data );
+             LCR_Data => LCR_Data,
 
+             VectorC_Present => VectorC_Present,
+             VectorC_Accept => VectorC_Accept,
+             VectorC_Operation => VectorC_Operation ,
+             VectorC_Dest => VectorC_Dest ,
+             VectorC_OperandA => VectorC_OperandA ,
+             VectorC_OperandB => VectorC_OperandB ,
+             VectorC_OperandC => VectorC_OperandC ,
+             VectorR_Present => VectorR_Present ,
+             VectorR_Dest => VectorR_Dest ,
+             VectorR_Result => VectorR_Result);
+
+  --
+  -- Vector Unit
+  --
+  
+  VU101_I : entity WORK.VU101(RTL)
+    generic map(Log2BPW_C => Log2BPW_C,
+                Log2VecSIze_C => Log2VecSIze_C )
+
+    port map(Clk => Clk,
+             Reset => Reset,
+             
+             VectorC_Present => VectorC_Present,
+             VectorC_Accept => VectorC_Accept,
+             VectorC_Operation => VectorC_Operation ,
+             VectorC_Dest => VectorC_Dest ,
+             VectorC_OperandA => VectorC_OperandA ,
+             VectorC_OperandB => VectorC_OperandB ,
+             VectorC_OperandC => VectorC_OperandC ,
+             VectorR_Present => VectorR_Present ,
+             VectorR_Dest => VectorR_Dest ,
+             VectorR_Result => VectorR_Result);
+  
   --
   -- Multi-Port Memory
   --

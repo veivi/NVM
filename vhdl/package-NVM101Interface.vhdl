@@ -14,5 +14,7 @@ package NVM101Interface is
   constant Log2MaxRegs_C : integer := 6;
 
   constant Log2NumOfCondRegs_C : integer := 2;
+
+  constant ExtOpSize_C : integer := 8;
 end package;
 

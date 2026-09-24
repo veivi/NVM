@@ -124,8 +124,8 @@ package NVM101Types is
     Imm_Operation : ImmOp_T;
     Fence_Operation : FenceOp_T;
     Ext_Active : std_logic;
-    Ext_Operation : integer range 0 to 2**8-1;
-    Ext_Result : RegIndex_T;
+    Ext_Operation : integer range 0 to 2**ExtOpSize_C-1;
+    Ext_Dest : RegIndex_T;
   end record;
 
   constant DefaultControlWord_C : ControlWord_T :=

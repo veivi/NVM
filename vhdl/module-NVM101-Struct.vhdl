@@ -39,7 +39,23 @@ entity NVM101 is
 
        LCR_Present : in std_logic_vector(2**Log2VecSize_C downto 0);
        LCR_Tag : in std_logic_vector(TagSize_C*(2**Log2VecSize_C+1)-1 downto 0);
-       LCR_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C*(2**Log2VecSize_C+1)-1 downto 0));
+       LCR_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C*(2**Log2VecSize_C+1)-1 downto 0);
+
+       -- Vector Unit Command
+
+       VectorC_Present : out std_logic;
+       VectorC_Accept : in std_logic;
+       VectorC_Operation : out std_logic_vector(ExtOpSize_C-1 downto 0);
+       VectorC_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       VectorC_OperandA : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       VectorC_OperandB : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       VectorC_OperandC : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+
+       -- Vector Unit Result
+
+       VectorR_Present : in std_logic;
+       VectorR_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       VectorR_Result : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
 end NVM101;
 
 architecture Struct of NVM101 is
@@ -96,6 +112,7 @@ architecture Struct of NVM101 is
   signal VALU_OperandA : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_Condition, VCR_ReadValue : ConditionVector_T(0 to VecSize_C-1);
+  signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
   signal VLS_C_Addr : std_logic_vector(VecSize_C*AddrSize_C-1 downto 0);
@@ -110,6 +127,8 @@ architecture Struct of NVM101 is
   signal VRF_SB_Span : RegSpan_T;
   signal VRF_Scoreboard : std_logic_vector(2**Log2NumOfRegs_C*VecSize_C-1 downto 0);
   signal VRF_ReadValid : std_logic_vector(VecSize_C-1 downto 0);
+  signal VRF_WA_Active : std_logic;
+  signal VRF_WA_Index : RegIndex_T;
   
   signal VRF_RA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_RB_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
@@ -219,10 +238,14 @@ begin
              Fence_Operation => ExecuteWord.Fence_Operation,
              LoadsOutstanding => LoadsOutstanding,
              StoresOutstanding => StoresOutstanding,
+             ALU_Operation => ExecuteWord.ALU_Operation,
              LS_Operation => ExecuteWord.LS_Operation,
              LS_Ready => LS_Ready,
              VLS_Operation => ExecuteWord.VLS_Operation,
              VLS_Ready => VLS_Ready,
+             ExtC_Operation => ExecuteWord.Ext_Operation,
+             ExtC_Accept => VectorC_Accept,
+             ExtR_Present => VectorR_Present,
              DecodeStall => DecodeStall,
              ExecuteStall => ExecuteStall);
 
@@ -436,10 +459,10 @@ begin
                C_Stall => ExecuteStall,
                C_Span => ExecuteWord.VLS_Span,
                C_Ready => VLS_Ready(I),               
-               C_Dest => ExecuteWord.VRF_RA_Index,
-               C_Addr => VRF_WA_Data(I*WordSize_C+AddrSize_C-1 downto I*WordSize_C),
+               C_Dest => ExecuteWord.VRF_RC_Index,
+               C_Addr => VALU_Result(I*WordSize_C+AddrSize_C-1 downto I*WordSize_C),
                C_Stride => VLS_C_Stride,
-               C_Data => VRF_RA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
+               C_Data => VRF_RC_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
                LoadsOutstanding => VLS_LoadsOutstanding(I),
                StoresOutstanding => VLS_StoresOutstanding(I),
                R_Present => VLS_R_Present(I),
@@ -498,9 +521,9 @@ begin
 
                -- Write A
                
-               WA_Active => ExecuteWord.VRF_W_Active,
+               WA_Active => VRF_WA_Active,
                WA_Valid => VRF_WA_Valid,
-               WA_Index => ExecuteWord.VRF_W_Index,
+               WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
     
                -- Write B is used by the VLSU load results
@@ -519,13 +542,20 @@ begin
       port map(Operation => VALU_Operation,
                A => VALU_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C),
                B => VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C),
-               Result => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
+               Result => VALU_Result((I+1)*WordSize_C-1 downto I*WordSize_C),
                Condition => VALU_Condition(I));
     
   end generate;
 
-  VRF_WA_Valid <= '1' when to_integer(unsigned(not VRF_ReadValid)) = 0 else '0';
-
+  --
+  -- VRF write port multiplexing (VALU and Vector Extension share it)
+  --
+  
+  VRF_WA_Active <= ExecuteWord.VRF_W_Active or VectorR_Present;
+  VRF_WA_Valid <=  VectorR_Present when to_integer(unsigned(not VRF_ReadValid)) /= 0 else '1';
+  VRF_WA_Index <= to_integer(unsigned(VectorR_Dest)) when VectorR_Present = '1' else ExecuteWord.VRF_W_Index;
+  VRF_WA_Data <= VectorR_Result when VectorR_Present = '1' else VALU_Result;
+  
   --
   -- Vector ALU operation/operand multiplexing
   --
@@ -571,9 +601,20 @@ begin
   -- Vector scoreboard control
   --
 
-  VRF_SB_Set <= '1' when LSOpIsLoad(ControlWord.VLS_Operation) else '0';
-  VRF_SB_Index <= ControlWord.VRF_RA_Index;
+  VRF_SB_Set <= '1' when LSOpIsLoad(ControlWord.VLS_Operation) or ControlWord.Ext_Active = '1' else '0';
+  VRF_SB_Index <= ControlWord.Ext_Dest when ControlWord.Ext_Active = '1' else ControlWord.VRF_RC_Index;
   VRF_SB_Span <= 0;
+
+  --
+  -- Vector Extension Interface
+  --
+
+  VectorC_Present <= ExecuteWord.Ext_Active;
+  VectorC_Operation <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Operation, ExtOpSize_C));
+  VectorC_Dest <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
+  VectorC_OperandA <= VRF_RA_Data;
+  VectorC_OperandB <= VRF_RB_Data;
+  VectorC_OperandC <= VRF_RC_Data;
 end Struct;
 
 

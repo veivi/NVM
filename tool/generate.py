@@ -263,7 +263,7 @@ for op in opcodes:
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Operation <= to_integer(unsigned(I_Code({offset+length-1} downto {offset})));")
     if "ext-result" in category:
         (offset, length) = instruction_field(format, category["ext-result"])
-        decoder_lines.append(f"      ControlWord.{category["unit"]}_Result <= RegIndex(I_Code({offset+length-1} downto {offset}));")
+        decoder_lines.append(f"      ControlWord.{category["unit"]}_Dest <= RegIndex(I_Code({offset+length-1} downto {offset}));")
     
     first = False
 

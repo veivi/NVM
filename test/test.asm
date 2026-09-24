@@ -115,12 +115,6 @@ clear_vektori_loop:
 	vstib v5, s1, 5
 	vstib v6, s1, 6
 
-	//
-	// Ext unit access
-	//
-	
-	ext 77, v20, v1, v2
-
 	// Memory fence test, first without barriers
 
 	drain
@@ -156,6 +150,22 @@ clear_vektori_loop:
 	sync
 	debugi 49
 
+	//
+	// Vector Extension test
+	//
+
+	vandi v1, v1, 0
+	vandi v2, v1, 0
+	vandi v3, v1, 0
+
+	vori v1, v1, 10
+	vori v2, v2, 13
+	vori v3, v3, 17
+	
+	ext 100, v1, v2, v3
+	addi s1, s1, 128
+	vsti v1, s1, 4
+	
 	// Finish
 
 	drain

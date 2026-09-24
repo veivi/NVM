@@ -168,7 +168,7 @@ instruction_categories:
     mode: "VLS_Reg_C"
     register-read-a: "rs1"
     register-read-b: "rs2"
-    vector-read-a: "vd"
+    vector-read-c: "vd"
     
   loadstore_vec_imm:
     format: "loadstore_vec_imm"
@@ -178,7 +178,7 @@ instruction_categories:
     mode: "VLS_Imm_C"
     register-read-a: "rs"
     imm-unsigned: "stride"
-    vector-read-a: "vd"
+    vector-read-c: "vd"
     
   jump_imm:
     format: "jump_imm"
