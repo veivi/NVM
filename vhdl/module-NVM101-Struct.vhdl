@@ -88,7 +88,9 @@ architecture Struct of NVM101 is
   signal LS_LoadsOutstanding, LS_StoresOutstanding : std_logic;
   signal VLS_LoadsOutstanding, VLS_StoresOutstanding : std_logic_vector(VecSize_C-1 downto 0);
   
-  signal VALU_Operand : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
+  signal VALU_Operation : ALUOp_T;
+  signal VALU_OperandA : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
+  signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_Condition, VCR_ReadValue : ConditionVector_T(0 to VecSize_C-1);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
@@ -406,7 +408,7 @@ begin
                C_Span => ExecuteWord.VLS_Span,
                C_Ready => VLS_Ready(I),               
                C_Dest => ExecuteWord.VRF_RA_Index,
-               C_Addr => VLS_C_Addr((I+1)*AddrSize_C-1 downto I*AddrSize_C),
+               C_Addr => VRF_WA_Data(I*WordSize_C+AddrSize_C-1 downto I*WordSize_C),
                C_Stride => VLS_C_Stride,
                C_Data => VRF_RA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
                LoadsOutstanding => VLS_LoadsOutstanding(I),
@@ -485,30 +487,55 @@ begin
     VALU_I : entity WORK.ALU(RTL)
       generic map(Log2BPW_C => Log2BPW_C)
 
-      port map(Operation => ExecuteWord.VALU_Operation,
-               A => VRF_RA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
-               B => VALU_Operand((I+1)*WordSize_C-1 downto I*WordSize_C),
+      port map(Operation => VALU_Operation,
+               A => VALU_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C),
+               B => VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C),
                Result => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
                Condition => VALU_Condition(I));
     
   end generate;
 
   VRF_WA_Valid <= '1' when to_integer(unsigned(not VRF_ReadValid)) = 0 else '0';
+
   --
-  -- Vector ALU operand B multiplexing
+  -- Vector ALU operation/operand multiplexing
   --
 
-  VectorOperandB_P : process(VRF_RB_Data, ExecuteWord, Execute_Imm_Data)
+  VectorALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RA_Data, VRF_RA_Data, VRF_RB_Data)
+    constant StubSize_C : integer := AddrSize_C - Log2VecSize_C;
+    variable Stride : std_logic_vector(StubSize_C-1 downto 0);
   begin
-    if ExecuteWord.VALU_Mode = ALU_RegReg_C then
-      VALU_Operand <= VRF_RB_Data;
-    else
+    -- Default operand comes from VRFU
+    
+    VALU_Operation <= ExecuteWord.VALU_Operation;
+    VALU_OperandA <= VRF_RA_Data;
+    VALU_OperandB <= VRF_RB_Data;
+    
+    Stride :=
+      Execute_Imm_Data(StubSize_C-1 downto 0) when ExecuteWord.VLS_Mode = VLS_Imm_C
+      else RF_RB_Data(StubSize_C-1 downto 0);
+    
+    if ExecuteWord.VLS_Operation /= LSOp_None_C then
+      -- Override ALU operation for EA computation. Operand A is broadcast from
+      -- scalar RFU
+      
+      VALU_Operation <= ALUOp_Add_C;
+      
       for I in 0 to VecSize_C-1 loop
-        VALU_Operand((I+1)*WordSize_C-1 downto I*WordSize_C) <= Execute_Imm_Data;
+        VALU_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C)
+          <= RF_RA_Data;
+        VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C)
+          <= std_logic_vector(to_unsigned(I, WordSize_C-AddrSize_C+Log2VecSize_C)*unsigned(Stride));
+      end loop;
+      
+    elsif ExecuteWord.VALU_Mode = ALU_RegImm_C then
+      -- Possible vector ALU operation with immediate operand
+      for I in 0 to VecSize_C-1 loop
+        VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C) <= Execute_Imm_Data;
       end loop;
     end if;
   end process;
-
+  
   --
   -- Vector scoreboard control
   --
@@ -516,25 +543,6 @@ begin
   VRF_SB_Set <= '1' when LSOpIsLoad(ControlWord.VLS_Operation) else '0';
   VRF_SB_Index <= ControlWord.VRF_RA_Index;
   VRF_SB_Span <= 0;
-  
-  --
-  -- Vector Load/Store effective address computation
-  --
-  
-  VectorEffAddress_P : process(ExecuteWord, RF_RA_Data, RF_RB_Data, Execute_Imm_Data)
-    constant StubSize_C : integer := AddrSize_C - Log2VecSize_C;
-    variable Stride : std_logic_vector(StubSize_C-1 downto 0);
-  begin
-    Stride :=
-      Execute_Imm_Data(StubSize_C-1 downto 0) when ExecuteWord.VLS_Mode = VLS_Imm_C
-      else RF_RB_Data(StubSize_C-1 downto 0);
-    
-    for I in 0 to VecSize_C-1 loop
-      VLS_C_Addr((I+1)*AddrSize_C-1 downto I*AddrSize_C)
-        <= std_logic_vector(unsigned(RF_RA_Data(AddrSize_C-1 downto 0))
-                                     + to_unsigned(I, Log2VecSize_C)*unsigned(Stride));
-    end loop; 
-  end process;          
 end Struct;
 
 
