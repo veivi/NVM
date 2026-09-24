@@ -115,11 +115,15 @@ begin
           end loop;
 
           write(OutLine, string'(", "));
+        else
+          -- write(OutLine, string'("                   "));
         end if;
       end loop;
 
       if Something then
         writeline(file_pointer, OutLine);
+      else
+       -- OutLine := string'("");
       end if;
     end if;
   end process;
