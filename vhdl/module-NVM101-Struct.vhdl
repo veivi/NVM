@@ -548,7 +548,8 @@ begin
   end generate;
 
   --
-  -- VRF write port multiplexing (VALU and Vector Extension share it)
+  -- VRF write port multiplexing (vector integer ALU and Vector Extension share it, the
+  -- latter has priority)
   --
   
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or VectorR_Present;
