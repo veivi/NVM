@@ -34,6 +34,7 @@ architecture RTL of VU102 is
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
 
   type WordArray_T is array (natural range <>) of Word_T;
+  
   --
   -- Real/Imaginary part representation
   --
@@ -85,9 +86,10 @@ architecture RTL of VU102 is
   signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal OperandC, DelayedOperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
+  signal AdderResult, MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, MultiplyValid : std_logic;
   signal PartialDest, MultiplyDest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
 begin
   --
   -- State
@@ -99,21 +101,29 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         PartialValid <= '0';
+        Operation <= (others => '0');
 
       elsif VectorC_Present = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           A := VectorC_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := VectorC_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
-                               Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
+          if VectorC_Operation(0) = '1' then
+            PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
+                                 Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
+          else
+            AdderResult(I) <= Complex(std_logic_vector(signed(RealPart(A)) + signed(RealPart(B))),
+                                      std_logic_vector(signed(ImagPart(A)) + signed(ImagPart(B))));
+          end if;
         end loop;
 
         PartialValid <= '1';
+        PartialOperation <= VectorC_Operation;        
         PartialDest <= VectorC_Dest;
         OperandC <= VectorC_OperandC;
       else
         PartialValid <= '0';
+        Operation <= (others => '0');
       end if;
     end if;
   end process;
@@ -127,17 +137,23 @@ begin
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          MultiplyResult(I) <= Complex(Normalize(std_logic_vector(signed(PartialResult(I).RealARealB)
-                                                                  - signed(PartialResult(I).ImagAImagB))),
-                                       Normalize(std_logic_vector(signed(PartialResult(I).RealAImagB)
-                                                                  + signed(PartialResult(I).ImagARealB))));
+          if PartialOperation(0) = '1' then
+            MultiplyResult(I) <= Complex(Normalize(std_logic_vector(signed(PartialResult(I).RealARealB)
+                                                                    - signed(PartialResult(I).ImagAImagB))),
+                                         Normalize(std_logic_vector(signed(PartialResult(I).RealAImagB)
+                                                                    + signed(PartialResult(I).ImagARealB))));
+          else
+            MultiplyResult(I) <= AdderResult(I);
+          end if;
         end loop;
 
         DelayedOperandC <= OperandC;
         MultiplyDest <= PartialDest;
+        MultiplyOperation <= PartialOperation;        
         MultiplyValid <= '1';
       else
         MultiplyValid <= '0';
+        MultiplyOperation <= (others => '0');
       end if;
     end if;
   end process;
@@ -151,9 +167,13 @@ begin
 
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-            <= std_logic_vector(unsigned(MultiplyResult(I))
-                                + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
+          if MultiplyOperation(1) = '1' then
+            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= std_logic_vector(unsigned(MultiplyResult(I))
+                                  + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
+          else
+            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+          end if;
           VectorR_Present <= '1';
           VectorR_Dest <= MultiplyDest;
         end loop;

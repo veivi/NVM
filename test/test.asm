@@ -169,9 +169,13 @@ clear_vektori_loop:
 	drain
 	debugi 11
 	
-	ext 100, v1, v2, v3
+	ext 1, v1, v2, v3
 	vsti v1, s1, 4
-	ext 100, v1, v1, v1
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
 	vsti v1, s1, 4
 
 	drain
