@@ -154,29 +154,40 @@ clear_vektori_loop:
 	// Vector Extension test
 	//
 
-	vandi v1, v1, 0
-	vandi v3, v3, 0
-	vandi v2, v2, 0
-	
-	vori v2, v2, 1
-	vlsli v2, v2, 12
-	
-	vori v3, v3, 1
-	vlsli v3, v3, 28
+	addi s1, s1, 128
+	ldi s2, 3956
+	lsli s2, s2, 16
+	ori s2, s2, 1060
+	st s2, s1, 0
 
-	vsti v2, s1, 4
-	vsti v3, s1, 4
 	drain
+	
+	vldi v0, s1, 0
+	
+	vandi v2, v2, 0  // Load 1+0i into v2
+	vori v2, v2, 1
+	vlsli v2, v2, 28
+	
 	debugi 11
 	
-	ext 1, v1, v2, v3
-	vsti v1, s1, 4
-	ext 1, v1, v1, v2
-	vsti v1, s1, 4
-	ext 1, v1, v1, v2
-	vsti v1, s1, 4
-	ext 1, v1, v1, v2
-	vsti v1, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
 
 	drain
 	debugi 10

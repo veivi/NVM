@@ -358,6 +358,24 @@ instruction_set:
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
+  LSLI:
+    category: "logic_imm"
+    opcode: 12
+    operation: "ALUOp_LSL_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
+
+  LSRI:
+    category: "logic_imm"
+    opcode: 13
+    operation: "ALUOp_LSR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  ASRI:
+    category: "logic_imm"
+    opcode: 14
+    operation: "ALUOp_ASR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
 #
 # Compare Scalar/Vector
 #
@@ -770,13 +788,13 @@ instruction_set:
 
   VLSRI:
     category: "logic_vec_imm"
-    opcode: 10
+    opcode: 11
     operation: "ALUOp_LSR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
   VASRI:
     category: "logic_vec_imm"
-    opcode: 10
+    opcode: 12
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 

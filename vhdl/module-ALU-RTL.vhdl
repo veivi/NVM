@@ -59,12 +59,10 @@ begin
         Result <= std_logic_vector(shift_left(unsigned(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
             
-
       when ALUOp_LSR_C =>
         Result <= std_logic_vector(shift_right(unsigned(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
             
-
       when ALUOp_ASR_C =>
         Result <= std_logic_vector(shift_right(signed(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
