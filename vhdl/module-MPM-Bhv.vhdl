@@ -9,7 +9,8 @@ entity MPM is
   generic(AddrSize_C : integer;
           Log2BPW_C : integer;
           TagSize_C : integer;
-          NumOfPorts_C : integer);
+          NumOfPorts_C : integer;
+          Contention_C : real);
   
   port(Clk : in std_logic;
        Reset : in std_logic;
@@ -184,7 +185,7 @@ begin
     if rising_edge(Clk) then
       for I in 0 to NumOfPorts_C-1 loop
         Uniform(Seed1, Seed2, Rnd);
-        if Rnd < 0.3 then
+        if Rnd < Contention_C then
           PortReady(I) <= '0';
         else
           PortReady(I) <= '1';

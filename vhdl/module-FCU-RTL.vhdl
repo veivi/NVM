@@ -82,7 +82,7 @@ begin
   -- Next instruction pointer
   --
 
-  NIP_P : process(FIP, Operation, Evaluated)
+  NIP_P : process(FIP, XIP, Operation, Evaluated, Imm_Data, Reg_Data)
   begin
     -- Default is to increment
     
@@ -102,8 +102,9 @@ begin
         NIP <= Imm_Data(AddrSize_C-1 downto 0);
 
       when FlowOp_JMP_C | FlowOp_JMPL_C =>
-        -- Indirect jump
-        NIP <= Reg_Data(AddrSize_C-1 downto 0);
+        -- Indirect with displacement
+        
+        NIP <= std_logic_vector(signed(Reg_Data(AddrSize_C-1 downto 0)) + signed(Imm_Data));
         
       when others =>
         null;

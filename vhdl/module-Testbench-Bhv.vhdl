@@ -9,6 +9,7 @@ entity Testbench is
 end Testbench;
 
 architecture Bhv of Testbench is
+  constant Contention_C : real := 0.5;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;
@@ -87,30 +88,6 @@ begin
              LCR_Data => LCR_Data );
 
   --
-  -- LCM
-  --
-
-  -- LCM_Generate : for I in 0 to 2**Log2VecSize_C generate
-  --   LCM_I : entity WORK.LCM(Bhv)
-  --     generic map(AddrSize_C => AddrSize_C - Log2BPW_C,
-  --                 Log2BPW_C => Log2BPW_C,
-  --                 TagSize_C => TagSize_C)
-
-  --     port map(Clk => Clk,
-  --              Reset => Reset,
-  --              LCI_Present => LCI_Present(I),
-  --              LCI_Accept => LCI_Accept(I),
-  --              LCI_Write => LCI_Write(I),
-  --              LCI_Tag => LCI_Tag((I+1)*TagSize_C-1 downto I*TagSize_C),
-  --              LCI_Addr => LCI_Addr((I+1)*WordAddrSize_C-1 downto I*WordAddrSize_C),
-  --              LCI_ByteSel => LCI_ByteSel((I+1)*BytesPerWord_C-1 downto I*BytesPerWord_C),
-  --              LCI_Data => LCI_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
-  --              LCR_Present => LCR_Present(I),
-  --              LCR_Tag => LCR_Tag((I+1)*TagSize_C-1 downto I*TagSize_C),
-  --              LCR_Data => LCR_Data((I+1)*WordSize_C-1 downto I*WordSize_C));
-  -- end generate;
-
-  --
   -- Multi-Port Memory
   --
 
@@ -118,7 +95,8 @@ begin
     generic map(AddrSize_C => AddrSize_C - Log2BPW_C,
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
-                NumOfPorts_C => 2**Log2VecSize_C + 1)
+                NumOfPorts_C => 2**Log2VecSize_C + 1,
+                Contention_C => Contention_C)
 
     port map(Clk => Clk,
              Reset => Reset,

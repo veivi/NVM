@@ -182,12 +182,14 @@ instruction_categories:
     format: "jump_imm"
     prefix: 52
     operands: [ "i_target" ]
+    imm-unsigned: "i_target"
     unit: "FCU"
     
   jump_ind:
     format: "jump_ind"
     prefix: 52
     operands: [ "rs", "i_disp" ]
+    imm-signed: "i_disp"
     unit: "FCU"
 
   cond_branch:

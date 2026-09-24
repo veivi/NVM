@@ -1,4 +1,5 @@
 	.export "funktio"
+	.export "stop_simulation"
 	.import "init"
 
 	.section "code"
@@ -14,3 +15,9 @@ funktio:
 loop:
 	ba loop
 	
+
+stop_simulation:
+	ldi s0, -1
+	jmp s0, 0	// This should stop the simulation with instruction access failure
+	nop
+	nop

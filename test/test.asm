@@ -1,4 +1,5 @@
 	.import "funktio"
+	.import "stop_simulation"
 	.export "init"
 
 	.section "bss"
@@ -112,9 +113,12 @@ clear_vektori_loop:
 	vstib v4, s1, 4
 	vstib v5, s1, 5
 	vstib v6, s1, 6
-	drain
-		
-	ext 77, v3, v1, v2
+
+	//
+	// Ext unit access
+	//
+	
+	ext 77, v20, v1, v2
 
 	// Memory fence test, first without write fence
 
@@ -123,7 +127,6 @@ clear_vektori_loop:
 
 	vstib v3, s1, 10
 	vldib v4, s1, 10
-	sync
 
 	// Then with write fence
 	
@@ -132,31 +135,20 @@ clear_vektori_loop:
 	vstib v3, s1, 10
 	drain
 	vldib v4, s1, 10
+	
+	// Then with read and write fence
+	
+	vaddi v5, v3, 16
+	
 	sync
-	
-stop:
-	ldi s0, -1
-	jmp s0, 0
-	nop
-	nop
+	vstib v5, s1, 10
+	drain
+	vldib v6, s1, 10
 
-paska:
-	jmpa init
+	// Finish
+	
+	sync
+	jmpa stop_simulation
 	nop
 	nop
-	
-subroutine:
-	subi s63, s63, 4	// Push link register
-	stl s0, s63, 4
-	
-	jmpal funktio
-
-	ldl s0, s63, 4		// Pop link register
-	addi s63, s63, 4
-	
-	jmp s0, 0
-	nop
-	nop
-	
-	
 
