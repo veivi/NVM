@@ -109,9 +109,13 @@ begin
           B := VectorC_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
           if VectorC_Operation(0) = '1' then
+            -- We're doing multiplication
+            
             PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
                                  Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
           else
+            -- We're doing addition
+            
             AdderResult(I) <= Complex(std_logic_vector(signed(RealPart(A)) + signed(RealPart(B))),
                                       std_logic_vector(signed(ImagPart(A)) + signed(ImagPart(B))));
           end if;
@@ -168,10 +172,14 @@ begin
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if MultiplyOperation(1) = '1' then
+            -- Include Operand C in the result
+            
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
               <= std_logic_vector(unsigned(MultiplyResult(I))
                                   + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
           else
+            -- Just output result of operation between A and B
+            
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
           end if;
           VectorR_Present <= '1';
