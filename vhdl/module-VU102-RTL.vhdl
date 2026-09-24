@@ -177,6 +177,12 @@ begin
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
               <= std_logic_vector(unsigned(MultiplyResult(I))
                                   + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
+          elsif MultiplyOperation(2) = '1' then
+            -- Include previous result in the result
+            
+            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= std_logic_vector(unsigned(MultiplyResult(I))
+                                  + unsigned(VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)));            
           else
             -- Just output result of operation between A and B
             
