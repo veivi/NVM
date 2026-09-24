@@ -50,28 +50,34 @@ begin
         Complete <= '0';
         Dest <= (others => '0');
         Operation <= (others => '0');
+        
       elsif Busy = '1' then
-
         if Count > 10 then
           Complete <= '1';
+          Busy <= '0';
 
           for I in 0 to 2**Log2VecSize_C-1 loop
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= std_logic_vector(unsigned(OperandA(WordSize_C/2-1 downto 0))*unsigned(OperandB(WordSize_C/2-1 downto 0)));
+              <= std_logic_vector(unsigned(OperandA(I*WordSize_C+WordSize_C/2-1 downto I*WordSize_C))
+                                  * unsigned(OperandB(I*WordSize_C+WordSize_C/2-1 downto I*WordSize_C)));
           end loop;
         else
           Count := Count + 1;
         end if;
-          
-      elsif VectorC_Present = '1' then
-        Busy <= '1';
-        Dest <= VectorC_Dest;
-        Operation <= VectorC_Operation;
-        OperandA <= VectorC_OperandA;
-        OperandB <= VectorC_OperandB;
-        OperandC <= VectorC_OperandC;
+
+      else
         Complete <= '0';
-        Count := 0;
+        
+        if VectorC_Present = '1' then
+          Busy <= '1';
+          Dest <= VectorC_Dest;
+          Operation <= VectorC_Operation;
+          OperandA <= VectorC_OperandA;
+          OperandB <= VectorC_OperandB;
+          OperandC <= VectorC_OperandC;
+          VectorR_Result <= (others => '0');
+          Count := 0;
+        end if;
       end if;
     end if;
   end process;

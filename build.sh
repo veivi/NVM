@@ -16,6 +16,7 @@ nvc -a design/vhdl/entity-IDU.vhdl
 nvc -a artefact/architecture-IDU-Synthetic.vhdl
 nvc -a design/vhdl/module-NVM101-Struct.vhdl
 nvc -a design/vhdl/module-VU101-RTL.vhdl
+nvc -a design/vhdl/module-VU102-RTL.vhdl
 nvc -a design/vhdl/module-LCM-Bhv.vhdl
 nvc -a design/vhdl/module-MPM-Bhv.vhdl
 nvc -a design/vhdl/module-Testbench-Bhv.vhdl

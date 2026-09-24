@@ -1,0 +1,167 @@
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
+use WORK.NVM101Interface.all;
+use WORK.NVM101Types.all;
+
+entity VU102 is
+  generic(Log2BPW_C : integer;
+          Log2VecSize_C : integer);
+
+  port(Clk : in std_logic;
+       Reset : in std_logic;
+
+       -- Vector Unit Command
+
+       VectorC_Present : in  std_logic;
+       VectorC_Accept : out std_logic;
+       VectorC_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
+       VectorC_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       VectorC_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       VectorC_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       VectorC_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+
+       -- Vector Unit Result
+
+       VectorR_Present : out std_logic;
+       VectorR_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       VectorR_Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
+end VU102;
+
+architecture RTL of VU102 is
+  constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
+
+  subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
+
+  type WordArray_T is array (natural range <>) of Word_T;
+  --
+  -- Real/Imaginary part representation
+  --
+  
+  constant PartSize_C : integer := WordSize_C/2;  
+  constant Precision_C : integer := 12;
+  
+  subtype Part_T is std_logic_vector(PartSize_C-1 downto 0);
+
+  type PartialResult_T is record
+    RealARealB : Word_T;
+    ImagAImagB : Word_T;
+    RealAImagB : Word_T;
+    ImagARealB : Word_T;
+  end record;
+
+  type PartialResultArray_T is array (natural range <>) of PartialResult_T;
+  
+  function RealPart(A : Word_T) return Part_T is
+  begin
+    return A(WordSize_C-1 downto PartSize_C);
+  end function;
+  
+  function ImagPart(A : Word_T) return Part_T is
+  begin
+    return A(PartSize_C-1 downto 0);
+  end function;
+
+  function Complex(RealPart : Part_T; ImagPart : Part_T) return Word_T is
+  begin
+    return RealPart & ImagPart;
+  end function;
+  
+  function Multiply(A : Part_T; B : Part_T) return Word_T is
+  begin
+    return std_logic_vector(signed(A) * signed(B));
+  end function;
+
+  function Normalize(A : Word_T) return Part_T is
+  begin
+    return A(PartSize_C+Precision_C-1 downto Precision_C);
+  end function;
+  
+  function MultiplyNormalize(A : Part_T; B : Part_T) return Part_T is
+  begin
+    return Normalize(std_logic_vector(signed(A) * signed(B)));
+  end function;
+
+  signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
+  signal OperandC, DelayedOperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
+  signal MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
+  signal PartialValid, MultiplyValid : std_logic;
+  signal PartialDest, MultiplyDest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+begin
+  --
+  -- State
+  --
+
+  Multiplier_P : process(Clk)
+    variable A, B : Word_T;
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        PartialValid <= '0';
+
+      elsif VectorC_Present = '1' then
+        for I in 0 to 2**Log2VecSize_C-1 loop
+          A := VectorC_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
+          B := VectorC_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
+
+          PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
+                               Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
+        end loop;
+
+        PartialValid <= '1';
+        PartialDest <= VectorC_Dest;
+        OperandC <= VectorC_OperandC;
+      else
+        PartialValid <= '0';
+      end if;
+    end if;
+  end process;
+
+  PartialAdder_P : process(Clk)
+    variable A, B : Word_T;
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        MultiplyValid <= '0';
+
+      elsif PartialValid = '1' then
+        for I in 0 to 2**Log2VecSize_C-1 loop
+          MultiplyResult(I) <= Complex(Normalize(std_logic_vector(signed(PartialResult(I).RealARealB)
+                                                                  - signed(PartialResult(I).ImagAImagB))),
+                                       Normalize(std_logic_vector(signed(PartialResult(I).RealAImagB)
+                                                                  + signed(PartialResult(I).ImagARealB))));
+        end loop;
+
+        DelayedOperandC <= OperandC;
+        MultiplyDest <= PartialDest;
+        MultiplyValid <= '1';
+      else
+        MultiplyValid <= '0';
+      end if;
+    end if;
+  end process;
+
+  Accumulator_P : process(Clk)
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        VectorR_Present <= '0';
+        VectorR_Dest <= (others => '0');
+
+      elsif MultiplyValid = '1' then
+        for I in 0 to 2**Log2VecSize_C-1 loop
+          VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+            <= std_logic_vector(unsigned(MultiplyResult(I))
+                                + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
+          VectorR_Present <= '1';
+          VectorR_Dest <= MultiplyDest;
+        end loop;
+      else
+        VectorR_Present <= '0';
+      end if;
+    end if;
+  end process;
+  
+  VectorC_Accept <= '1';
+end RTL;

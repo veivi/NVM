@@ -762,6 +762,24 @@ instruction_set:
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
+  VLSLI:
+    category: "logic_vec_imm"
+    opcode: 10
+    operation: "ALUOp_LSL_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
+
+  VLSRI:
+    category: "logic_vec_imm"
+    opcode: 10
+    operation: "ALUOp_LSR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  VASRI:
+    category: "logic_vec_imm"
+    opcode: 10
+    operation: "ALUOp_ASR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
 #
 # Jump Absolute / Indirect
 #

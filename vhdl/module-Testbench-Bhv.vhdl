@@ -120,7 +120,7 @@ begin
   -- Vector Unit
   --
   
-  VU101_I : entity WORK.VU101(RTL)
+  VU102_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C )
 
