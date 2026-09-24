@@ -104,6 +104,7 @@ clear_vektori_loop:
 	vaddi v2, v2, 10
 	vstib v2, s1, 1
 	vldib v3, s1, 1
+	vaddi v3, v3, 1
 	vaddi v4, v3, 1
 	vaddi v5, v4, 1
 	vaddi v6, v5, 1
@@ -115,12 +116,23 @@ clear_vektori_loop:
 		
 	ext 77, v3, v1, v2
 
-	// Memory fence test
+	// Memory fence test, first without write fence
+
+	addi s1, s1, 128
+	vaddi v3, v3, 16
 
 	vstib v3, s1, 10
-	drain
-	
 	vldib v4, s1, 10
+	sync
+
+	// Then with write fence
+	
+	vaddi v3, v3, 16
+	
+	vstib v3, s1, 10
+	drain
+	vldib v4, s1, 10
+	sync
 	
 stop:
 	ldi s0, -1

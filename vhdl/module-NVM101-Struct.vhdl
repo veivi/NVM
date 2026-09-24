@@ -501,15 +501,17 @@ begin
   -- Vector ALU operation/operand multiplexing
   --
 
-  VectorALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RA_Data, VRF_RA_Data, VRF_RB_Data)
+  VectorALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RA_Data, RF_RB_Data, VRF_RA_Data, VRF_RB_Data)
     constant StubSize_C : integer := AddrSize_C - Log2VecSize_C;
     variable Stride : std_logic_vector(StubSize_C-1 downto 0);
   begin
-    -- Default operand comes from VRFU
+    -- Default: vector ALUs are under instruction control and operands come from VRFU
     
     VALU_Operation <= ExecuteWord.VALU_Operation;
     VALU_OperandA <= VRF_RA_Data;
     VALU_OperandB <= VRF_RB_Data;
+
+    -- The stride can come from scalar RF_B or instruction word
     
     Stride :=
       Execute_Imm_Data(StubSize_C-1 downto 0) when ExecuteWord.VLS_Mode = VLS_Imm_C
@@ -517,7 +519,7 @@ begin
     
     if ExecuteWord.VLS_Operation /= LSOp_None_C then
       -- Override ALU operation for EA computation. Operand A is broadcast from
-      -- scalar RFU
+      -- scalar RFU, operand B is calculated per lane as stride multiples
       
       VALU_Operation <= ALUOp_Add_C;
       
