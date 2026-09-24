@@ -63,7 +63,11 @@ package NVM101Types is
                      FlowOp_JMPL_C,
                      FlowOp_JMPA_C,
                      FlowOp_JMPAL_C);
-
+ 
+  type DebugOp_T is ( DebugOp_None_C,
+                      DebugOp_DEBUG_C,
+                      DebugOp_DEBUGI_C);
+  
   type FenceOp_T is ( FenceOp_None_C,
                       FenceOp_Fence_C,
                       FenceOp_ReadFence_C,
@@ -106,6 +110,7 @@ package NVM101Types is
     VCR_Write_Active : std_logic;
     VCR_Write_Index : CondRegIndex_T;
     FCU_Operation : FlowOp_T;
+    Debug_Operation : DebugOp_T;
     LS_Operation : LoadStoreOp_T;
     LS_Mode : LoadStoreMode_T;
     LS_Span : RegSpan_T;
@@ -128,7 +133,7 @@ package NVM101Types is
       '0', 0, '0', 0, '0', 0, '0', 0,
       '0', 0, '0', 0,
       '0', 0, '0', 0,
-      FlowOp_None_C, LSOp_None_C, LS_Displaced_C, 0, LSOp_None_C, VLS_Imm_C, 0,
+      FlowOp_None_C, DebugOp_None_C, LSOp_None_C, LS_Displaced_C, 0, LSOp_None_C, VLS_Imm_C, 0,
       ALUOp_None_C, ALU_RegReg_C, ALUOp_None_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
       '0', 0, 0);
 end package;

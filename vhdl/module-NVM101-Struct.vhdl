@@ -21,6 +21,10 @@ entity NVM101 is
        I_Addr : out std_logic_vector(AddrSize_C-1 downto 0);
        I_Code : in std_logic_vector(InstrSize_C-1 downto 0);
 
+       -- Debug output
+
+       DebugOut : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       
        -- LCM initiative
 
        LCI_Present : out std_logic_vector(2**Log2VecSize_C downto 0);
@@ -149,6 +153,31 @@ begin
              Imm_Data => Execute_Imm_Data,
              Reg_Data => RF_RA_Data);
     
+  --
+  -- Debug port
+  --
+
+  Debug_P : process(Clk)
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        DebugOut <= (others => '0');
+        
+      elsif ExecuteStall = '0' then
+        case ExecuteWord.Debug_Operation is
+          when DebugOp_DEBUGI_C =>
+            DebugOut <= Execute_Imm_Data;
+        
+          when DebugOp_DEBUG_C =>
+            DebugOut <= RF_RA_Data;
+
+          when others =>
+            null;
+        end case;
+      end if;
+    end if;
+  end process;
+  
   --
   -- Instruction Decode
   --

@@ -23,6 +23,10 @@ entity FCU is
        
        Instruction : out std_logic_vector(InstrSize_C-1 downto 0);
 
+       -- Debug output
+
+       DebugOut : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       
        -- Interlock interface
        
        IL_Stall : in std_logic;
@@ -104,8 +108,8 @@ begin
       when FlowOp_JMP_C | FlowOp_JMPL_C =>
         -- Indirect with displacement
         
-        NIP <= std_logic_vector(signed(Reg_Data(AddrSize_C-1 downto 0)) + signed(Imm_Data));
-        
+        NIP <= std_logic_vector(signed(Reg_Data(AddrSize_C-1 downto 0)) + signed(Imm_Data(AddrSize_C-1 downto 0)));
+
       when others =>
         null;
     end case;

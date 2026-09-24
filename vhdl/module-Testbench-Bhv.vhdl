@@ -39,6 +39,8 @@ architecture Bhv of Testbench is
   signal LCR_Tag : std_logic_vector(TagSize_C*(VecSize_C+1)-1 downto 0);
   signal LCR_Data : std_logic_vector(ByteSize_C*2**Log2BPW_C*(VecSize_C+1)-1 downto 0);
 
+  signal DebugOut : std_logic_vector(WordSize_C-1 downto 0);
+  
   subtype InstrWord_T is std_logic_vector(InstrSize_C-1 downto 0);
   type InstrArray_T is array (natural range <>) of InstrWord_T;
 
@@ -76,6 +78,8 @@ begin
              I_Addr => I_Addr,
              I_Code => I_Code,
 
+             DebugOut => DebugOut,
+             
              LCI_Present => LCI_Present,
              LCI_Accept => LCI_Accept,
              LCI_Write => LCI_Write,
@@ -100,6 +104,7 @@ begin
 
     port map(Clk => Clk,
              Reset => Reset,
+             DebugOut => DebugOut,
              LCI_Present => LCI_Present,
              LCI_Accept => LCI_Accept,
              LCI_Write => LCI_Write,

@@ -89,6 +89,7 @@ clear_vektori_loop:
 	
 	// Testataan vector loadeja
 
+	debugi 1
 	ldi s1, vektoridata_alku
 	
 	vldi v0, s1, 4
@@ -120,35 +121,45 @@ clear_vektori_loop:
 	
 	ext 77, v20, v1, v2
 
-	// Memory fence test, first without write fence
+	// Memory fence test, first without barriers
 
+	drain
+	sync
+	
 	addi s1, s1, 128
 	vaddi v3, v3, 16
 
+	debugi 16
 	vstib v3, s1, 10
 	vldib v4, s1, 10
+	debugi 17
 
 	// Then with write fence
 	
 	vaddi v3, v3, 16
 	
+	debugi 32	
 	vstib v3, s1, 10
 	drain
 	vldib v4, s1, 10
+	debugi 33	
 	
 	// Then with read and write fence
 	
 	vaddi v5, v3, 16
 	
 	sync
+	debugi 48
 	vstib v5, s1, 10
 	drain
 	vldib v6, s1, 10
+	sync
+	debugi 49
 
 	// Finish
-	
-	sync
+
+	drain
 	jmpa stop_simulation
-	nop
-	nop
+	sync
+	debugi -1
 

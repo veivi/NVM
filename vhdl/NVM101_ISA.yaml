@@ -26,6 +26,8 @@ instruction_formats:
   branch: { opcode: 10, i_disp: 20, cr: 2 }
   loadstore_vec: { opcode: 14, rs2 : 6, rs1: 6, vd: 6 }
   loadstore_vec_imm: { opcode: 14, stride : 6, rs: 6, vd: 6 }
+  debug: { opcode: 6, rs: 6 }
+  debug_imm: { opcode: 6, value: 26 }
   ext: { opcode: 6, subop: 8, vs2 : 6, vs1: 6, vd: 6 }
 
 #
@@ -190,7 +192,22 @@ instruction_categories:
     prefix: 52
     operands: [ "rs", "i_disp" ]
     imm-signed: "i_disp"
+    register-read-a: "rs"
     unit: "FCU"
+
+  debug_imm:
+    format: "debug_imm"
+    prefix: 52
+    operands: [ "value" ]
+    imm-unsigned: "value"
+    unit: "Debug"
+
+  debug:
+    format: "debug"
+    prefix: 52
+    operands: [ "rs" ]
+    register-read-a: "rs"
+    unit: "Debug"
 
   cond_branch:
     format: "branch"
@@ -748,6 +765,7 @@ instruction_set:
 #
 # Jump Absolute / Indirect
 #
+
   JMPA:
     category: "jump_imm"
     opcode: 0
@@ -771,3 +789,22 @@ instruction_set:
     opcode: 3
     operation: "FlowOp_JMPL_C"
     behaviour: "R0 = IP; IP = R[rs] + sign_extend(i_disp)"
+
+#
+# Debug
+#
+
+  DEBUG:
+    category: "debug"
+    opcode: 4
+    operation: "DebugOp_DEBUG_C"
+    behaviour: "Debug from register"
+
+  DEBUGI:
+    category: "debug_imm"
+    opcode: 5
+    operation: "DebugOp_DEBUGI_C"
+    behaviour: "Debug Immediate"
+
+
+    

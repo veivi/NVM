@@ -14,6 +14,10 @@ entity MPM is
   
   port(Clk : in std_logic;
        Reset : in std_logic;
+
+       --
+
+       DebugOut : std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
        -- LCM initiative
 
@@ -93,8 +97,20 @@ begin
     file file_pointer : text open write_mode is "MPM_report.txt";
     variable OutLine : line;
     variable Something : boolean;
+    variable DebugState : Word_T := (others => '0');
   begin
     if rising_edge(Clk) then
+      if DebugOut /= DebugState then
+        write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
+        writeline(file_pointer, Outline);
+        write(OutLine, string'("-- DEBUG "));
+        hwrite(OutLine, DebugOut);
+        writeline(file_pointer, Outline);
+        write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
+        writeline(file_pointer, Outline);
+        DebugState := DebugOut;
+      end if;
+        
       Something := false;
       
       for P in 0 to NumOfPorts_C-1 loop
