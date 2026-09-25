@@ -120,29 +120,9 @@ void fft_with_vectors(complex_t *A)
     half_m = m/2;
     tab_step = 1<<(LOG2LEN - s);
     
-    if(half_m >= V) {
+    if(half_m < V) {
       //
-      // Late stage: half_m at least as big as our vector
-      //
-	
-      for(k = 0; k < 1<<LOG2LEN; k += m) {	  
-	for(v = 0; v < half_m; v += V) {
-	  complex_t omega[V], a[V], t[V], u[V], x[V];
-	  
-	  complex_vector_read(omega, w, v * tab_step, tab_step);
-	  complex_vector_read(a, A, k + v + half_m, 1);
-	  complex_vector_mul(t, omega, a);
-	  complex_vector_read(u, A, k + v, 1);
-
-	  complex_vector_add(x, u, t);
-	  complex_vector_write(x, A, k + v, 1);
-	  complex_vector_sub(x, u, t);
-	  complex_vector_write(x, A, k + v + half_m, 1);
-	}
-      }
-    } else {
-      //
-      // Early stage: half_m is smaller than our vector
+      // Early stage: our vectors will handle k
       //
 
       for(j = 0; j < half_m; j++) {
@@ -159,6 +139,26 @@ void fft_with_vectors(complex_t *A)
 	  complex_vector_write(x, A, j + v, m);
 	  complex_vector_sub(x, u, t);
 	  complex_vector_write(x, A, j + v + half_m, m);
+	}
+      }
+    } else {
+      //
+      // Late stage: our vectors will handle j
+      //
+	
+      for(k = 0; k < 1<<LOG2LEN; k += m) {	  
+	for(v = 0; v < half_m; v += V) {
+	  complex_t omega[V], a[V], t[V], u[V], x[V];
+	  
+	  complex_vector_read(omega, w, v * tab_step, tab_step);
+	  complex_vector_read(a, A, k + v + half_m, 1);
+	  complex_vector_mul(t, omega, a);
+	  complex_vector_read(u, A, k + v, 1);
+
+	  complex_vector_add(x, u, t);
+	  complex_vector_write(x, A, k + v, 1);
+	  complex_vector_sub(x, u, t);
+	  complex_vector_write(x, A, k + v + half_m, 1);
 	}
       }
     }
