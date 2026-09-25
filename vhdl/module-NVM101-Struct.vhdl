@@ -589,6 +589,13 @@ begin
         VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C)
           <= std_logic_vector(to_unsigned(I, WordSize_C-AddrSize_C+Log2VecSize_C)*unsigned(Stride));
       end loop;
+
+    elsif ExecuteWord.RF_RB_Active = '1' then
+      -- Broadcast the scalar register to the vector lanes
+
+      for I in 0 to VecSize_C-1 loop
+        VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C) <= RF_RB_Data;
+      end loop;
       
     elsif ExecuteWord.VALU_Mode = ALU_RegImm_C then
       -- Possible vector ALU operation with immediate operand

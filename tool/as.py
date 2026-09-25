@@ -398,7 +398,7 @@ def assemble(mnemonic, params):
                 raise ParseError(f"immediate expected for a value/index/offset")
                 
         else:
-            raise ParseError(f"Unidentified field '{arg}' in instr '{mnemonic}'")        
+            raise ParseError(f"Unidentified field '{arg}' in instr '{mnemonic}' format {format}")        
             
         param_index = param_index + 1
 

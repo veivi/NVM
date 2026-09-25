@@ -158,21 +158,16 @@ clear_vektori_loop:
 	ldi s2, 3956
 	lsli s2, s2, 16
 	ori s2, s2, 1060
-	st s2, s1, 0
+	vandi v0, v0, 0
+	vbor v0, v0, s2
+	vsti v0, s1, 4
 
-	drain
-	
-	vldi v0, s1, 0
-	
-	sync
-	
-	vandi v2, v2, 0  // Load 1+0i into v2 
-	vori v2, v2, 1
-	vlsli v2, v2, 28
-	vandi v3, v3, 0  // Load 0-i into v3
-	vori v3, v3, 15
-	vlsli v3, v3, 12
-	vadd v2, v2, v3   // Load 1-i into v2
+	ldi s2, 4096
+	lsli s2, s2, 4
+	ori s2, s2, 15
+	lsli s2, s2, 12
+	vandi v2, v2, 0
+	vbor v2, v2, s2   // Load 1-i into v2
 	
 	debugi 11
 

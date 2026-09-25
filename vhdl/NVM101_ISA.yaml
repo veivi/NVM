@@ -23,12 +23,14 @@ instruction_formats:
   loadstore_indexed: { opcode: 8, scale: 6, rs2: 6, rs1: 6, rd: 6 }
   logic_vec: { opcode: 10, _: 4, vs2: 6, vs1: 6, vd: 6 }
   logic_vec_imm: { opcode: 10, value: 10, vs: 6, vd: 6 }
+  logic_vec_bc: { opcode: 10, _: 4, rs2: 6, vs1: 6, vd: 6 }
   branch: { opcode: 10, i_disp: 20, cr: 2 }
   loadstore_vec: { opcode: 14, rs2 : 6, rs1: 6, vd: 6 }
   loadstore_vec_imm: { opcode: 14, stride : 6, rs: 6, vd: 6 }
-  debug: { opcode: 6, rs: 6 }
-  debug_imm: { opcode: 6, value: 26 }
+  debug: { opcode: 10, rs: 6 }
+  debug_imm: { opcode: 10, value: 22 }
   ext: { opcode: 6, subop: 8, vs2 : 6, vs1: 6, vd: 6 }
+  ext_bc: { opcode: 6, subop: 8, rs2 : 6, vs1: 6, vd: 6 }
 
 #
 # INSTRUCTION CATEGORIES
@@ -172,7 +174,7 @@ instruction_categories:
     
   loadstore_vec_imm:
     format: "loadstore_vec_imm"
-    prefix: 50
+    prefix: 49
     operands: [ "vd", "rs", "stride" ]
     unit: "VLS"
     mode: "VLS_Imm_C"
@@ -182,14 +184,14 @@ instruction_categories:
     
   jump_imm:
     format: "jump_imm"
-    prefix: 52
+    prefix: 50
     operands: [ "i_target" ]
     imm-unsigned: "i_target"
     unit: "FCU"
     
   jump_ind:
     format: "jump_ind"
-    prefix: 52
+    prefix: 51
     operands: [ "rs", "i_disp" ]
     imm-signed: "i_disp"
     register-read-a: "rs"
@@ -197,14 +199,14 @@ instruction_categories:
 
   debug_imm:
     format: "debug_imm"
-    prefix: 52
+    prefix: 56
     operands: [ "value" ]
     imm-unsigned: "value"
     unit: "Debug"
 
   debug:
     format: "debug"
-    prefix: 52
+    prefix: 56
     operands: [ "rs" ]
     register-read-a: "rs"
     unit: "Debug"
@@ -244,14 +246,35 @@ instruction_categories:
     imm-unsigned: "value"
     vector-write: "vd"
 
+  logic_vec_bc:
+    format: "logic_vec_bc"
+    prefix: 60
+    operands: [ "vd", "vs1", "rs2" ]
+    unit: "VALU"
+    mode: "ALU_RegReg_C"
+    vector-read-a: "vs1"
+    register-read-b: "rs2"
+    vector-write: "vd"
+    
   ext:
     format: "ext"
-    prefix: 62
+    prefix: 58
     operands: [ "subop", "vd", "vs1", "vs2" ]
     unit: "Ext"
     sub-operation: "subop"
     vector-read-a: "vs1"
     vector-read-b: "vs2"
+    vector-read-c: "vd"
+    ext-result: "vd"
+
+  ext_bc:
+    format: "ext_bc"
+    prefix: 58
+    operands: [ "subop", "vd", "vs1", "rs2" ]
+    unit: "Ext"
+    sub-operation: "subop"
+    vector-read-a: "vs1"
+    register-read-b: "rs2"
     vector-read-c: "vd"
     ext-result: "vd"
 
@@ -290,6 +313,11 @@ instruction_set:
   
   EXT:
     category: "ext"
+    opcode: 0
+    behaviour: "Extension"
+    
+  EXTB:
+    category: "ext_bc"
     opcode: 0
     behaviour: "Extension"
     
@@ -799,6 +827,58 @@ instruction_set:
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
 #
+# Vector Logic Broadcast
+#
+
+  VBAND:
+    category: "logic_vec_bc"
+    opcode: 13
+    operation: "ALUOp_AND_C"
+    behaviour: "R[rd] = R[rs1] AND R[rs2]"
+
+  VBXOR:
+    category: "logic_vec_bc"
+    opcode: 14
+    operation: "ALUOp_XOR_C"
+    behaviour: "R[rd] = R[rs1] XOR R[rs2]"
+
+  VBADD:
+    category: "logic_vec_bc"
+    opcode: 15
+    operation: "ALUOp_ADD_C"
+    behaviour: "R[rd] = R[rs1] + R[rs2]"
+
+  VBSUB:
+    category: "logic_vec_bc"
+    opcode: 16
+    operation: "ALUOp_SUB_C"
+    behaviour: "R[rd] = R[rs1] - R[rs2]"
+
+  VBOR:
+    category: "logic_vec_bc"
+    opcode: 17
+    operation: "ALUOp_OR_C"
+    behaviour: "R[rd] = R[rs1] OR R[rs2]"
+
+  VBLSL:
+    category: "logic_vec_bc"
+    opcode: 18
+    operation: "ALUOp_LSL_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
+
+  VBLSR:
+    category: "logic_vec_bc"
+    opcode: 19
+    operation: "ALUOp_LSR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  VBASR:
+    category: "logic_vec_bc"
+    opcode: 20
+    operation: "ALUOp_ASR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+#
 # Jump Absolute / Indirect
 #
 
@@ -832,13 +912,13 @@ instruction_set:
 
   DEBUG:
     category: "debug"
-    opcode: 4
+    opcode: 100
     operation: "DebugOp_DEBUG_C"
     behaviour: "Debug from register"
 
   DEBUGI:
     category: "debug_imm"
-    opcode: 5
+    opcode: 101
     operation: "DebugOp_DEBUGI_C"
     behaviour: "Debug Immediate"
 
