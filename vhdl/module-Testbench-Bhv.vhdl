@@ -41,19 +41,19 @@ architecture Bhv of Testbench is
 
   signal DebugOut : std_logic_vector(WordSize_C-1 downto 0);
   
-  signal VectorC_Present : std_logic;
-  signal VectorC_Accept : std_logic;
-  signal VectorC_Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
-  signal VectorC_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
-  signal VectorC_OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-  signal VectorC_OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-  signal VectorC_OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal AVU_C_Present : std_logic;
+  signal AVU_C_Accept : std_logic;
+  signal AVU_C_Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
+  signal AVU_C_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal AVU_C_OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal AVU_C_OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal AVU_C_OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
   -- Vector Unit Result
 
-  signal VectorR_Present : std_logic;
-  signal VectorR_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
-  signal VectorR_Result : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+  signal AVU_R_Present : std_logic;
+  signal AVU_R_Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal AVU_R_Result : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   
   subtype InstrWord_T is std_logic_vector(InstrSize_C-1 downto 0);
   type InstrArray_T is array (natural range <>) of InstrWord_T;
@@ -105,16 +105,16 @@ begin
              LCR_Tag => LCR_Tag,
              LCR_Data => LCR_Data,
 
-             VectorC_Present => VectorC_Present,
-             VectorC_Accept => VectorC_Accept,
-             VectorC_Operation => VectorC_Operation ,
-             VectorC_Dest => VectorC_Dest ,
-             VectorC_OperandA => VectorC_OperandA ,
-             VectorC_OperandB => VectorC_OperandB ,
-             VectorC_OperandC => VectorC_OperandC ,
-             VectorR_Present => VectorR_Present ,
-             VectorR_Dest => VectorR_Dest ,
-             VectorR_Result => VectorR_Result);
+             AVU_C_Present => AVU_C_Present,
+             AVU_C_Accept => AVU_C_Accept,
+             AVU_C_Operation => AVU_C_Operation ,
+             AVU_C_Dest => AVU_C_Dest ,
+             AVU_C_OperandA => AVU_C_OperandA ,
+             AVU_C_OperandB => AVU_C_OperandB ,
+             AVU_C_OperandC => AVU_C_OperandC ,
+             AVU_R_Present => AVU_R_Present ,
+             AVU_R_Dest => AVU_R_Dest ,
+             AVU_R_Result => AVU_R_Result);
 
   --
   -- Vector Unit
@@ -128,16 +128,16 @@ begin
     port map(Clk => Clk,
              Reset => Reset,
              
-             VectorC_Present => VectorC_Present,
-             VectorC_Accept => VectorC_Accept,
-             VectorC_Operation => VectorC_Operation ,
-             VectorC_Dest => VectorC_Dest ,
-             VectorC_OperandA => VectorC_OperandA ,
-             VectorC_OperandB => VectorC_OperandB ,
-             VectorC_OperandC => VectorC_OperandC ,
-             VectorR_Present => VectorR_Present ,
-             VectorR_Dest => VectorR_Dest ,
-             VectorR_Result => VectorR_Result);
+             AVU_C_Present => AVU_C_Present,
+             AVU_C_Accept => AVU_C_Accept,
+             AVU_C_Operation => AVU_C_Operation ,
+             AVU_C_Dest => AVU_C_Dest ,
+             AVU_C_OperandA => AVU_C_OperandA ,
+             AVU_C_OperandB => AVU_C_OperandB ,
+             AVU_C_OperandC => AVU_C_OperandC ,
+             AVU_R_Present => AVU_R_Present ,
+             AVU_R_Dest => AVU_R_Dest ,
+             AVU_R_Result => AVU_R_Result);
   
   --
   -- Multi-Port Memory

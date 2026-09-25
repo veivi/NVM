@@ -14,19 +14,19 @@ entity VU102 is
 
        -- Vector Unit Command
 
-       VectorC_Present : in  std_logic;
-       VectorC_Accept : out std_logic;
-       VectorC_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
-       VectorC_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
-       VectorC_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-       VectorC_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-       VectorC_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       AVU_C_Present : in  std_logic;
+       AVU_C_Accept : out std_logic;
+       AVU_C_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
+       AVU_C_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
+       AVU_C_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
        -- Vector Unit Result
 
-       VectorR_Present : out std_logic;
-       VectorR_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
-       VectorR_Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
+       AVU_R_Present : out std_logic;
+       AVU_R_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_R_Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
 end VU102;
 
 architecture RTL of VU102 is
@@ -149,12 +149,12 @@ begin
         PartialValid <= '0';
         Operation <= (others => '0');
 
-      elsif VectorC_Present = '1' then
+      elsif AVU_C_Present = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          A := VectorC_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
-          B := VectorC_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
+          A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
+          B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          if VectorC_Operation(0) = '1' then
+          if AVU_C_Operation(0) = '1' then
             -- We're doing multiplication
             
             PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
@@ -168,9 +168,9 @@ begin
         end loop;
 
         PartialValid <= '1';
-        PartialOperation <= VectorC_Operation;        
-        PartialDest <= VectorC_Dest;
-        OperandC <= VectorC_OperandC;
+        PartialOperation <= AVU_C_Operation;        
+        PartialDest <= AVU_C_Dest;
+        OperandC <= AVU_C_OperandC;
       else
         PartialValid <= '0';
         Operation <= (others => '0');
@@ -220,34 +220,34 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        VectorR_Present <= '0';
-        VectorR_Dest <= (others => '0');
+        AVU_R_Present <= '0';
+        AVU_R_Dest <= (others => '0');
 
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if MultiplyOperation(1) = '1' then
             -- Add Operand C to the result
             
-            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
               <= AddComplex(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
           elsif MultiplyOperation(2) = '1' then
             -- Add the previous result to the result
             
-            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= AddComplex(MultiplyResult(I), VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
           else
             -- Just output result of operation between A and B
             
-            VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
           end if;
-          VectorR_Present <= '1';
-          VectorR_Dest <= MultiplyDest;
+          AVU_R_Present <= '1';
+          AVU_R_Dest <= MultiplyDest;
         end loop;
       else
-        VectorR_Present <= '0';
+        AVU_R_Present <= '0';
       end if;
     end if;
   end process;
   
-  VectorC_Accept <= '1';
+  AVU_C_Accept <= '1';
 end RTL;

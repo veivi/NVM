@@ -287,26 +287,6 @@ clear_vektori_loop:
 	drain
 	debugi 10
 	
-	addi s1, s1, 128
-	ldi s2, 10
-	ldi s3, 8
-
-	ori s4, s1, 0
-vek_init:	
-	st s2, s4 + 0
-	subi s3, s3, 1
-	cmpi c0, s3, 0
-	bgt c0, vek_init
-	addi s4, s4, 4
-	addi s2, s2, 1
-	
-	vldi v2, s1, 4
-	
-	ext 100, v1, v2, v3
-	vsti v1, s1, 4
-	ext 100, v1, v1, v2
-	vsti v1, s1, 8
-	
 	// Finish
 
 	drain
