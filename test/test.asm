@@ -166,13 +166,18 @@ clear_vektori_loop:
 	
 	sync
 	
-	vandi v2, v2, 0  // Load 1+0i into v2
+	vandi v2, v2, 0  // Load 1+0i into v2 
 	vori v2, v2, 1
 	vlsli v2, v2, 28
+	vandi v3, v3, 0  // Load 0-i into v3
+	vori v3, v3, 15
+	vlsli v3, v3, 12
+	vadd v2, v2, v3   // Load 1-i into v2
 	
 	debugi 11
 
-	ext 0, v1, v2, v2 // Test complex add
+	vsti v2, s1, 4
+	ext 0, v1, v2, v2 // Test saturating complex add
 	vsti v1, s1, 4
 	ext 0, v1, v1, v2
 	vsti v1, s1, 4
@@ -193,13 +198,84 @@ clear_vektori_loop:
 	
 	drain
 	debugi 12
+
+	vandi v2, v2, 0  // Load 1.5+0i into v2 
+	vori v2, v2, 3
+	vlsli v2, v2, 27
+	vandi v3, v3, 0  // Load 0-1.5i into v3
+	vori v3, v3, 31
+	vlsli v3, v3, 11
+	vadd v2, v2, v3   // Load 1.5-1.5i into v2
 	
+	vsti v2, s1, 4
+	ext 1, v1, v2, v2 // Test saturating complex multiply
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v1
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v1
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	ext 1, v1, v1, v2
+	vsti v1, s1, 4
+	
+	drain
+	debugi 13
+
+	vandi v2, v2, 0  // Load 1+0i into v2 
+	vori v2, v2, 1
+	vlsli v2, v2, 28
+	
+	// Complex multiply
+	
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
 	ext 1, v2, v2, v0
 	vsti v2, s1, 4
 	ext 1, v2, v2, v0
 	vsti v2, s1, 4
 	ext 1, v2, v2, v0
 	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+	ext 1, v2, v2, v0
+	vsti v2, s1, 4
+
 	ext 1, v2, v2, v0
 	vsti v2, s1, 4
 	ext 1, v2, v2, v0

@@ -6,7 +6,8 @@ use WORK.NVM101Types.all;
 
 entity VU102 is
   generic(Log2BPW_C : integer;
-          Log2VecSize_C : integer);
+          Log2VecSize_C : integer;
+          Precision_C : integer);
 
   port(Clk : in std_logic;
        Reset : in std_logic;
@@ -40,7 +41,7 @@ architecture RTL of VU102 is
   --
   
   constant PartSize_C : integer := WordSize_C/2;  
-  constant Precision_C : integer := 12;
+  constant IntSize_C : integer := PartSize_C - Precision_C;
   
   subtype Part_T is std_logic_vector(PartSize_C-1 downto 0);
 
@@ -68,28 +69,48 @@ architecture RTL of VU102 is
     return RealPart & ImagPart;
   end function;
 
-  function Add(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
-    constant W : integer := A'range'high - A'range'low + 2;
-    variable MinValue, MaxValue, Temp : signed(W-1 downto 0);
+  function Saturate(A : std_logic_vector; W : natural) return std_logic_vector is
+    constant Len_C : integer := A'range'high - A'range'low + 1;
+    variable MinValue, MaxValue, Temp : signed(A'range);
   begin
     MinValue := (others => '0');
-    MinValue(W-1 downto W-2) := (others => '1');
+    MinValue(Len_C-1 downto W-1) := (others => '1');
     
     MaxValue := (others => '1');
-    MaxValue(W-1) := '1';
+    MaxValue(Len_C-1 downto W-1) := (others => '0');
     
-    Temp := resize(signed(A), W) + resize(signed(B), W);
+    Temp := signed(A);
+    
     if Temp < MinValue then
       Temp := MinValue;
     elsif Temp > MaxValue then
       Temp := MaxValue;
     end if;
+    
+    return std_logic_vector(Temp);
+  end function;
+
+  function Add(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
+    constant W : integer := A'range'high - A'range'low + 2;
+    variable Temp : signed(W-1 downto 0);
+  begin
+    Temp := resize(signed(A), W) + resize(signed(B), W);
+    Temp := signed(Saturate(std_logic_vector(Temp), W-1));
     return std_logic_vector(Temp(W-2 downto 0));
   end function;
 
-  function Negate(A : std_logic_vector) return std_logic_vector is
+  function AddComplex(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
   begin
-    return std_logic_vector(-signed(A));
+    return Complex(Add(RealPart(A), RealPart(B)), Add(ImagPart(A), ImagPart(B)));
+  end function;
+  
+  function Negate(A : std_logic_vector) return std_logic_vector is
+    constant W : integer := A'range'high - A'range'low + 2;
+    variable Temp : std_logic_vector(W-1 downto 0);
+  begin
+    Temp := std_logic_vector(-resize(signed(A), W));
+    Temp := Saturate(Temp, W-1);
+    return Temp;
   end function;
   
   function Multiply(A : Part_T; B : Part_T) return Word_T is
@@ -98,15 +119,16 @@ architecture RTL of VU102 is
   end function;
 
   function Normalize(A : Word_T) return Part_T is
+    variable Temp : std_logic_vector(WordSize_C-1 downto 0);
   begin
-    return A(PartSize_C+Precision_C-1 downto Precision_C);
+    -- Round to nearest before truncating
+    Temp := std_logic_vector(signed(A) + to_signed(2**(Precision_C-1), WordSize_C));
+    -- Saturate
+    Temp := Saturate(A, PartSize_C + Precision_C);
+    -- Truncate
+    return Temp(PartSize_C+Precision_C-1 downto Precision_C);
   end function;
   
-  function MultiplyNormalize(A : Part_T; B : Part_T) return Part_T is
-  begin
-    return Normalize(std_logic_vector(signed(A) * signed(B)));
-  end function;
-
   signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal OperandC, DelayedOperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
@@ -116,7 +138,7 @@ architecture RTL of VU102 is
   signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
 begin
   --
-  -- State
+  -- Multiplication stage
   --
 
   Multiplier_P : process(Clk)
@@ -156,6 +178,10 @@ begin
     end if;
   end process;
 
+  --
+  -- Partial result adder
+  --
+  
   PartialAdder_P : process(Clk)
     variable A, B : Word_T;
   begin
@@ -186,6 +212,10 @@ begin
     end if;
   end process;
 
+  --
+  -- Accumulator/Result output
+  --
+  
   Accumulator_P : process(Clk)
   begin
     if rising_edge(Clk) then
@@ -196,16 +226,15 @@ begin
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if MultiplyOperation(1) = '1' then
-            -- Include Operand C in the result
+            -- Add Operand C to the result
             
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Add(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
+              <= AddComplex(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
           elsif MultiplyOperation(2) = '1' then
-            -- Include previous result in the result
+            -- Add the previous result to the result
             
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= std_logic_vector(unsigned(MultiplyResult(I))
-                                  + unsigned(VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)));            
+              <= AddComplex(MultiplyResult(I), VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
           else
             -- Just output result of operation between A and B
             
