@@ -95,7 +95,7 @@ void fft(complex_t *A)
   for(s = 1; s <= LOG2LEN; s++) {
     m = 1<<s;
     half_m = m/2;
-    tab_step = FFT_LEN / m;
+    tab_step = 1<<(LOG2LEN - s);
     
     for(k = 0; k < FFT_LEN; k += m) {
       for(j = 0; j < half_m; j++) {
