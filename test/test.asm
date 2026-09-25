@@ -289,7 +289,42 @@ clear_vektori_loop:
 	drain
 	debugi 10
 	
-	// Finish
+	// Try once more
+	
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	ext 1, v2, v2, v0
+	
+	vsti v2, s1, 4    // This should be close to 1 + 0i
+
+	drain
+	debugi 11
+
+	// Done
 
 	drain
 	jmpa stop_simulation

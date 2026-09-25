@@ -16,7 +16,7 @@ entity VU101 is
        AVU_C_Present : in  std_logic;
        AVU_C_Accept : out std_logic;
        AVU_C_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
-       AVU_C_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
@@ -24,7 +24,7 @@ entity VU101 is
        -- Vector Unit Result
 
        AVU_R_Present : out std_logic;
-       AVU_R_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_R_Tag : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_R_Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
 end VU101;
 
@@ -34,7 +34,7 @@ architecture RTL of VU101 is
   signal OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-  signal Dest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal Tag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal Busy, Complete : std_logic;  
 begin
   --
@@ -48,7 +48,7 @@ begin
       if Reset = '1' then
         Busy <= '0';
         Complete <= '0';
-        Dest <= (others => '0');
+        Tag <= (others => '0');
         Operation <= (others => '0');
         
       elsif Busy = '1' then
@@ -70,7 +70,7 @@ begin
         
         if AVU_C_Present = '1' then
           Busy <= '1';
-          Dest <= AVU_C_Dest;
+          Tag <= AVU_C_Tag;
           Operation <= AVU_C_Operation;
           OperandA <= AVU_C_OperandA;
           OperandB <= AVU_C_OperandB;
@@ -85,5 +85,5 @@ begin
   AVU_C_Accept <= not Busy;
   
   AVU_R_Present <= Complete;
-  AVU_R_Dest <= Dest;
+  AVU_R_Tag <= Tag;
 end RTL;

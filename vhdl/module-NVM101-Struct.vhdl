@@ -46,7 +46,7 @@ entity NVM101 is
        AVU_C_Present : out std_logic;
        AVU_C_Accept : in std_logic;
        AVU_C_Operation : out std_logic_vector(ExtOpSize_C-1 downto 0);
-       AVU_C_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Tag : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_C_OperandA : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandC : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
@@ -54,7 +54,7 @@ entity NVM101 is
        -- Vector Unit Result
 
        AVU_R_Present : in std_logic;
-       AVU_R_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_R_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_R_Result : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
 end NVM101;
 
@@ -554,7 +554,7 @@ begin
   
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Valid <=  AVU_R_Present when to_integer(unsigned(not VRF_ReadValid)) /= 0 else '1';
-  VRF_WA_Index <= to_integer(unsigned(AVU_R_Dest)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
+  VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
   --
@@ -619,7 +619,7 @@ begin
 
   AVU_C_Present <= ExecuteWord.Ext_Active;
   AVU_C_Operation <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Operation, ExtOpSize_C));
-  AVU_C_Dest <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
+  AVU_C_Tag <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
   AVU_C_OperandA <= VRF_RA_Data;
   AVU_C_OperandB <= VRF_RB_Data;
   AVU_C_OperandC <= VRF_RC_Data;

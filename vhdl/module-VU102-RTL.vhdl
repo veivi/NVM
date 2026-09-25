@@ -17,7 +17,7 @@ entity VU102 is
        AVU_C_Present : in  std_logic;
        AVU_C_Accept : out std_logic;
        AVU_C_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
-       AVU_C_Dest : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
@@ -25,7 +25,7 @@ entity VU102 is
        -- Vector Unit Result
 
        AVU_R_Present : out std_logic;
-       AVU_R_Dest : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_R_Tag : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_R_Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0));
 end VU102;
 
@@ -134,7 +134,7 @@ architecture RTL of VU102 is
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
   signal AdderResult, MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, MultiplyValid : std_logic;
-  signal PartialDest, MultiplyDest : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal PartialTag, MultiplyTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
 begin
   --
@@ -169,7 +169,7 @@ begin
 
         PartialValid <= '1';
         PartialOperation <= AVU_C_Operation;        
-        PartialDest <= AVU_C_Dest;
+        PartialTag <= AVU_C_Tag;
         OperandC <= AVU_C_OperandC;
       else
         PartialValid <= '0';
@@ -202,7 +202,7 @@ begin
         end loop;
 
         DelayedOperandC <= OperandC;
-        MultiplyDest <= PartialDest;
+        MultiplyTag <= PartialTag;
         MultiplyOperation <= PartialOperation;        
         MultiplyValid <= '1';
       else
@@ -221,7 +221,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         AVU_R_Present <= '0';
-        AVU_R_Dest <= (others => '0');
+        AVU_R_Tag <= (others => '0');
 
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
@@ -241,7 +241,7 @@ begin
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
           end if;
           AVU_R_Present <= '1';
-          AVU_R_Dest <= MultiplyDest;
+          AVU_R_Tag <= MultiplyTag;
         end loop;
       else
         AVU_R_Present <= '0';
