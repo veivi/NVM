@@ -2,7 +2,7 @@
 #include <math.h>
 
 #define  LOG2LEN     6
-#define  FFTLEN      (1<<LOG2LEN)
+#define  FFT_LEN      (1<<LOG2LEN)
 #define  V           8
 #define  pi          ((float) M_PI)
 
@@ -16,8 +16,8 @@ typedef struct complex {
 #define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
 #define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
 
-complex_t fft_data[FFTLEN];
-complex_t w[FFTLEN];
+complex_t fft_data[FFT_LEN];
+complex_t w[FFT_LEN];
 
 int bit_reverse(int I)
 {
@@ -33,7 +33,7 @@ void bit_reversal_permutation(complex_t *data)
 {
   int i = 0;
   
-  for(i = 0; i < FFTLEN; i++) {
+  for(i = 0; i < FFT_LEN; i++) {
     int rev = bit_reverse(i);
 
     if(i < rev) {
@@ -95,9 +95,9 @@ void fft(complex_t *A)
   for(s = 1; s <= LOG2LEN; s++) {
     m = 1<<s;
     half_m = m/2;
-    tab_step = FFTLEN / m;
+    tab_step = FFT_LEN / m;
     
-    for(k = 0; k < FFTLEN; k += m) {
+    for(k = 0; k < FFT_LEN; k += m) {
       for(j = 0; j < half_m; j++) {
 	complex_t omega = w[j * tab_step];
 	complex_t t = COMPLEX_MUL(omega, A[k + j + half_m]);
@@ -129,7 +129,7 @@ void fft_with_vectors(complex_t *A)
       for(j = 0; j < half_m; j++) {
 	complex_t omega = w[j * tab_step];
 
-	for(v = 0; v < FFTLEN; v += V*m) {
+	for(v = 0; v < FFT_LEN; v += V*m) {
 	  complex_t a[V], t[V], u[V], x[V];
 
 	  complex_vector_read(a, A, j + v + half_m, m);
@@ -146,7 +146,7 @@ void fft_with_vectors(complex_t *A)
       // Late stage: our vectors will handle j, striding used only for w
       //
 	
-      for(k = 0; k < FFTLEN; k += m) {	  
+      for(k = 0; k < FFT_LEN; k += m) {	  
 	for(v = 0; v < half_m; v += V) {
 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
@@ -170,21 +170,21 @@ int main()
 
   printf("Blob.\n");
   
-  for(i = 0; i < FFTLEN; i++)
-    w[i] = COMPLEX(cosf(i*2*pi/FFTLEN), -sinf(i*2*pi/FFTLEN));
+  for(i = 0; i < FFT_LEN; i++)
+    w[i] = COMPLEX(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
   
-  for(i = 0; i < FFTLEN; i++)
+  for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(cosf(i*2*pi/8), sinf(i*2*pi/8));
     fft_data[i] = COMPLEX(1.0f + sinf(i*2*pi/8) + sinf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(1.0f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   
-  for(i = 0; i < FFTLEN; i++)
+  for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
   
   fft_with_vectors(fft_data);
   // fft(fft_data);
 
-  for(i = 0; i < FFTLEN; i++)
+  for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i, fft_data[i].real, fft_data[i].imag, COMPLEX_ABS(fft_data[i]));
 }
