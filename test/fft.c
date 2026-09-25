@@ -143,7 +143,7 @@ void fft_with_vectors(complex_t *A)
       }
     } else {
       //
-      // Late stage: our vectors will handle j, striding used only for w
+      // Late stage: our vectors will handle j directly, striding used only for w
       //
 	
       for(k = 0; k < FFT_LEN; k += m) {	  
