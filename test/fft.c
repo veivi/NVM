@@ -112,7 +112,7 @@ void fft(complex_t *A)
 
 void fft_with_vectors(complex_t *A)
 {
-  int s = 0, k = 0, m = 0, half_m = 0, j = 0, v = 0, tab_step = 0;
+  int s = 0, m = 0, half_m = 0, tab_step = 0;
 
   bit_reversal_permutation(A);
   
@@ -126,7 +126,10 @@ void fft_with_vectors(complex_t *A)
       // Early stage: our vectors will handle k with striding by m
       //
 
+      int j = 0;
+      
       for(j = 0; j < half_m; j++) {
+	int v = 0;
 	complex_t omega = w[j * tab_step];
 
 	for(v = 0; v < FFT_LEN; v += V*m) {
@@ -145,8 +148,12 @@ void fft_with_vectors(complex_t *A)
       //
       // Late stage: our vectors will handle j directly, striding used only for w
       //
+
+      int k = 0;
+      
+      for(k = 0; k < FFT_LEN; k += m) {
+	int v = 0;
 	
-      for(k = 0; k < FFT_LEN; k += m) {	  
 	for(v = 0; v < half_m; v += V) {
 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
