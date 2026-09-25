@@ -122,7 +122,7 @@ void fft_with_vectors(complex_t *A)
     
     if(half_m < V) {
       //
-      // Early stage: our vectors will handle k
+      // Early stage: our vectors will handle k with striding by m
       //
 
       for(j = 0; j < half_m; j++) {
@@ -142,7 +142,7 @@ void fft_with_vectors(complex_t *A)
       }
     } else {
       //
-      // Late stage: our vectors will handle j
+      // Late stage: our vectors will handle j, striding used only for w
       //
 	
       for(k = 0; k < 1<<LOG2LEN; k += m) {	  
