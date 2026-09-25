@@ -4,6 +4,8 @@
 
 	.section "bss"
 
+	#include <VU102.h>
+	
 bss_start:	
 	.byte 5
 
@@ -174,23 +176,23 @@ clear_vektori_loop:
 	debugi 11
 
 	vsti v2, s1, 4
-	ext 0, v1, v2, v2 // Test saturating complex add
+	cvadd v1, v2, v2 // Test saturating complex add
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
-	ext 0, v1, v1, v1
+	cvadd v1, v1, v1
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
-	ext 0, v1, v1, v1
+	cvadd v1, v1, v1
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
-	ext 0, v1, v1, v2
+	cvadd v1, v1, v2
 	vsti v1, s1, 4
 	
 	drain
@@ -205,23 +207,23 @@ clear_vektori_loop:
 	vadd v2, v2, v3   // Load 1.5-1.5i into v2
 	
 	vsti v2, s1, 4
-	ext 1, v1, v2, v2 // Test saturating complex multiply
+	cvmul v1, v2, v2 // Test saturating complex multiply
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
-	ext 1, v1, v1, v1
+	cvmul v1, v1, v1
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
-	ext 1, v1, v1, v1
+	cvmul v1, v1, v1
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
-	ext 1, v1, v1, v2
+	cvmul v1, v1, v2
 	vsti v1, s1, 4
 	
 	drain
@@ -234,56 +236,56 @@ clear_vektori_loop:
 	// Complex multiply: rotate elements of v2 15 degrees at a time
 	
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-	ext 1, v2, v2, v0
-	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
 
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
 
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
 	vsti v2, s1, 4
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+	cvmul v2, v2, v0
+	vsti v2, s1, 4
+	cvmul v2, v2, v0
 	vsti v2, s1, 4    // This should be close to 1 + 0i
 
 	drain
@@ -291,33 +293,33 @@ clear_vektori_loop:
 	
 	// Try once more
 	
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
 	
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
 	
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
 	
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
-	ext 1, v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
+	cvmul v2, v2, v0
 	
 	vsti v2, s1, 4    // This should be close to 1 + 0i
 

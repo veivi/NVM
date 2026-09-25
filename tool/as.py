@@ -21,6 +21,8 @@ filename_body, filename_ext = os.path.splitext(filename)
 if out_file == None:
     out_file = f"{os.path.basename(filename_body)}.obj"
 
+filename_pp = f"artefact/{os.path.basename(filename_body)}.pp"
+
 with open(f"design/vhdl/{isa_name}_ISA.yaml", "r") as f:
     spec = yaml.safe_load(f)
         
@@ -34,6 +36,7 @@ Token = namedtuple("Token", ["type", "value"])
 
 token_spec = [
     ("COMMENT",   r"//.*"),
+    ("COMMENT2",   r"#.*"),
     ("DIRECTIVE", r"\.\w+"),
     ("LABEL",     r"^\w+:"),
     ("STRING",    r'"[^"]*"'),
@@ -61,7 +64,7 @@ def tokenize(text):
     for m in re.finditer(tok_regex, text, re.MULTILINE):
         kind = m.lastgroup
         value = m.group()
-        if kind in ("WS", "COMMENT"):
+        if kind in ("WS", "COMMENT", "COMMENT2"):
             continue
         elif kind == "MISMATCH":
             raise SyntaxError(f"Unexpected character {value!r}")
@@ -407,7 +410,8 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    file = open(filename)
+    os.system(f"cpp -Idesign/test {filename} >{filename_pp}")
+    file = open(filename_pp)
     
     ast = Parser(tokenize(file.read())).parse_program()
 
