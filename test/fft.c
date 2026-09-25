@@ -190,7 +190,6 @@ int main()
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
   
   fft_with_vectors(fft_data);
-  // fft(fft_data);
 
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i, fft_data[i].real, fft_data[i].imag, COMPLEX_ABS(fft_data[i]));
