@@ -123,7 +123,7 @@ begin
   VU102_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C,
-                Precision_C => 12)
+                Precision_C => 14)
 
     port map(Clk => Clk,
              Reset => Reset,
