@@ -164,11 +164,35 @@ clear_vektori_loop:
 	
 	vldi v0, s1, 0
 	
+	sync
+	
 	vandi v2, v2, 0  // Load 1+0i into v2
 	vori v2, v2, 1
 	vlsli v2, v2, 28
 	
 	debugi 11
+
+	ext 0, v1, v2, v2 // Test complex add
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	ext 0, v1, v1, v1
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	ext 0, v1, v1, v1
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	ext 0, v1, v1, v2
+	vsti v1, s1, 4
+	
+	drain
+	debugi 12
 	
 	ext 1, v2, v2, v0
 	vsti v2, s1, 4

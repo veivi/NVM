@@ -67,6 +67,30 @@ architecture RTL of VU102 is
   begin
     return RealPart & ImagPart;
   end function;
+
+  function Add(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
+    constant W : integer := A'range'high - A'range'low + 2;
+    variable MinValue, MaxValue, Temp : signed(W-1 downto 0);
+  begin
+    MinValue := (others => '0');
+    MinValue(W-1 downto W-2) := (others => '1');
+    
+    MaxValue := (others => '1');
+    MaxValue(W-1) := '1';
+    
+    Temp := resize(signed(A), W) + resize(signed(B), W);
+    if Temp < MinValue then
+      Temp := MinValue;
+    elsif Temp > MaxValue then
+      Temp := MaxValue;
+    end if;
+    return std_logic_vector(Temp(W-2 downto 0));
+  end function;
+
+  function Negate(A : std_logic_vector) return std_logic_vector is
+  begin
+    return std_logic_vector(-signed(A));
+  end function;
   
   function Multiply(A : Part_T; B : Part_T) return Word_T is
   begin
@@ -116,8 +140,8 @@ begin
           else
             -- We're doing addition
             
-            AdderResult(I) <= Complex(std_logic_vector(signed(RealPart(A)) + signed(RealPart(B))),
-                                      std_logic_vector(signed(ImagPart(A)) + signed(ImagPart(B))));
+            AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
+                                      Add(ImagPart(A), ImagPart(B)));
           end if;
         end loop;
 
@@ -142,10 +166,10 @@ begin
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if PartialOperation(0) = '1' then
-            MultiplyResult(I) <= Complex(Normalize(std_logic_vector(signed(PartialResult(I).RealARealB)
-                                                                    - signed(PartialResult(I).ImagAImagB))),
-                                         Normalize(std_logic_vector(signed(PartialResult(I).RealAImagB)
-                                                                    + signed(PartialResult(I).ImagARealB))));
+            MultiplyResult(I) <= Complex(Normalize(Add(PartialResult(I).RealARealB,
+                                                       Negate(PartialResult(I).ImagAImagB))),
+                                         Normalize(Add(PartialResult(I).RealAImagB,
+                                                       PartialResult(I).ImagARealB)));
           else
             MultiplyResult(I) <= AdderResult(I);
           end if;
@@ -175,8 +199,7 @@ begin
             -- Include Operand C in the result
             
             VectorR_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= std_logic_vector(unsigned(MultiplyResult(I))
-                                  + unsigned(DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C)));
+              <= Add(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
           elsif MultiplyOperation(2) = '1' then
             -- Include previous result in the result
             
