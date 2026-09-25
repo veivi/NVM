@@ -2,7 +2,7 @@
 #include <math.h>
 
 #define  LOG2LEN     6
-#define  V           8
+#define  V           4
 #define  pi          ((float) M_PI)
 
 typedef struct complex {
@@ -10,9 +10,10 @@ typedef struct complex {
 } complex_t;
 
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
-#define COMPLEX_ADD(a, b) (complex_t) { a.real + b.real, a.imag + b.imag }
-#define COMPLEX_MUL(a, b) (complex_t) { a.real*b.real-a.imag*b.imag, a.real*b.imag+a.imag*b.real }
-#define COMPLEX_ABS(a) sqrtf(a.real*a.real + a.imag*a.imag)
+#define COMPLEX_ADD(a, b) (complex_t) { (a).real + (b).real, (a).imag + (b).imag }
+#define COMPLEX_SUB(a, b) (complex_t) { (a).real - (b).real, (a).imag - (b).imag }
+#define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
+#define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
 
 complex_t fft_data[1<<LOG2LEN];
 complex_t w[1<<LOG2LEN];
@@ -60,7 +61,7 @@ void fft(complex_t *A)
 	complex_t u = A[k + j];
 
 	A[k + j] = COMPLEX_ADD(u, t);
-	A[k + j + half_m] = COMPLEX_ADD(u, -t);
+	A[k + j + half_m] = COMPLEX_SUB(u, t);
       }
     }
   }
@@ -87,6 +88,13 @@ void complex_vector_mul(complex_t result[], complex_t a[], complex_t b[])
     result[i] = COMPLEX_MUL(a[i], b[i]);
 }
 
+void complex_vector_mul_bc(complex_t result[], complex_t a[], complex_t *b)
+{
+  int i = 0;
+  for(i = 0; i < V; i++)
+    result[i] = COMPLEX_MUL(a[i], *b);
+}
+
 void complex_vector_add(complex_t result[], complex_t a[], complex_t b[])
 {
   int i = 0;
@@ -98,7 +106,7 @@ void complex_vector_sub(complex_t result[], complex_t a[], complex_t b[])
 {
   int i = 0;
   for(i = 0; i < V; i++)
-    result[i] = COMPLEX_ADD(a[i], -b[i]);
+    result[i] = COMPLEX_SUB(a[i], b[i]);
 }
 
 void fft_with_vectors(complex_t *A)
@@ -112,16 +120,7 @@ void fft_with_vectors(complex_t *A)
     half_m = m/2;
     tab_step = 1<<(LOG2LEN - s);
     
-    /* for(j = 0; j < half_m; j++) { */
-    /*   complex_t omega = w[j * tab_step]; */
-    /*   complex_t t = COMPLEX_MUL(omega, A[k + j + half_m]); */
-    /*   complex_t u = A[k + j]; */
-    
-    /*   A[k + j] = COMPLEX_ADD(u, t); */
-    /*   A[k + j + half_m] = COMPLEX_ADD(u, -t); */
-    /* } */
-      
-    if(0 && half_m >= V) {
+    if(half_m >= V) {
       //
       // Late stage: half_m at least as big as our vector
       //
@@ -130,7 +129,7 @@ void fft_with_vectors(complex_t *A)
 	for(v = 0; v < half_m; v += V) {
 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
-	  complex_vector_read(omega, w, v, tab_step);
+	  complex_vector_read(omega, w, v * tab_step, tab_step);
 	  complex_vector_read(a, A, k + v + half_m, 1);
 	  complex_vector_mul(t, omega, a);
 	  complex_vector_read(u, A, k + v, 1);
@@ -146,29 +145,20 @@ void fft_with_vectors(complex_t *A)
       // Early stage: half_m is smaller than our vector
       //
 
-      for(k = 0; k < 1<<LOG2LEN; k += m) {	  
-	for(j = 0; j < half_m; j++) {
-	  complex_t omega = w[j * tab_step];
-	  complex_t t = COMPLEX_MUL(omega, A[k + j + half_m]);
-	  complex_t u = A[k + j];
-	    
-	  A[k + j] = COMPLEX_ADD(u, t);
-	  A[k + j + half_m] = COMPLEX_ADD(u, -t);
-	    
-	  /* for(l = 0; l < half_m; l += V) { */
-	  /*   complex_t omega[V], a[V], t[V], u[V], x[V], y[V]; */
+      for(j = 0; j < half_m; j++) {
+	complex_t omega = w[j * tab_step];
 
-	  /*   complex_vector_read(omega, w, 0, tab_step); */
-	  /*   complex_vector_read(a, A, k + half_m, 1); */
-	  /*   complex_vector_read(u, A, k, 1); */
+	for(v = 0; v < 1<<LOG2LEN; v += V*m) {
+	  complex_t a[V], t[V], u[V], x[V];
 
-	  /*   complex_vector_mul(t, omega, a); */
-	  /*   complex_vector_add(x, u, t); */
-	  /*   complex_vector_sub(y, u, t); */
+	  complex_vector_read(a, A, j + v + half_m, m);
+	  complex_vector_read(u, A, j + v, m);
+	  complex_vector_mul_bc(t, a, &omega);
 
-	  /*   complex_vector_write(x, A, k, 1); */
-	  /*   complex_vector_write(y, A, k + half_m, 1); */
-	  /* } */
+	  complex_vector_add(x, u, t);
+	  complex_vector_write(x, A, j + v, m);
+	  complex_vector_sub(x, u, t);
+	  complex_vector_write(x, A, j + v + half_m, m);
 	}
       }
     }
