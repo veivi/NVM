@@ -2,7 +2,7 @@
 #include <math.h>
 
 #define  LOG2LEN     6
-#define  V           4
+#define  V           8
 #define  pi          ((float) M_PI)
 
 typedef struct complex {
@@ -39,30 +39,6 @@ void bit_reversal_permutation(complex_t *data)
       complex_t temp = data[i];
       data[i] = data[rev];
       data[rev] = temp;
-    }
-  }
-}
-
-void fft(complex_t *A)
-{
-  int s = 0, k = 0, m = 0, half_m = 0, j = 0, tab_step = 0;
-
-  bit_reversal_permutation(A);
-  
-  for(s = 1; s <= LOG2LEN; s++) {
-    m = 1<<s;
-    half_m = m/2;
-    tab_step = (1<<LOG2LEN) / m;
-    
-    for(k = 0; k < 1<<LOG2LEN; k += m) {
-      for(j = 0; j < half_m; j++) {
-	complex_t omega = w[j * tab_step];
-	complex_t t = COMPLEX_MUL(omega, A[k + j + half_m]);
-	complex_t u = A[k + j];
-
-	A[k + j] = COMPLEX_ADD(u, t);
-	A[k + j + half_m] = COMPLEX_SUB(u, t);
-      }
     }
   }
 }
@@ -107,6 +83,30 @@ void complex_vector_sub(complex_t result[], complex_t a[], complex_t b[])
   int i = 0;
   for(i = 0; i < V; i++)
     result[i] = COMPLEX_SUB(a[i], b[i]);
+}
+
+void fft(complex_t *A)
+{
+  int s = 0, k = 0, m = 0, half_m = 0, j = 0, tab_step = 0;
+
+  bit_reversal_permutation(A);
+  
+  for(s = 1; s <= LOG2LEN; s++) {
+    m = 1<<s;
+    half_m = m/2;
+    tab_step = (1<<LOG2LEN) / m;
+    
+    for(k = 0; k < 1<<LOG2LEN; k += m) {
+      for(j = 0; j < half_m; j++) {
+	complex_t omega = w[j * tab_step];
+	complex_t t = COMPLEX_MUL(omega, A[k + j + half_m]);
+	complex_t u = A[k + j];
+
+	A[k + j] = COMPLEX_ADD(u, t);
+	A[k + j + half_m] = COMPLEX_SUB(u, t);
+      }
+    }
+  }
 }
 
 void fft_with_vectors(complex_t *A)
