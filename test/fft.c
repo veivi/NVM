@@ -152,7 +152,7 @@ void fft_with_vectors(complex_t *A)
 	  
 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 	  complex_vector_read(a, A, k + v + half_m, 1);
-	  complex_vector_mul(t, omega, a);
+	  complex_vector_mul(t, a, omega);
 	  complex_vector_read(u, A, k + v, 1);
 	  complex_vector_add(x, u, t);
 	  complex_vector_write(x, A, k + v, 1);
