@@ -203,13 +203,21 @@ def main():
     # Dump
     #
     
-    print("Dumping segment rom0...")
+    print("Dumping segment code_rom0...")
 
     output_lines = []
     
     with open(f"i_rom.txt", "w") as f:    
-        for i in range(0, len(segments["rom0"]), 4):
-            output_lines.append(bin(bytes_to_iword(segments["rom0"][i:i+4])))
-
+        for i in range(0, len(segments["code_rom0"]), 4):
+            output_lines.append(bin(bytes_to_iword(segments["code_rom0"][i:i+4])))
         f.write("\n".join(output_lines))
+        
+    # print("Dumping segment data_rom0...")
+
+    # output_lines = []
+    
+    # with open(f"data_rom.txt", "w") as f:    
+    #     for i in range(0, len(segments["data_rom0"]), 4):
+    #         output_lines.append(bin(bytes_to_iword(segments["data_rom0"][i:i+4])))
+    #     f.write("\n".join(output_lines))
 main()

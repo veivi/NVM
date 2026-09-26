@@ -37,7 +37,7 @@ entity MPM is
 end MPM;
 
 architecture Bhv of MPM is
-  constant Log2MemSize_C : integer := 12;
+  constant Log2MemSize_C : integer := 9;
   
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   
@@ -45,13 +45,11 @@ architecture Bhv of MPM is
 
   type WordArray_T is array (natural range <>) of Word_T;
 
-  signal Storage : WordArray_T(0 to 2**Log2MemSize_C-1);
-
   type State_T is ( Idle_C, Read_C, Write_C );
 
   type StateArray_T is array (natural range <>) of State_T;
 
-  subtype Addr_T is integer range 0 to 2**Log2MemSize_C-1;
+  subtype Addr_T is integer;
 
   type AddrArray_T is array (natural range <>) of Addr_T;
   
@@ -63,6 +61,22 @@ architecture Bhv of MPM is
 
   type TagArray_T is array (natural range <>) of Tag_T;
   
+  impure function InitReadOnlyStore(name : in string) return WordArray_T is
+    file file_pointer : text open read_mode is name;
+    variable line_v : line;
+    variable output : WordArray_T(0 to 2**10-1);
+    variable i : integer := 0;
+  begin
+    while not endfile(file_pointer) loop
+      readline(file_pointer, line_v);
+      bread(line_v, output(i));
+      i := i + 1;
+    end loop;
+    return output;
+  end function;
+
+  signal Storage : WordArray_T(0 to 2**Log2MemSize_C-1);
+  signal ReadOnlyMemory : WordArray_T(0 to 2**10-1) := InitReadOnlyStore("data_rom.txt");
   signal State : StateArray_T(0 to NumOfPorts_C-1);
   signal Addr : AddrArray_T(0 to NumOfPorts_C-1);
   
@@ -84,7 +98,7 @@ begin
           end if;
 
           Tag(I) <= LCI_Tag((I+1)*TagSize_C-1 downto I*TagSize_C);
-          Addr(I) <= to_integer(unsigned(LCI_Addr((I+1)*AddrSize_C-(AddrSize_C-Log2MemSize_C)-1 downto I*AddrSize_C)));
+          Addr(I) <= to_integer(unsigned(LCI_Addr((I+1)*AddrSize_C-1 downto I*AddrSize_C)));
           ByteSel(I) <= LCI_ByteSel((I+1)*2**Log2BPW_C-1 downto I*2**Log2BPW_C);
         else
           State(I) <= Idle_C;
@@ -98,6 +112,7 @@ begin
     variable OutLine : line;
     variable Something : boolean;
     variable DebugState : Word_T := (others => '0');
+    variable ReadData : Word_T;
   begin
     if rising_edge(Clk) then
       if DebugOut /= DebugState then
@@ -124,8 +139,10 @@ begin
             if ByteSel(P)(I) = '1' then
               hwrite(OutLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
 
-              Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
-                <= WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C);
+              if Addr(P) < 2**Log2MemSize_C then
+                Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
+                  <= WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C);
+              end if; 
             else
               write(OutLine, string'("__"));
             end if;
@@ -139,9 +156,15 @@ begin
           hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
           write(OutLine, string'(" ~"));
           
+          if Addr(P) < 2**Log2MemSize_C then
+            ReadData := Storage(Addr(P));
+          else
+            ReadData := ReadOnlyMemory(Addr(P) mod 2**Log2MemSize_C);
+          end if;
+          
           for I in 2**Log2BPW_C-1 downto 0 loop
             if ByteSel(P)(I) = '1' then
-              hwrite(OutLine, Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C));
+              hwrite(OutLine, ReadData((I+1)*ByteSize_C-1 downto I*ByteSize_C));
             else
               write(OutLine, string'("__"));
             end if;
@@ -162,6 +185,7 @@ begin
   end process;
   
   Responder_P : process(Clk)
+    variable ReadData : Word_T;
   begin
     if rising_edge(Clk) then
       for P in 0 to NumOfPorts_C-1 loop
@@ -176,10 +200,16 @@ begin
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => 'X');
 
           if State(P) = Read_C then
+            if Addr(P) < 2**Log2MemSize_C then
+              ReadData := Storage(Addr(P));
+            else
+              ReadData := ReadOnlyMemory(Addr(P) mod 2**Log2MemSize_C);
+            end if;
+          
             for I in 0 to 2**Log2BPW_C-1 loop
               if ByteSel(P)(I) = '1' then
                 LCR_Data((P*2**Log2BPW_C+I+1)*ByteSize_C-1 downto (P*2**Log2BPW_C+I)*ByteSize_C)
-                  <= Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C);
+                  <= ReadData((I+1)*ByteSize_C-1 downto I*ByteSize_C);
               end if;
             end loop;
           end if;

@@ -171,6 +171,16 @@ void fft_with_vectors(complex_t *A)
   }
 }
 
+void printbin(int16_t a)
+{
+  int i = 0;
+  while(i < 8*sizeof(a)) {
+    printf("%c", a & 0x8000 ? '1' : '0');
+    a <<= 1;
+    i++;
+  }
+}
+
 int main()
 {
   int i = 0;
@@ -180,6 +190,14 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     w[i] = COMPLEX(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
   
+  for(i = 0; i < FFT_LEN; i++) {
+    int16_t real = (int16_t) (w[i].real * (1<<14)), imag = (w[i].imag * (float) (1<<14));
+    // printf("W[i] = %d + i%d\n", real, imag);
+    printbin(real);
+    printbin(imag);
+    printf("\n");
+  }
+    
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(cosf(i*2*pi/8), sinf(i*2*pi/8));
     fft_data[i] = COMPLEX(1.0f + sinf(i*2*pi/8) + sinf(i*2*pi/32), 0);

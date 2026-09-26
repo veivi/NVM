@@ -3,7 +3,7 @@
 
 #include <VU102.h>
 #include <common.h>
-	
+
 	.section "code"
 
 fft_decimation_in_time:
@@ -207,8 +207,10 @@ s_loop_end:
 	nop
 	nop
 	
-	.section "data"
+	.section "const"
 
 w_table:
 	.word 1024
+	
+	.section "data"
 	
