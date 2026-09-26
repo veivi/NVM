@@ -154,17 +154,29 @@ begin
           A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          if AVU_C_Operation(0) = '1' then
-            -- We're doing multiplication
+          case AVU_C_Operation(1 downto 0) is
+            when "00" =>
+              -- We're doing multiplication
             
-            PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
-                                 Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
-          else
-            -- We're doing addition
+              PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
+                                   Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
+
+            when "01" =>      
+              -- We're doing addition
             
-            AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
-                                      Add(ImagPart(A), ImagPart(B)));
-          end if;
+              AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
+                                        Add(ImagPart(A), ImagPart(B)));
+              
+            when "10" =>      
+              -- We're doing subtraction
+            
+              AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
+                                        Negate(Add(ImagPart(A), ImagPart(B))));
+
+            when others =>
+              -- Invalid operation
+              null;
+          end case;
         end loop;
 
         PartialValid <= '1';
@@ -191,7 +203,7 @@ begin
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if PartialOperation(0) = '1' then
+          if PartialOperation(1 downto 0) = "00" then
             MultiplyResult(I) <= Complex(Normalize(Add(PartialResult(I).RealARealB,
                                                        Negate(PartialResult(I).ImagAImagB))),
                                          Normalize(Add(PartialResult(I).RealAImagB,
@@ -225,21 +237,24 @@ begin
 
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if MultiplyOperation(1) = '1' then
-            -- Add Operand C to the result
+          case MultiplyOperation(3 downto 2) is
+            when "01" =>
+              -- Add Operand C to the result
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= AddComplex(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
-          elsif MultiplyOperation(2) = '1' then
-            -- Add the previous result to the result
+              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+                <= AddComplex(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
+
+            when "10" =>
+              -- Add the previous result to the result
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
-          else
-            -- Just output result of operation between A and B
+              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+                <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
+
+            when others =>  
+              -- Just output result of operation between A and B
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
-          end if;
+              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+          end case;
           AVU_R_Present <= '1';
           AVU_R_Tag <= MultiplyTag;
         end loop;

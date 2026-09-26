@@ -76,9 +76,16 @@ for_v_loop:
 	// 	  complex_vector_write(x, A, j + v, m);
 	// 	  complex_vector_write(y, A, j + v + half_m, m);
 
-	ba s_loop_end
+	lsl s10, s4, LOG2V // s10 = m<<LOG2V = V*m
+	add s9, s9, s10    // v += V*m
+	
+	ba for_v_loop
 	vst v2, s10, s11
 	vst v3, s13, s11
+	
+	ba s_loop_end
+	nop
+	nop
 	
 late_stage:	
 	//
