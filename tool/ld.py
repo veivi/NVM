@@ -170,8 +170,9 @@ def main():
                 target = target>>2
 
             elif ref["type"] == "disp":
-                target = target - (segmentList[sectionMap[symSect]]["base"] + sectionBase[targetSect] + symOffset)
-
+                # target = (segmentList[sectionMap[symSect]]["base"] + sectionBase[targetSect] + symOffset)
+                pass
+            
             elif ref["type"] == "value":
                 pass
                 

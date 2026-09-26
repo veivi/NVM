@@ -627,9 +627,31 @@ begin
   AVU_C_Present <= ExecuteWord.Ext_Active;
   AVU_C_Operation <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Operation, ExtOpSize_C));
   AVU_C_Tag <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
-  AVU_C_OperandA <= VRF_RA_Data;
-  AVU_C_OperandB <= VRF_RB_Data;
-  AVU_C_OperandC <= VRF_RC_Data;
+
+  AVUOperand_P : process(ExecuteWord, VRF_RA_Data, VRF_RB_Data, VRF_RC_Data, RF_RB_Data)
+  begin
+    if ExecuteWord.Ext_Active = '1' then
+      -- We're issuing an AVU instruction
+      
+      AVU_C_OperandA <= VRF_RA_Data;
+      AVU_C_OperandB <= VRF_RB_Data;
+      AVU_C_OperandC <= VRF_RC_Data;
+      
+      if ExecuteWord.RF_RB_Active = '1' then
+        -- Broadcast scalar read B data onto AVU_C_Operand lanes
+        
+        for I in 0 to VecSize_C-1 loop
+          AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C) <= RF_RB_Data;
+        end loop;
+      end if;
+    else
+      -- No AVU instruction being issued, clear the operands
+
+      AVU_C_OperandA <= (others => '0');
+      AVU_C_OperandB <= (others => '0');
+      AVU_C_OperandC <= (others => '0');
+    end if;
+  end process;
 end Struct;
 
 

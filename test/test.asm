@@ -5,7 +5,8 @@
 
 	.section "bss"
 
-	#include <VU102.h>
+#include <common.h>
+#include <VU102.h>
 	
 bss_start:	
 	.byte 5
@@ -19,7 +20,7 @@ test:
 	.align 4
 	
 vektoridata_alku:
-	.word 32
+	.word 64
 vektoridata_loppu:
 
 fft_data:
@@ -38,18 +39,23 @@ init:
 	ldi s1, bss_start
 	ldi s2, bss_end
 	sub s2, s2, s1
-	ldi s3, 0
+
+	vclear(v0)
 
 clear_bss_loop:
-	stb s3, s1 + 0
-	stb s3, s1 + 1
-	stb s3, s1 + 2
-	subi s2, s2, 4
+	vsti v0, s1, 4
+	subi s2, s2, 32
 	cmpi c0, s2, 0
 	bgt c0, clear_bss_loop
-	stb s3, s1 + 3
-	addi s1, s1, 4
+	addi s1, s1, 32
+	nop
 
+	// FFT test
+
+	jmpal fft_decimation_in_time
+	ldi s1, fft_data
+	ldi s2, 6
+	
 write_neg_bytes:	
 	ldi s1, bss_start
 	ldi s2, bss_end
@@ -330,12 +336,6 @@ clear_vektori_loop:
 	drain
 	debugi 11
 
-	// FFT test
-
-	jmpal fft_decimation_in_time
-	ldi s1, fft_data
-	ldi s2, 6
-	
 	// Done
 
 	drain
