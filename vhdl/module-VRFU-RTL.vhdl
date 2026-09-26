@@ -54,6 +54,7 @@ entity VRFU is
        --
 
        WA_Active : in std_logic;
+       WA_Async : in std_logic;
        WA_Valid : in std_logic;
        WA_Index : in RegIndex_T;
        WA_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
@@ -93,7 +94,7 @@ begin
   Clear_P : process(ExecuteStall, WA_Active, WA_Index, WB_Active, WB_Index)
   begin
     Clear <= (others => '0');
-    Clear(WA_Index) <= WA_Active and not ExecuteStall;
+    Clear(WA_Index) <= WA_Active and (WA_Async or not ExecuteStall);
     Clear(WB_Index) <= WB_Active;
   end process;
 

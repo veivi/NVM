@@ -98,6 +98,7 @@ architecture Struct of NVM101 is
   signal RF_RC_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Valid : std_logic;
+  signal RF_WA_Async : std_logic;
 
   signal ALU_Operation : ALUOp_T;
   signal ALU_Operand : std_logic_vector(WordSize_C-1 downto 0);
@@ -135,6 +136,7 @@ architecture Struct of NVM101 is
   signal VRF_RC_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_WA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_WA_Valid : std_logic;
+  signal VRF_WA_Async : std_logic;
     
 begin
   --
@@ -373,6 +375,7 @@ begin
 
              WA_Active => ExecuteWord.RF_W_Active,
              WA_Valid => RF_WA_Valid,
+             WA_Async => RF_WA_Async,
              WA_Index => ExecuteWord.RF_W_Index,
              WA_Data => RF_WA_Data,
     
@@ -383,6 +386,7 @@ begin
              WB_Data => LS_R_Data);
 
   RF_WA_Valid <= RF_ReadValid;
+  RF_WA_Async <= '0';
   
   --
   -- Scalar scoreboard control
@@ -522,6 +526,7 @@ begin
                -- Write A
                
                WA_Active => VRF_WA_Active,
+               WA_Async => VRF_WA_Async,
                WA_Valid => VRF_WA_Valid,
                WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
@@ -553,6 +558,7 @@ begin
   --
   
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
+  VRF_WA_Async <= AVU_R_Present;
   VRF_WA_Valid <=  AVU_R_Present when to_integer(unsigned(not VRF_ReadValid)) /= 0 else '1';
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;

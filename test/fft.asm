@@ -82,12 +82,15 @@ for_v_loop:
 	// 	  complex_vector_write(x, A, j + v, m);
 	// 	  complex_vector_write(y, A, j + v + half_m, m);
 
+	debugi 15
+	
 	lsli s14, s4, LOG2V // s14 = m<<LOG2V = V*m
 	add s9, s9, s14    // v += V*m
-	cmp c0, s9, s15    
+	cmp c0, s9, s15
+	
 	blt c0, for_v_loop     // Loop as long as v < FFT_LEN
-	vst v2, s10, s11
-	vst v3, s13, s11
+	vst v2, s10, s11       // complex_vector_write(x, A, j + v, m)
+	vst v3, s13, s11       // complex_vector_write(y, A, j + v + half_m, m)
 	
 	ba s_loop_end
 	nop
