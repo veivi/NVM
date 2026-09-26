@@ -11,35 +11,15 @@ fft_decimation_in_time:
 	
 	// Params: s1 = data, s2 = log2(N)
 
-	// Initialize w_table
-	
-	vclear(v0)
-	
-	ldi s4, w_table
-	ldi s5, 1024
-	
-init_w_loop:
-	vsti v0, s4, 4
-	addi s4, s4, 32
-	subi s5, s5, 32
-	cmpi c0, s5, 0
-	bgt c0, init_w_loop
-	nop
-	nop
-
-	drain
-	
 	// for(s = 1; s <= LOG2LEN; s++) {
 	//   m = 1<<s;
 	//   half_m = m/2;
 	//   tab_step = 1<<(LOG2LEN - s);
 
-	ldi s3, 1   // s3 will hold "s"
+	ldi s3, 1   // s3 = "s" = 1
 	lsl s15, s3, s2  // s15 = 1<<LOG2LEN = FFT_LEN
 
 for_s_loop:
-	debugi 12
-	
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
 	lsri s5, s4, 1  // s5 = "half_m" = m/2
@@ -61,7 +41,6 @@ for_s_loop:
 	clear(s7)	  // s7 = "j" = 0
 
 for_j_loop:
-	debugi 16
 	// 	complex_t omega = w[j * tab_step];
 	
 	lsl s8, s7, s6    // s8 = j<<log2_tab_step_bytes = j * tab_step_bytes
@@ -72,7 +51,6 @@ for_j_loop:
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_early:
-	debugi 17
 	// 	  complex_t a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(u, A, j + v, m);
 
@@ -129,15 +107,12 @@ late_stage:
 	
 	clear(s7)	  // s7 = "k" = 0
 	
-for_k_loop:	
-	debugi 32
-	
+for_k_loop:		
 	// 	for(v = 0; v < half_m; v += V) {
 
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_late:
-	debugi 33
 	
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
@@ -187,12 +162,28 @@ for_v_loop_late:
 	blt c0, for_k_loop  // While k < FFT_LEN
 	nop
 	nop
+
+	drain
 	
 s_loop_end:
-	debugi 15
 	addi s3, s3, 1    // s = s + 1
 	cmp c0, s3, s2   // if(s <= LOG2LEN)
 	ble c0, for_s_loop
+	nop
+	nop
+
+	// Read result
+
+	debugi 64
+	ldi s3, 1
+	lsl s3, s3, s2
+	
+read_loop:
+	ld s2, s1, 0
+	addi s1, s1, 4
+	subi s3, s3, 1
+	cmpi c0, s3, 0
+	bgt c0, read_loop
 	nop
 	nop
 	

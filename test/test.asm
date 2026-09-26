@@ -43,14 +43,27 @@ init:
 	vclear(v0)
 
 clear_bss_loop:
-	vsti v0, s1, 4
 	subi s2, s2, 32
 	cmpi c0, s2, 0
 	bgt c0, clear_bss_loop
+	vsti v0, s1, 4
 	addi s1, s1, 32
-	nop
 
 	// FFT test
+
+	ldi s1, fft_data
+	ldi s2, 64
+	ldi s3, 50
+	
+	lsli s3, s3, 16
+	
+init_fft_loop:
+	st s3, s1, 0
+	subi s2, s2, 1
+	cmpi c0, s2, 0
+	bgt c0, init_fft_loop
+	addi s1, s1, 4
+	nop
 
 	jmpal fft_decimation_in_time
 	ldi s1, fft_data
