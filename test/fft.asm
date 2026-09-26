@@ -145,6 +145,9 @@ for_v_loop_late:
 	
 	vldi v2, s13, 4     // v2 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
+	addi s9, s9, V           // v += V
+	cmp c0, s9, s5
+	
 	// 	  complex_vector_mul(t, u, omega);
 
 	cvmul v2, v2, v0   // v2 = "t" = complex_vector_mul(t, a, omega)
@@ -155,9 +158,6 @@ for_v_loop_late:
 	cvadd v3, v1, v2
 	cvsub v4, v1, v2
 
-	addi s9, s9, V           // v += V
-	cmp c0, s9, s5
-	
 	blt c0, for_v_loop_late  // Loop as long as v < half_m
 	vsti v3, s10, 4          // 	  complex_vector_write(x, A, k + v, 1)
 	vsti v4, s13, 4          // 	  complex_vector_write(y, A, k + v + half_m, 1)
