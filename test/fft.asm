@@ -203,5 +203,3 @@ read_loop:
 w_table:
 	.word 1024
 	
-	.section "data"
-	

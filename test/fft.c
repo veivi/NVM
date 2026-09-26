@@ -3,7 +3,8 @@
 
 #define  LOG2LEN     6
 #define  FFT_LEN      (1<<LOG2LEN)
-#define  V           8
+#define  LOG2V       3
+#define  V           (1<<LOG2V)
 #define  pi          ((float) M_PI)
 
 typedef struct complex {
@@ -86,7 +87,7 @@ void complex_vector_sub(complex_t result[], complex_t a[], complex_t b[])
     result[i] = COMPLEX_SUB(a[i], b[i]);
 }
 
-void fft(complex_t *A)
+void fft(complex_t A[])
 {
   int s = 0, k = 0, m = 0, half_m = 0, j = 0, tab_step = 0;
 
@@ -110,62 +111,68 @@ void fft(complex_t *A)
   }
 }
 
-void fft_with_vectors(complex_t *A)
+void fft_with_vectors(complex_t A[])
 {
   int s = 0, m = 0, half_m = 0, tab_step = 0;
 
   bit_reversal_permutation(A);
   
-  for(s = 1; s <= LOG2LEN; s++) {
+  for(s = 1; s <= LOG2V; s++) {
+    //
+    // Early stage: our vectors will handle k with striding by m
+    //
+    // if(half_m < V)
+    //   m/2 < V <==> m < 2*V <==> 1<<s < 2*V <==> s < LOG2V + 1
+
+    m = 1<<s;
+    half_m = m/2;
+    tab_step = 1<<(LOG2LEN - s);
+
+    int j = 0;
+      
+    for(j = 0; j < half_m; j++) {
+      int v = 0;
+      complex_t omega = w[j * tab_step];
+
+      for(v = 0; v < FFT_LEN; v += V*m) {
+	complex_t a[V], t[V], u[V], x[V];
+
+	complex_vector_read(a, A, j + v + half_m, m);
+	complex_vector_read(u, A, j + v, m);
+	complex_vector_mul_bc(t, a, &omega);
+	complex_vector_add(x, u, t);
+	complex_vector_write(x, A, j + v, m);
+	complex_vector_sub(x, u, t);
+	complex_vector_write(x, A, j + v + half_m, m);
+      }
+    }
+  }
+
+  for(s = LOG2V+1; s <= LOG2LEN; s++) {
+    //
+    // Late stage: our vectors will handle j directly, striding used only for w
+    //
+
     m = 1<<s;
     half_m = m/2;
     tab_step = 1<<(LOG2LEN - s);
     
-    if(half_m < V) {
-      //
-      // Early stage: our vectors will handle k with striding by m
-      //
-
-      int j = 0;
-      
-      for(j = 0; j < half_m; j++) {
-	int v = 0;
-	complex_t omega = w[j * tab_step];
-
-	for(v = 0; v < FFT_LEN; v += V*m) {
-	  complex_t a[V], t[V], u[V], x[V];
-
-	  complex_vector_read(a, A, j + v + half_m, m);
-	  complex_vector_read(u, A, j + v, m);
-	  complex_vector_mul_bc(t, a, &omega);
-	  complex_vector_add(x, u, t);
-	  complex_vector_write(x, A, j + v, m);
-	  complex_vector_sub(x, u, t);
-	  complex_vector_write(x, A, j + v + half_m, m);
-	}
-      }
-    } else {
-      //
-      // Late stage: our vectors will handle j directly, striding used only for w
-      //
-
-      int k = 0;
-      
-      for(k = 0; k < FFT_LEN; k += m) {
-	int v = 0;
+    int k = 0;
+    
+    for(k = 0; k < FFT_LEN; k += m) {
+      int v = 0;
 	
-	for(v = 0; v < half_m; v += V) {
-	  complex_t omega[V], a[V], t[V], u[V], x[V];
+      for(v = 0; v < half_m; v += V) {
+	complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
-	  complex_vector_read(omega, w, v * tab_step, tab_step);
-	  complex_vector_read(a, A, k + v + half_m, 1);
-	  complex_vector_mul(t, a, omega);
-	  complex_vector_read(u, A, k + v, 1);
-	  complex_vector_add(x, u, t);
-	  complex_vector_write(x, A, k + v, 1);
-	  complex_vector_sub(x, u, t);
-	  complex_vector_write(x, A, k + v + half_m, 1);
-	}
+	complex_vector_read(omega, w, v * tab_step, tab_step);
+	complex_vector_read(a, A, k + v + half_m, 1);
+	complex_vector_mul(t, a, omega);
+	complex_vector_read(u, A, k + v, 1);
+	complex_vector_add(x, u, t);
+	complex_vector_write(x, A, k + v, 1);
+	complex_vector_sub(x, u, t);
+	complex_vector_write(x, A, k + v + half_m, 1);
       }
     }
   }
@@ -208,7 +215,7 @@ int main()
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
   
   fft_with_vectors(fft_data);
-
+  // fft(fft_data);
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,
 	   fft_data[i].real, fft_data[i].imag, COMPLEX_ABS(fft_data[i]));
