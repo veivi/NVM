@@ -412,7 +412,7 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    os.system(f"cpp -Idesign/test -DV=8 {filename} >{filename_pp}")
+    os.system(f"cpp -Idesign/test -DV=8 -DLOG2V=3 {filename} >{filename_pp}")
     file = open(filename_pp)
     
     ast = Parser(tokenize(file.read())).parse_program()

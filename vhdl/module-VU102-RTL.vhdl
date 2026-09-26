@@ -170,8 +170,8 @@ begin
             when "10" =>      
               -- We're doing subtraction
             
-              AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
-                                        Negate(Add(ImagPart(A), ImagPart(B))));
+              AdderResult(I) <= Complex(Add(RealPart(A), Negate(RealPart(B))),
+                                        Add(ImagPart(A), Negate(ImagPart(B))));
 
             when others =>
               -- Invalid operation

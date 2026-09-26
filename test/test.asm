@@ -1,4 +1,5 @@
 	.import "funktio"
+	.import "fft_decimation_in_time"
 	.import "stop_simulation"
 	.export "init"
 
@@ -21,6 +22,9 @@ vektoridata_alku:
 	.word 32
 vektoridata_loppu:
 
+fft_data:
+	.word 64
+	
 bss_end:	
 	
 	.section "data"
@@ -326,6 +330,12 @@ clear_vektori_loop:
 	drain
 	debugi 11
 
+	// FFT test
+
+	jmpal fft_decimation_in_time
+	ldi s1, fft_data
+	ldi s2, 6
+	
 	// Done
 
 	drain
