@@ -35,8 +35,9 @@ opcodes = spec["instruction_set"]
 Token = namedtuple("Token", ["type", "value"])
 
 token_spec = [
-    ("COMMENT",   r"//.*"),
-    ("COMMENT2",   r"#.*"),
+    ("COMMENT",   r"[#/;].*"),
+#    ("COMMENT2",   r"#.*"),
+#    ("COMMENT3",   r"#.*"),
     ("DIRECTIVE", r"\.\w+"),
     ("LABEL",     r"^\w+:"),
     ("STRING",    r'"[^"]*"'),
@@ -395,6 +396,7 @@ def assemble(mnemonic, params):
                 iword |= (op.value & ((1<<size) - 1)) << offset
 
             elif type(op) == Ident:
+                # print(f"ref {op.name}")
                 ref = { "type": arg, "symbol": op.name, "bit_offset": offset, "num_bits": size }
                 
             else:
@@ -410,7 +412,7 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    os.system(f"cpp -Idesign/test {filename} >{filename_pp}")
+    os.system(f"cpp -Idesign/test -DV=8 {filename} >{filename_pp}")
     file = open(filename_pp)
     
     ast = Parser(tokenize(file.read())).parse_program()

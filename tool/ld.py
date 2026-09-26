@@ -158,6 +158,9 @@ def main():
                 target = target - (segmentList[sectionMap[symSect]]["base"] + sectionBase[targetSect] + symOffset)
                 target = target>>2
 
+            elif ref["type"] == "disp":
+                target = target - (segmentList[sectionMap[symSect]]["base"] + sectionBase[targetSect] + symOffset)
+
             elif ref["type"] == "value":
                 pass
                 

@@ -386,21 +386,39 @@ instruction_set:
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
-  LSLI:
-    category: "logic_imm"
+  LSL:
+    category: "logic"
     opcode: 12
     operation: "ALUOp_LSL_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
 
-  LSRI:
+  LSLI:
     category: "logic_imm"
     opcode: 13
+    operation: "ALUOp_LSL_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
+
+  LSR:
+    category: "logic"
+    opcode: 14
     operation: "ALUOp_LSR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  LSRI:
+    category: "logic_imm"
+    opcode: 15
+    operation: "ALUOp_LSR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  ASR:
+    category: "logic"
+    opcode: 16
+    operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
   ASRI:
     category: "logic_imm"
-    opcode: 14
+    opcode: 17
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
@@ -741,6 +759,80 @@ instruction_set:
   VSTIB:
     category: "loadstore_vec_imm"
     opcode: 10
+    operation: "LSOp_StoreByte_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+
+#
+# Vector Load, Indirect, Stride
+#
+
+  VLD:
+    category: "loadstore_vec"
+    opcode: 11
+    operation: "LSOp_LoadWord_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDL:
+    category: "loadstore_vec"
+    opcode: 12
+    operation: "LSOp_LoadLongSigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDLU:
+    category: "loadstore_vec"
+    opcode: 13
+    operation: "LSOp_LoadLongUnsigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDS:
+    category: "loadstore_vec"
+    opcode: 14
+    operation: "LSOp_LoadShortSigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDSU:
+    category: "loadstore_vec"
+    opcode: 15
+    operation: "LSOp_LoadShortUnsigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDB:
+    category: "loadstore_vec"
+    opcode: 16
+    operation: "LSOp_LoadByteSigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VLDBU:
+    category: "loadstore_vec"
+    opcode: 17
+    operation: "LSOp_LoadByteUnsigned_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+
+#
+# Vector Store, Indirect, Stride
+#
+
+  VST:
+    category: "loadstore_vec"
+    opcode: 18
+    operation: "LSOp_StoreWord_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VSTL:
+    category: "loadstore_vec"
+    opcode: 19
+    operation: "LSOp_StoreLong_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VSTS:
+    category: "loadstore_vec"
+    opcode: 20
+    operation: "LSOp_StoreShort_C"
+    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
+    
+  VSTB:
+    category: "loadstore_vec"
+    opcode: 21
     operation: "LSOp_StoreByte_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
