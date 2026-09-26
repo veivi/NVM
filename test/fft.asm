@@ -19,15 +19,10 @@ fft_decimation_in_time:
 	ldi s3, 1   // s3 = "s" = 1
 	lsl s15, s3, s2  // s15 = 1<<LOG2LEN = FFT_LEN
 
-for_s_loop:
+for_s_loop_early:
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
 	lsri s5, s4, 1  // s5 = "half_m" = m/2
-	
-	//   if(half_m < V) {
-	
-	cmpi c0, s5, V
-	bge c0, late_stage
 	
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	addi s6, s6, 2  // s6 = "log2_tab_step_bytes" = log2_tab_step + 2
@@ -35,7 +30,6 @@ for_s_loop:
 	//
 	// Early stage: our vectors will handle k with striding by m
 	//
-
 	//     for(j = 0; j < half_m; j++) {
 	
 	clear(s7)	  // s7 = "j" = 0
@@ -93,16 +87,27 @@ for_v_loop_early:
 	blt c0, for_j_loop     // Loop as long as j < half_m
 	nop
 	nop
+
+	drain
 	
-	ba s_loop_end
+	addi s3, s3, 1    // s = s + 1
+	cmpi c0, s3, LOG2V  
+	ble c0, for_s_loop_early   // while s < LOG2V
 	nop
 	nop
-	
-late_stage:	
+
+for_s_loop_late:
 	//
 	// Late stage: our vectors will handle j directly, striding used only for w
 	//
 
+	ldi s4, 1
+	lsl s4, s4, s3  // s4 = "m" = 1<<s
+	lsri s5, s4, 1  // s5 = "half_m" = m/2
+	
+	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
+	addi s6, s6, 2  // s6 = "log2_tab_step_bytes" = log2_tab_step + 2
+	
 	//     for(k = 0; k < FFT_LEN; k += m) {
 	
 	clear(s7)	  // s7 = "k" = 0
@@ -112,8 +117,7 @@ for_k_loop:
 
 	clear(s9)         // s9 = "v" = 0
 	
-for_v_loop_late:
-	
+for_v_loop_late:	
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 
@@ -165,10 +169,9 @@ for_v_loop_late:
 
 	drain
 	
-s_loop_end:
 	addi s3, s3, 1    // s = s + 1
 	cmp c0, s3, s2   // if(s <= LOG2LEN)
-	ble c0, for_s_loop
+	ble c0, for_s_loop_late
 	nop
 	nop
 
