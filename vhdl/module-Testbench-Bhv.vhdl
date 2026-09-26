@@ -9,7 +9,7 @@ entity Testbench is
 end Testbench;
 
 architecture Bhv of Testbench is
-  constant Contention_C : real := 0.5;
+  constant Contention_C : real := 0.1;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;

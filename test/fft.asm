@@ -80,14 +80,16 @@ for_v_loop_early:
 	blt c0, for_v_loop_early  // Loop as long as v < FFT_LEN
 	vst v2, s10, s11       // complex_vector_write(x, A, j + v, m)
 	vst v3, s13, s11       // complex_vector_write(y, A, j + v + half_m, m)
-
+	
+end_for_v_loop_early:
 	addi s7, s7, 1         // j++
 
 	cmp c0, s7, s5
-	blt c0, for_j_loop     // Loop as long as j < half_m
+	blt c0, for_j_loop     // while j < half_m
 	nop
 	nop
 
+end_for_j_loop:
 	drain
 	
 	addi s3, s3, 1    // s = s + 1
@@ -107,6 +109,8 @@ for_s_loop_late:
 	
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	addi s6, s6, 2  // s6 = "log2_tab_step_bytes" = log2_tab_step + 2
+	ldi s16, 1
+	lsl s16, s16, s6  // s16 = 1<<log2_tab_step_bytes = tab_step
 	
 	//     for(k = 0; k < FFT_LEN; k += m) {
 	
@@ -123,10 +127,8 @@ for_v_loop_late:
 
 	lsl s8, s9, s6        // s8 = v<<log2_tab_step_bytes = v * tab_step
 	addi s8, s8, w_table  // s8 = &w_table[v * tab_step]
-	ldi s10, 1
-	lsl s10, s10, s6  // s10 = 1<<log2_tab_step_bytes = tab_step
 
-	vld v0, s8, s10    // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
+	vld v0, s8, s16    // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
 	
 	// 	  complex_vector_read(u, A, k + v, 1);
 	
@@ -159,14 +161,15 @@ for_v_loop_late:
 	blt c0, for_v_loop_late  // Loop as long as v < half_m
 	vsti v3, s10, 4          // 	  complex_vector_write(x, A, k + v, 1)
 	vsti v4, s13, 4          // 	  complex_vector_write(y, A, k + v + half_m, 1)
-
+	
+end_for_v_loop_late:
 	add s7, s7, s4           // k += m
 	cmp c0, s7, s15
-
 	blt c0, for_k_loop  // While k < FFT_LEN
 	nop
 	nop
 
+end_for_k_loop:
 	drain
 	
 	addi s3, s3, 1    // s = s + 1
