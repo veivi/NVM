@@ -116,7 +116,6 @@ architecture Struct of NVM101 is
   signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
-  signal VLS_C_Addr : std_logic_vector(VecSize_C*AddrSize_C-1 downto 0);
   signal VLS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
   
   signal VLS_R_Present : std_logic_vector(VecSize_C-1 downto 0);
@@ -611,6 +610,8 @@ begin
     end if;
   end process;
   
+  VLS_C_Stride <= (others => '0');
+    
   --
   -- Vector scoreboard control
   --

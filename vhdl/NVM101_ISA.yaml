@@ -269,7 +269,7 @@ instruction_categories:
 
   ext_bc:
     format: "ext_bc"
-    prefix: 58
+    prefix: 59
     operands: [ "subop", "vd", "vs1", "rs2" ]
     unit: "Ext"
     sub-operation: "subop"

@@ -17,6 +17,7 @@ obj_files = args.filename
 out_file = args.output
 isa_name = args.isa
 map_file = args.map
+word_len = 4
 
 with open(f"design/vhdl/{isa_name}_ISA.yaml", "r") as f:
     spec = yaml.safe_load(f)
@@ -83,7 +84,17 @@ def main():
             moduleStart[name][sect_name] = len(sections[sect_name])
             
             sections[sect_name] += object_code["sections"][sect_name]
+
+            #
+            # Add zeros to force word alignment!
+            #
             
+            tail = len(sections[sect_name]) % word_len
+            
+            if tail > 0:
+                print(f"  Padding with {word_len - tail} bytes")
+                sections[sect_name] += bytearray(word_len - tail)
+
         print(f"Loading module {name} labels...")
 
         for id in object_code["exports"]:

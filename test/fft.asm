@@ -5,9 +5,24 @@
 #include <common.h>
 	
 	.section "code"
-	
+
 fft_decimation_in_time:
 	// Params: s1 = data, s2 = log2(N)
+
+	// Initialize w_table
+	
+	clear(s3)
+	ldi s4, w_table
+	ldi s5, 1024
+	
+init_w_loop:
+	st s3, s4 + 0
+	addi s4, s4, 4
+	subi s5, s5, 1
+	cmpi c0, s5, 0
+	bgt c0, init_w_loop
+	nop
+	nop
 	
 	// for(s = 1; s <= LOG2LEN; s++) {
 	//   m = 1<<s;
