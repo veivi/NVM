@@ -70,10 +70,10 @@ tests_start:
 	
 init_fft_loop:
 	ldx s3, s0, s2
+	stx s3, s1, s2
 	subi s2, s2, 1
 	cmpi c0, s2, 0
 	bge c0, init_fft_loop
-	stx s3, s1, s2
 
 	// Invoke FFT
 	
