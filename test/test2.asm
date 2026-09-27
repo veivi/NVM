@@ -20,7 +20,9 @@ loop:
 stop_simulation:
 	drain
 	debugi -1
-	nop
+
+stop_loop:
+	ba stop_loop
 	nop
 
 	

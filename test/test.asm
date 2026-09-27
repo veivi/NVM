@@ -212,18 +212,18 @@ clear_vektori_loop:
 
 	addi s1, s1, 128
 	
-	ldi s2, 15826
+	ldi s2, 3957
 	lsli s2, s2, 16
-	ori s2, s2, 4240   // s2 = cos(15) + i*sin(15)
-	
+	ori s2, s2, 1060   // s2 = cos(15) + i*sin(15)
+
 	vandi v0, v0, 0
 	vbor v0, v0, s2
 	vsti v0, s1, 1    // v0 is now all s2 from above
 
 	ldi s2, 1
 	lsli s2, s2, 16
-	ori s2, s2, 3
-	lsli s2, s2, 14   // s2 = 1-i
+	ori s2, s2, 15
+	lsli s2, s2, 12   // s2 = 1-i
 	vandi v2, v2, 0
 	vbor v2, v2, s2   // Load 1-i into v2
 	
@@ -254,10 +254,10 @@ clear_vektori_loop:
 
 	vandi v2, v2, 0  // Load 1.5+0i into v2 
 	vori v2, v2, 3
-	vlsli v2, v2, 29
+	vlsli v2, v2, 27
 	vandi v3, v3, 0  // Load 0-1.5i into v3
-	vori v3, v3, 7
-	vlsli v3, v3, 13
+	vori v3, v3, 31
+	vlsli v3, v3, 11
 	vadd v2, v2, v3   // Load 1.5-1.5i into v2
 	
 	vsti v2, s1, 1
@@ -285,7 +285,7 @@ clear_vektori_loop:
 
 	vandi v2, v2, 0  // Load 1+0i into v2 
 	vori v2, v2, 1
-	vlsli v2, v2, 30
+	vlsli v2, v2, 28
 	
 	// Complex multiply: rotate elements of v2 15 degrees at a time
 	

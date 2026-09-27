@@ -12,7 +12,7 @@ fft_decimation_in_time:
 	
 	// Params: s1 = data, s2 = log2(N)
 
-	// for(s = 1; s <= LOG2LEN; s++) {
+	// for(s = 1; s <= LOG2V; s++) {
 	//   m = 1<<s;
 	//   half_m = m/2;
 	//   tab_step = 1<<(LOG2LEN - s);
@@ -89,12 +89,10 @@ end_for_v_loop_early:
 	nop
 
 end_for_j_loop:
-	drain
-	
 	addi s3, s3, 1    // s = s + 1
 	cmpi c0, s3, LOG2V  
-	ble c0, for_s_loop_early   // while s < LOG2V
-	nop
+	ble c0, for_s_loop_early   // while s <= LOG2V
+	drain  // Delay slot
 
 for_s_loop_late:
 	//
@@ -158,22 +156,20 @@ for_v_loop_late:
 	
 	vsti v3, s10, 1
 	
-	blt c0, for_v_loop_late  // Loop as long as v < half_m
-	vsti v4, s13, 1          // 	  complex_vector_write(y, A, k + v + half_m, 1)
+	blt c0, for_v_loop_late  // while v < half_m
+	vsti v4, s13, 1          // complex_vector_write(y, A, k + v + half_m, 1)
 	
 end_for_v_loop_late:
 	add s7, s7, s4           // k += m
 	cmp c0, s7, s15
-	blt c0, for_k_loop       // While k < FFT_LEN
+	blt c0, for_k_loop       // while k < FFT_LEN
 	nop
 
-end_for_k_loop:
-	drain
-	
+end_for_k_loop:	
 	addi s3, s3, 1    // s = s + 1
-	cmp c0, s3, s2   // if(s <= LOG2LEN)
-	ble c0, for_s_loop_late
-	nop
+	cmp c0, s3, s2   
+	ble c0, for_s_loop_late // while s <= LOG2LEN
+	drain   // Delay slot
 
 	// Done
 

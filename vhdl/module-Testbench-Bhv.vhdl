@@ -208,10 +208,16 @@ begin
   -- Debug output monitor, stop the simulation if we see all '1's
   --
 
-  Debug_P : process(DebugOut)
+  Debug_P : process
   begin
-    assert DebugOut /= std_logic_vector(to_signed(-1, WordSize_C))
-      report "Debug port stopping simulation"
-      severity failure;      
+    if DebugOut = std_logic_vector(to_signed(-1, WordSize_C)) then
+      wait for 10 us;
+
+      assert false
+        report "Debug port stopping simulation"
+        severity failure;
+    else
+      wait for 10 ns;
+    end if;  
   end process;
 end Bhv;
