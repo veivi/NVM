@@ -193,15 +193,7 @@ begin
   -- Instruction memory
   --
 
-  I_ROM_Lookup_C : process(I_Addr, I_Request)
-  begin
-    if I_Request = '1' then
-      I_Code <= I_Store(to_integer(unsigned(I_Addr(Log2IROMSize_C-1 downto 0)))) after 3 ns;      
-    else
-      I_Code <= (others => 'X') after 4 ns;
-    end if;
-  end process;
-
+  I_Code <= I_Store(to_integer(unsigned(I_Addr(Log2IROMSize_C-1 downto 0)))) after 3 ns;      
   I_Ready <= '1';
   
   --
