@@ -43,14 +43,13 @@ init:
 	vclear(v0)
 
 clear_bss_loop:
+	vsti v0, s1, 1
 	subi s2, s2, 32
 	cmpi c0, s2, 0
 	bgt c0, clear_bss_loop
-	vsti v0, s1, 1
 	addi s1, s1, 32
 
-	// ba write_neg_bytes
-	nop
+	ba write_neg_bytes
 	nop
 	
 	// FFT test
@@ -67,39 +66,42 @@ init_fft_loop:
 	cmpi c0, s2, 0
 	bgt c0, init_fft_loop
 	addi s1, s1, 4
-	nop
 
-	jmpal fft_decimation_in_time
+	
 	ldi s1, fft_data
+	jmpal fft_decimation_in_time
 	ldi s2, 6
+
+	// Done
+	
+	jmpa stop_simulation
+	debugi -1
 	
 write_neg_bytes:	
 	ldi s1, bss_start
-	ldi s2, bss_end
-	sub s2, s2, s1
+	ldi s2, 100
 	ldi s3, -1
 
 neg_loop:
 	stb s3, s1 + 0
+	addi s1, s1, 1
 	subi s2, s2, 1
 	cmpi c0, s2, 0
 	bgt c0, neg_loop
-	addi s1, s1, 1
 	subi s3, s3, 1
 		
 read_neg_bytes:	
 	ldi s1, bss_start
-	ldi s2, bss_end
-	sub s2, s2, s1
+	ldi s2, 100
 	
 byte_read_loop:
 	ldb s3, s1 + 0
 	ldbu s4, s1 + 1
 	ldb s5, s1 + 2
+	ldbu s6, s1 + 3
 	subi s2, s2, 4
 	cmpi c1, s2, 0
 	bgt c1, byte_read_loop
-	ldbu s6, s1 + 3
 	addi s1, s1, 4
 
 nollataan_vektoridata:	
@@ -110,10 +112,10 @@ nollataan_vektoridata:
 
 clear_vektori_loop:
 	st s3, s1 + 0
+	addi s1, s1, 4
 	subi s2, s2, 4
 	cmpi c0, s2, 0
 	bgt c0, clear_vektori_loop
-	addi s1, s1, 4
 	addi s3, s3, 2345
 	
 	// Testataan vector loadeja
@@ -356,7 +358,8 @@ clear_vektori_loop:
 	// Done
 
 	drain
-	jmpa stop_simulation
 	sync
+	
+	jmpa stop_simulation
 	debugi -1
 

@@ -6,14 +6,15 @@
 
 alku:
 	jmpal init
+	nop
 
 funktio:
-	// jmp s0
-	nop
+	ret
 	nop
 	
 loop:
 	ba loop
+	nop
 	
 
 stop_simulation:

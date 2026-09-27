@@ -30,10 +30,12 @@ entity FCU is
        -- Interlock interface
        
        IL_Stall : in std_logic;
+       IL_ExecuteStall : in std_logic;
 
-       -- Decoded instruction input
-       
-       Operation : in FlowOp_T;
+       -- Decoded instruction input for decode and execute stages
+
+       ControlWord : in ControlWord_T;
+       ExecuteWord : in ControlWord_T;
        
        CR_Read_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
        CR_Write_Active : in std_logic;
@@ -51,7 +53,7 @@ entity FCU is
 end FCU;
 
 architecture RTL of FCU is
-  signal NIP, FIP, DIP, XIP : std_logic_vector(AddrSize_C-1 downto 0);
+  signal NIP, FIP, DIP, LR : std_logic_vector(AddrSize_C-1 downto 0);
 
   subtype VCRElem_T is ConditionVector_T(0 to 2**Log2VecSize_C-1);
   
@@ -72,11 +74,18 @@ begin
         -- Reset
         FIP <= (others => '0');
         DIP <= (others => '0');
-        XIP <= (others => '0');
+        LR <= (others => '0');
       elsif IL_Stall = '0' then
-        XIP <= DIP;
         DIP <= FIP;
         FIP <= NIP;
+
+        if ControlWord.FCU_Operation = FlowOp_BL_C
+          or ControlWord.FCU_Operation = FlowOp_JMPAL_C
+          or ControlWord.FCU_Operation = FlowOp_JMPL_C then
+          -- We're supposed to store the return address to LR
+          
+          LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
+        end if;
       else
       end if;
     end if;
@@ -86,33 +95,47 @@ begin
   -- Next instruction pointer
   --
 
-  NIP_P : process(FIP, XIP, Operation, Evaluated, Imm_Data, Reg_Data)
+  NIP_P : process(FIP, DIP, LR, ControlWord, ExecuteWord, Evaluated, Imm_Data, Reg_Data)
   begin
     -- Default is to increment
     
     NIP <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
-    
-    case Operation is
-      when FlowOp_BNE_C | FlowOp_BEQ_C | FlowOp_BLE_C | FlowOp_BL_C 
-        | FlowOp_BLT_C | FlowOp_BGE_C | FlowOp_BGT_C | FlowOp_BA_C =>
-        if Evaluated then
-          -- Branch taken!
-          NIP <= std_logic_vector(unsigned(XIP)
-                                  + unsigned(Imm_Data(AddrSize_C-1 downto 0)));
-        end if;
 
-      when FlowOp_JMPA_C | FlowOp_JMPAL_C =>
-        -- Absolute jump
-        NIP <= Imm_Data(AddrSize_C-1 downto 0);
+    if ExecuteWord.FCU_Operation = FlowOp_JMP_C
+      or ExecuteWord.FCU_Operation = FlowOp_JMPL_C then
+      -- We're executing an indirect jump
 
-      when FlowOp_JMP_C | FlowOp_JMPL_C =>
-        -- Indirect with displacement
+      NIP <= Reg_Data(AddrSize_C-1 downto 0);
+
+    else
+      case ControlWord.FCU_Operation is
+        when FlowOp_BNE_C | FlowOp_BEQ_C | FlowOp_BLE_C | FlowOp_BL_C 
+          | FlowOp_BLT_C | FlowOp_BGE_C | FlowOp_BGT_C | FlowOp_BA_C | FlowOp_BL_C =>
+          if Evaluated then
+            -- Branch taken!
+            NIP <= std_logic_vector(signed(DIP)
+                                    + signed(Imm_Data(AddrSize_C-1 downto 0)));
+          end if;
+
+        when FlowOp_JMPA_C | FlowOp_JMPAL_C =>
+          -- Absolute jump
+          NIP <= Imm_Data(AddrSize_C-1 downto 0);
+
+        when FlowOp_JMP_C | FlowOp_JMPL_C =>
+          -- Indirect with displacement
         
-        NIP <= std_logic_vector(signed(Reg_Data(AddrSize_C-1 downto 0)) + signed(Imm_Data(AddrSize_C-1 downto 0)));
+          NIP <= std_logic_vector(signed(Reg_Data(AddrSize_C-1 downto 0))
+                                  + signed(Imm_Data(AddrSize_C-1 downto 0)));
 
-      when others =>
-        null;
-    end case;
+        when FlowOp_RET_C =>
+          -- Return from subroutine
+
+          NIP <= LR;
+        
+        when others =>
+          null;
+      end case;
+    end if;
   end process;
   
   --
@@ -146,7 +169,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         CR <= (others => Cond_Equal_C);
-      elsif CR_Write_Active = '1' then
+      elsif IL_ExecuteStall = '0' and CR_Write_Active = '1' then
         CR(CR_Write_Index) <= CR_Write_Data;
       end if;
     end if;
@@ -156,21 +179,29 @@ begin
   -- Condition evaluation
   --
 
-  Evaluate_P : process(Operation, CR, CR_Read_Index)
+  Evaluate_P : process(ControlWord, CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Data)
+    variable Temp : Condition_T;
   begin
-    case Operation is
+    Temp := CR(CR_Read_Index);
+
+    if CR_Write_Active = '1' and CR_Write_Index = CR_Read_Index then
+      -- Feedforward
+      Temp := CR_Write_Data;
+    end if;
+    
+    case ControlWord.FCU_Operation is
       when FlowOp_BNE_C =>
-        Evaluated <= CR(CR_Read_Index) /= Cond_Equal_C;
+        Evaluated <= Temp /= Cond_Equal_C;
       when FlowOp_BEQ_C =>
-        Evaluated <= CR(CR_Read_Index) = Cond_Equal_C;
+        Evaluated <= Temp = Cond_Equal_C;
       when FlowOp_BLE_C =>
-        Evaluated <= CR(CR_Read_Index) /= Cond_GreaterThan_C;
+        Evaluated <= Temp /= Cond_GreaterThan_C;
       when FlowOp_BLT_C =>
-        Evaluated <= CR(CR_Read_Index) = Cond_LessThan_C;
+        Evaluated <= Temp = Cond_LessThan_C;
       when FlowOp_BGE_C =>
-        Evaluated <= CR(CR_Read_Index) /= Cond_LessThan_C;
+        Evaluated <= Temp /= Cond_LessThan_C;
       when FlowOp_BGT_C =>
-        Evaluated <= CR(CR_Read_Index) = Cond_GreaterThan_C;
+        Evaluated <= Temp = Cond_GreaterThan_C;
       when others =>
         Evaluated <= true;
     end case;
@@ -185,7 +216,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         VCR <= (others => (others => Cond_Equal_C));
-      elsif CR_Write_Active = '1' then
+      elsif IL_ExecuteStall = '0' and CR_Write_Active = '1' then
         VCR(CR_Write_Index) <= VCR_Write_Data;
       end if;
     end if;

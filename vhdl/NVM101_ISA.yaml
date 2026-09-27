@@ -283,10 +283,17 @@ instruction_categories:
     prefix: 63
     unit: "Fence"
     operands: []
+
+  system:
+    format: "system"
+    prefix: 63
+    unit: "FCU"
+    operands: []
     
   nop:
     format: "nop"
     prefix: 0
+    operands: []
 
 #
 # INSTRUCTION SET
@@ -305,11 +312,11 @@ instruction_set:
     operation: "FenceOp_ReadFence_C"
     behaviour: "Memory Read fence"
   
-  FENCE:
-    category: "fence"
+  RET:
+    category: "system"
     opcode: 2
-    operation: "FenceOp_Fence_C"
-    behaviour: "Memory fence"
+    operation: "FlowOp_RET_C"
+    behaviour: "Jump to LR"
   
   EXT:
     category: "ext"

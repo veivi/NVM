@@ -58,7 +58,8 @@ package NVM101Types is
                      FlowOp_JMP_C,
                      FlowOp_JMPL_C,
                      FlowOp_JMPA_C,
-                     FlowOp_JMPAL_C);
+                     FlowOp_JMPAL_C,
+                     FlowOp_RET_C );
  
   type DebugOp_T is ( DebugOp_None_C,
                       DebugOp_DEBUG_C,

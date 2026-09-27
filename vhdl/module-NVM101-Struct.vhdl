@@ -152,14 +152,16 @@ begin
              I_Code => I_Code,
 
              Instruction => Instruction,
-             Operation => ExecuteWord.FCU_Operation,
+             ControlWord => ControlWord,
+             ExecuteWord => ExecuteWord,
 
              IL_Stall => Stall,
+             IL_ExecuteStall => ExecuteStall,
              
              CR_Write_Active => ExecuteWord.CR_Write_Active,
              CR_Write_Index => ExecuteWord.CR_Write_Index,
              CR_Write_Data => ALU_Condition,
-             CR_Read_Index => ExecuteWord.CR_Read_Index,
+             CR_Read_Index => ControlWord.CR_Read_Index,
              
              VCR_Write_Active => ExecuteWord.VCR_Write_Active,
              VCR_Write_Index => ExecuteWord.VCR_Write_Index,
@@ -167,7 +169,7 @@ begin
              VCR_Read_Index => ExecuteWord.VCR_Read_Index,
              VCR_Read_Data => VCR_ReadValue,
              
-             Imm_Data => Execute_Imm_Data,
+             Imm_Data => Imm_Data,
              Reg_Data => RF_RA_Data);
     
   --
