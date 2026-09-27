@@ -2,8 +2,8 @@
 
 design/tool/as.py design/test/test.asm
 design/tool/as.py design/test/fft.asm
-design/tool/as.py design/test/test2.asm
-design/tool/ld.py test.obj fft.obj test2.obj --map design/test/memory_map.yaml >ld.report
+design/tool/as.py design/test/common.asm
+design/tool/ld.py test.obj fft.obj common.obj --map design/test/memory_map.yaml >ld.report
 
 design/tool/generate.py
 
