@@ -419,25 +419,36 @@ begin
   --
 
   ALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RB_Data)
+    variable Temp : std_logic_vector(WordSize_C-1 downto 0);
   begin
-    -- Default operand comes from RFU
-    
-    ALU_Operation <= ExecuteWord.ALU_Operation;
-    ALU_Operand <= RF_RB_Data;
+    Temp := RF_RB_Data;
     
     if ExecuteWord.LS_Operation /= LSOp_None_C then
       -- Override ALU operation for EA computation
+      
       ALU_Operation <= ALUOp_Add_C;
       
-      if ExecuteWord.LS_Mode = LS_Displaced_C then
-        -- Immediate displacement
-        ALU_Operand <= Execute_Imm_Data;
+      if ExecuteWord.LS_Mode = LS_Indexed_C then
+        -- Indexed addressing, calculate the actual offset taking account
+        -- of operand size
+
+        Temp := std_logic_vector(shift_left(unsigned(Temp), ExecuteWord.LS_Log2Size));
+      else
+        -- immediatete displacement
+        Temp := Execute_Imm_Data;
       end if;
+    else
+      -- No overriding, assume it's an ALU instruction
       
-    elsif ExecuteWord.ALU_Mode = ALU_RegImm_C then
-      -- Possible ALU operation with immediate operand
-      ALU_Operand <= Execute_Imm_Data;
+      ALU_Operation <= ExecuteWord.ALU_Operation;
+    
+      if ExecuteWord.ALU_Mode = ALU_RegImm_C then
+        -- Possible ALU operation with immediate operand
+        Temp := Execute_Imm_Data;
+      end if;
     end if;
+  
+    ALU_Operand <= Temp;
   end process ALUControl_P;
   
   --
@@ -581,6 +592,10 @@ begin
     Stride :=
       Execute_Imm_Data(StubSize_C-1 downto 0) when ExecuteWord.VLS_Mode = VLS_Imm_C
       else RF_RB_Data(StubSize_C-1 downto 0);
+
+    -- Scale the stride by load/store operand size
+    
+    Stride := std_logic_vector(shift_left(unsigned(Stride), ExecuteWord.VLS_Log2Size));
     
     if ExecuteWord.VLS_Operation /= LSOp_None_C then
       -- Override ALU operation for EA computation. Operand A is broadcast from

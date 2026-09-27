@@ -154,7 +154,7 @@ instruction_categories:
   loadstore_indexed:
     format: "loadstore_indexed"
     prefix: 44
-    operands: [ "rd", "rs1", "rs2", "scale" ]
+    operands: [ "rd", "rs1", "rs2" ]
     unit: "LS"
     mode: "LS_Indexed_C"
     register-read-a: "rs1"
@@ -555,66 +555,77 @@ instruction_set:
   LD:
     category: "loadstore"
     opcode: 0
+    size: "Log2BPW_C"
     operation: "LSOp_LoadWord_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDL:
     category: "loadstore"
     opcode: 1
+    size: 2
     operation: "LSOp_LoadLongSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDLU:
     category: "loadstore"
     opcode: 2
+    size: 2
     operation: "LSOp_LoadLongUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDS:
     category: "loadstore"
     opcode: 3
+    size: 1
     operation: "LSOp_LoadShortSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDSU:
     category: "loadstore"
     opcode: 4
+    size: "1"
     operation: "LSOp_LoadShortUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDB:
     category: "loadstore"
     opcode: 5
+    size: 0
     operation: "LSOp_LoadByteSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   LDBU:
     category: "loadstore"
     opcode: 6
+    size: 0
     operation: "LSOp_LoadByteUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
   ST:
     category: "loadstore"
     opcode: 7
+    size: "Log2BPW_C"
     operation: "LSOp_StoreWord_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
   STL:
     category: "loadstore"
     opcode: 8
+    size: 2
     operation: "LSOp_StoreLong_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
   STS:
     category: "loadstore"
     opcode: 9
+    size: 1
     operation: "LSOp_StoreShort_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
   STB:
     category: "loadstore"
     opcode: 10
+    size: 0
     operation: "LSOp_StoreByte_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
 
@@ -626,65 +637,76 @@ instruction_set:
     category: "loadstore_indexed"
     opcode: 0
     operation: "LSOp_LoadWord_C"
+    size: "Log2BPW_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXL:
     category: "loadstore_indexed"
     opcode: 1
+    size: 2
     operation: "LSOp_LoadLongSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXLU:
     category: "loadstore_indexed"
     opcode: 2
+    size: 2
     operation: "LSOp_LoadLongUnsigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXS:
     category: "loadstore_indexed"
     opcode: 3
+    size: 1
     operation: "LSOp_LoadShortSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXSU:
     category: "loadstore_indexed"
     opcode: 4
+    size: 1    
     operation: "LSOp_LoadShortUnsigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXB:
     category: "loadstore_indexed"
     opcode: 5
+    size: 0
     operation: "LSOp_LoadByteSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
   LDXBU:
     category: "loadstore_indexed"
     opcode: 6
+    size: 0
     operation: "LSOp_LoadByteUnsigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
 
   STX:
     category: "loadstore_indexed"
     opcode: 7
+    size: "Log2BPW_C"
     operation: "LSOp_StoreWord_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
   STXL:
     category: "loadstore_indexed"
     opcode: 8
+    size: 2
     operation: "LSOp_StoreLong_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
   STXS:
     category: "loadstore_indexed"
     opcode: 9
+    size: 1
     operation: "LSOp_StoreShort_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
   STXB:
     category: "loadstore_indexed"
     opcode: 10
+    size: 0
     operation: "LSOp_StoreByte_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
 
@@ -695,42 +717,49 @@ instruction_set:
   VLDI:
     category: "loadstore_vec_imm"
     opcode: 0
+    size: "Log2BPW_C"
     operation: "LSOp_LoadWord_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDIL:
     category: "loadstore_vec_imm"
     opcode: 1
+    size: 2
     operation: "LSOp_LoadLongSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDILU:
     category: "loadstore_vec_imm"
     opcode: 2
+    size: 2
     operation: "LSOp_LoadLongUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDIS:
     category: "loadstore_vec_imm"
     opcode: 3
+    size: 1
     operation: "LSOp_LoadShortSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDISU:
     category: "loadstore_vec_imm"
     opcode: 4
+    size: 1
     operation: "LSOp_LoadShortUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDIB:
     category: "loadstore_vec_imm"
     opcode: 5
+    size: 0
     operation: "LSOp_LoadByteSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDIBU:
     category: "loadstore_vec_imm"
     opcode: 6
+    size: 0
     operation: "LSOp_LoadByteUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
@@ -741,24 +770,28 @@ instruction_set:
   VSTI:
     category: "loadstore_vec_imm"
     opcode: 7
+    size: "Log2BPW_C"
     operation: "LSOp_StoreWord_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTIL:
     category: "loadstore_vec_imm"
     opcode: 8
+    size: 2
     operation: "LSOp_StoreLong_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTIS:
     category: "loadstore_vec_imm"
     opcode: 9
+    size: 1
     operation: "LSOp_StoreShort_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTIB:
     category: "loadstore_vec_imm"
     opcode: 10
+    size: 0
     operation: "LSOp_StoreByte_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
@@ -769,42 +802,49 @@ instruction_set:
   VLD:
     category: "loadstore_vec"
     opcode: 11
+    size: "Log2BPW_C"
     operation: "LSOp_LoadWord_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDL:
     category: "loadstore_vec"
     opcode: 12
+    size: 2
     operation: "LSOp_LoadLongSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDLU:
     category: "loadstore_vec"
     opcode: 13
+    size: 2
     operation: "LSOp_LoadLongUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDS:
     category: "loadstore_vec"
     opcode: 14
+    size: 1
     operation: "LSOp_LoadShortSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDSU:
     category: "loadstore_vec"
     opcode: 15
+    size: 1
     operation: "LSOp_LoadShortUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDB:
     category: "loadstore_vec"
     opcode: 16
+    size: 0
     operation: "LSOp_LoadByteSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDBU:
     category: "loadstore_vec"
     opcode: 17
+    size: 0
     operation: "LSOp_LoadByteUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
@@ -815,24 +855,28 @@ instruction_set:
   VST:
     category: "loadstore_vec"
     opcode: 18
+    size: "Log2BPW_C"
     operation: "LSOp_StoreWord_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTL:
     category: "loadstore_vec"
     opcode: 19
+    size: 2
     operation: "LSOp_StoreLong_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTS:
     category: "loadstore_vec"
     opcode: 20
+    size: 1
     operation: "LSOp_StoreShort_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTB:
     category: "loadstore_vec"
     opcode: 21
+    size: 0
     operation: "LSOp_StoreByte_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 

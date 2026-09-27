@@ -198,6 +198,8 @@ for op in opcodes:
     
     if "operation" in opcode:
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Operation <= {opcode["operation"]};")
+    if "size" in opcode:
+        decoder_lines.append(f"      ControlWord.{category["unit"]}_Log2Size <= {opcode["size"]};")
     if "mode" in category:
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Mode <= {category["mode"]};")
     if "imm-unsigned" in category:

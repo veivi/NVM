@@ -46,7 +46,7 @@ clear_bss_loop:
 	subi s2, s2, 32
 	cmpi c0, s2, 0
 	bgt c0, clear_bss_loop
-	vsti v0, s1, 4
+	vsti v0, s1, 1
 	addi s1, s1, 32
 
 	// FFT test

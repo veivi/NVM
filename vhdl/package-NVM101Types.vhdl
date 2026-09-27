@@ -112,9 +112,11 @@ package NVM101Types is
     FCU_Operation : FlowOp_T;
     Debug_Operation : DebugOp_T;
     LS_Operation : LoadStoreOp_T;
+    LS_Log2Size : integer range 0 to 3;
     LS_Mode : LoadStoreMode_T;
     LS_Span : RegSpan_T;
     VLS_Operation : LoadStoreOp_T;
+    VLS_Log2Size : integer range 0 to 3;
     VLS_Mode : VectorLoadStoreMode_T;
     VLS_Span : RegSpan_T;
     ALU_Operation : ALUOp_T;
@@ -133,7 +135,7 @@ package NVM101Types is
       '0', 0, '0', 0, '0', 0, '0', 0,
       '0', 0, '0', 0,
       '0', 0, '0', 0,
-      FlowOp_None_C, DebugOp_None_C, LSOp_None_C, LS_Displaced_C, 0, LSOp_None_C, VLS_Imm_C, 0,
+      FlowOp_None_C, DebugOp_None_C, LSOp_None_C, 0, LS_Displaced_C, 0, LSOp_None_C, 0, VLS_Imm_C, 0,
       ALUOp_None_C, ALU_RegReg_C, ALUOp_None_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
       '0', 0, 0);
 end package;
