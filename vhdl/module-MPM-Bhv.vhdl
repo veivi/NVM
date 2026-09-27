@@ -10,14 +10,15 @@ entity MPM is
           Log2BPW_C : integer;
           TagSize_C : integer;
           NumOfPorts_C : integer;
-          Contention_C : real);
+          Contention_C : real;
+          Log2MemSize_C : integer);
   
   port(Clk : in std_logic;
        Reset : in std_logic;
 
        --
 
-       DebugOut : std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       DebugOut : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
        -- LCM initiative
 
@@ -37,8 +38,6 @@ entity MPM is
 end MPM;
 
 architecture Bhv of MPM is
-  constant Log2MemSize_C : integer := 10;
-  
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
@@ -123,6 +122,7 @@ begin
         writeline(file_pointer, Outline);
         write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
         writeline(file_pointer, Outline);
+        flush(file_pointer);
         DebugState := DebugOut;
       end if;
         

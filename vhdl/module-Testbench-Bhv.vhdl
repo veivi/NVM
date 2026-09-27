@@ -12,6 +12,7 @@ end Testbench;
 architecture Bhv of Testbench is
   constant Contention_C : real := 0.1;
   constant Log2IROMSize_C : integer := 10;
+  constant Log2RAMSize_C : integer := 10;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;
@@ -151,7 +152,8 @@ begin
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
                 NumOfPorts_C => 2**Log2VecSize_C + 1,
-                Contention_C => Contention_C)
+                Contention_C => Contention_C,
+                Log2MemSize_C => Log2RAMSize_C )
 
     port map(Clk => Clk,
              Reset => Reset,
