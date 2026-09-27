@@ -26,19 +26,15 @@ package NVM101Types is
   type ConditionVector_T is array (natural range <>) of Condition_T;
   
   type LoadStoreOp_T is ( LSOp_None_C,
-                          LSOp_LoadWord_C,
-                          LSOp_LoadLongSigned_C,
-                          LSOp_LoadLongUnsigned_C,
-                          LSOp_LoadByteSigned_C,
-                          LSOp_LoadByteUnsigned_C,
-                          LSOp_LoadShortSigned_C,
-                          LSOp_LoadShortUnsigned_C,
-                          LSOp_StoreWord_C,
-                          LSOp_StoreLong_C,
-                          LSOp_StoreByte_C,
-                          LSOp_StoreShort_C,
+                          LSOp_LoadSigned_C,
+                          LSOp_LoadUnsigned_C,
+                          LSOp_Store_C,
                           LSOp_Sync_C );
 
+  constant Log2MaxSize_C : integer := 3;
+  
+  subtype SizeSpec_T is integer range 0 to 2**Log2MaxSize_C-1;
+  
   type LoadStoreSize_T is ( LS_Byte_C,
                             LS_Short_C,
                             LS_Long_C,
@@ -112,11 +108,11 @@ package NVM101Types is
     FCU_Operation : FlowOp_T;
     Debug_Operation : DebugOp_T;
     LS_Operation : LoadStoreOp_T;
-    LS_Log2Size : integer range 0 to 3;
+    LS_Log2Size : SizeSpec_T;
     LS_Mode : LoadStoreMode_T;
     LS_Span : RegSpan_T;
     VLS_Operation : LoadStoreOp_T;
-    VLS_Log2Size : integer range 0 to 3;
+    VLS_Log2Size : SizeSpec_T;
     VLS_Mode : VectorLoadStoreMode_T;
     VLS_Span : RegSpan_T;
     ALU_Operation : ALUOp_T;

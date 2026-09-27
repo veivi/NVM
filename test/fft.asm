@@ -16,8 +16,9 @@ fft_decimation_in_time:
 	//   half_m = m/2;
 	//   tab_step = 1<<(LOG2LEN - s);
 
-	ldi s3, 1   // s3 = "s" = 1
-	lsl s15, s3, s2  // s15 = 1<<LOG2LEN = FFT_LEN
+	ldi s3, 1          // s3 = "s" = 1
+	lsl s15, s3, s2    // s15 = 1<<LOG2LEN = FFT_LEN
+	ldi s17, w_table   // s17 points to w_table
 
 for_s_loop_early:
 	ldi s4, 1
@@ -37,10 +38,7 @@ for_j_loop:
 	// 	complex_t omega = w[j * tab_step];
 	
 	lsl s8, s7, s6    // s8 = j<<log2_tab_step = j * tab_step
-	
-	//ld s8, s8, w_table  // s8 = "omega" =  w[j * tab_step]
-	ldi s17, w_table
-	ldx s8, s17, s8
+	ldx s8, s17, s8   // s8 = "omega" =  w[j * tab_step]
 	
 	// 	for(v = 0; v < FFT_LEN; v += V*m) {
 	
@@ -107,7 +105,6 @@ for_s_loop_late:
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
 	lsri s5, s4, 1  // s5 = "half_m" = m/2
-	
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	
 	ldi s16, 1
@@ -126,10 +123,9 @@ for_v_loop_late:
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 
-	lsl s8, s9, s16        // s8 = v<<log2_tab_step_bytes = v * tab_step_bytes
-	addi s8, s8, w_table  // s8 = &w_table[v * tab_step]
-
-	vld v0, s8, s16    // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
+	lsl s8, s9, s16  // s8 = v<<log2_tab_step_bytes = v * tab_step_bytes
+	add s8, s17, s8  // s8 = &w_table[v * tab_step]
+	vld v0, s8, s16  // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
 	
 	// 	  complex_vector_read(u, A, k + v, 1);
 	

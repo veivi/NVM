@@ -49,6 +49,10 @@ clear_bss_loop:
 	vsti v0, s1, 1
 	addi s1, s1, 32
 
+	// ba write_neg_bytes
+	nop
+	nop
+	
 	// FFT test
 
 	ldi s1, fft_data
@@ -117,9 +121,9 @@ clear_vektori_loop:
 	debugi 1
 	ldi s1, vektoridata_alku
 	
-	vldi v0, s1, 4
+	vldi v0, s1, 1
 	vaddi v0, v0, 1
-	vsti v0, s1, 4
+	vsti v0, s1, 1
 
 	vandi v0, v0, 127
 	vcmpi vc3, v0, 64
@@ -187,7 +191,7 @@ clear_vektori_loop:
 	
 	vandi v0, v0, 0
 	vbor v0, v0, s2
-	vsti v0, s1, 4    // v0 is now all s2 from above
+	vsti v0, s1, 1    // v0 is now all s2 from above
 
 	ldi s2, 1
 	lsli s2, s2, 16
@@ -198,25 +202,25 @@ clear_vektori_loop:
 	
 	debugi 11
 
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvadd v1, v2, v2 // Test saturating complex add
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v1
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v1
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	
 	drain
 	debugi 12
@@ -229,25 +233,25 @@ clear_vektori_loop:
 	vlsli v3, v3, 13
 	vadd v2, v2, v3   // Load 1.5-1.5i into v2
 	
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v1, v2, v2 // Test saturating complex multiply
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v1
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v1
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 4
+	vsti v1, s1, 1
 	
 	drain
 	debugi 13
@@ -258,58 +262,58 @@ clear_vektori_loop:
 	
 	// Complex multiply: rotate elements of v2 15 degrees at a time
 	
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4
+	vsti v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 4    // This should be close to 1 + 0i
+	vsti v2, s1, 1    // This should be close to 1 + 0i
 
 	drain
 	debugi 10
@@ -344,7 +348,7 @@ clear_vektori_loop:
 	cvmul v2, v2, v0
 	cvmul v2, v2, v0
 	
-	vsti v2, s1, 4    // This should be close to 1 + 0i
+	vsti v2, s1, 1    // This should be close to 1 + 0i
 
 	drain
 	debugi 11

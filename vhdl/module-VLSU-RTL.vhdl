@@ -17,6 +17,7 @@ entity VLSU is
        -- Command interface
 
        C_Operation : in LoadStoreOp_T;
+       C_Log2Size : in SizeSpec_T;
        C_Stall : in std_logic;
        C_Ready : out std_logic;
        C_Span : in RegSpan_T;
@@ -60,10 +61,8 @@ architecture RTL of VLSU is
   
   subtype Lifetime_T is integer range 0 to 2**4-1;
 
-  type BufferState_T is ( LSU_Idle_C, LSU_ReadSigned_C, LSU_ReadUnsigned_C, LSU_Write_C );
-
   type BufferEntry_T is record
-    State : BufferState_T;
+    State : LoadStoreOp_T;
     Addr : std_logic_vector(AddrSize_C-1 downto 0);
     Log2Size : integer range 0 to 2*Log2BPW_C-1;
     Stride : std_logic_vector(AddrSize_C-1 downto 0);
@@ -73,19 +72,19 @@ architecture RTL of VLSU is
   end record;
 
   constant IdleBufferEntry_C : BufferEntry_T :=
-    ( LSU_Idle_C, (others => '0'), 0, (others => '0'), 0, 0, (others => '0'));
+    ( LSOp_None_C, (others => '0'), 0, (others => '0'), 0, 0, (others => '0'));
 
   type BufferArray_T is array(natural range <>) of BufferEntry_T;
 
   type WorkEntry_T is record
-    State : BufferState_T;
+    State : LoadStoreOp_T;
     Addr : integer range 0 to 2**Log2BPW_C-1;
-    Lifetime : Lifetime_T;
     Log2Size : integer range 0 to 2*Log2BPW_C-1;
+    Lifetime : Lifetime_T;
     Dest : RegIndex_T;
   end record;
 
-  constant EmptyWorkEntry_C : WorkEntry_T := ( LSU_Idle_C, 0, 0, 0, 0 );
+  constant EmptyWorkEntry_C : WorkEntry_T := ( LSOp_None_C, 0, 0, 0, 0 );
   
   type WorkArray_T is array(natural range <>) of WorkEntry_T;
 
@@ -121,69 +120,17 @@ begin
           --  We're seeing a command and can buffer it
           --
 
-          BufferStore(IndexIn).WriteData <= (others => '0');
-          BufferStore(IndexIn).Count <= 0;
-          
-          case C_Operation is
-            when LSOp_StoreWord_C =>
-              BufferStore(IndexIn).State <= LSU_Write_C;
-              BufferStore(IndexIn).Log2Size <= Log2BPW_C;
-              BufferStore(IndexIn).WriteData <= C_Data;
-              
-            when LSOp_StoreByte_C =>
-              BufferStore(IndexIn).State <= LSU_Write_C;
-              BufferStore(IndexIn).Log2Size <= 0;
-              BufferStore(IndexIn).WriteData <= C_Data;
-
-            when LSOp_StoreShort_C =>
-              BufferStore(IndexIn).State <= LSU_Write_C;
-              BufferStore(IndexIn).Log2Size <= 1;
-              BufferStore(IndexIn).WriteData <= C_Data;
-
-            when LSOp_StoreLong_C =>
-              BufferStore(IndexIn).State <= LSU_Write_C;
-              BufferStore(IndexIn).Log2Size <= 2;
-              BufferStore(IndexIn).WriteData <= C_Data;
-
-            when LSOp_LoadWord_C =>
-              BufferStore(IndexIn).State <= LSU_ReadUnsigned_C;
-              BufferStore(IndexIn).Log2Size <= Log2BPW_C;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when LSOp_LoadLongUnsigned_C =>
-              BufferStore(IndexIn).State <= LSU_ReadUnsigned_C;
-              BufferStore(IndexIn).Log2Size <= 2;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when LSOp_LoadLongSigned_C =>
-              BufferStore(IndexIn).State <= LSU_ReadSigned_C;
-              BufferStore(IndexIn).Log2Size <= 2;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when LSOp_LoadShortUnsigned_C =>
-              BufferStore(IndexIn).State <= LSU_ReadUnsigned_C;
-              BufferStore(IndexIn).Log2Size <= 1;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when LSOp_LoadShortSigned_C =>
-              BufferStore(IndexIn).State <= LSU_ReadSigned_C;
-              BufferStore(IndexIn).Log2Size <= 1;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when LSOp_LoadByteUnsigned_C =>
-              BufferStore(IndexIn).State <= LSU_ReadUnsigned_C;
-              BufferStore(IndexIn).Log2Size <= 0;
-              BufferStore(IndexIn).Count <= C_Span;
-            
-            when others =>      
-              BufferStore(IndexIn).State <= LSU_ReadSigned_C;
-              BufferStore(IndexIn).Log2Size <= 0;
-              BufferStore(IndexIn).Count <= C_Span;
-          end case;
-          
+          BufferStore(IndexIn).State <= C_Operation;
+          BufferStore(IndexIn).Log2Size <= C_Log2Size;
           BufferStore(IndexIn).Addr <= C_Addr;
           BufferStore(IndexIn).Stride <= C_Stride;
           BufferStore(IndexIn).Dest <= C_Dest;
+          BufferStore(IndexIn).Count <= C_Span;
+          BufferStore(IndexIn).WriteData <= (others => '0');
+
+          if C_Operation = LSOp_Store_C then
+            BufferStore(IndexIn).WriteData <= C_Data;
+          end if;
         end if;
 
         if not BufferEmpty and not WorkTableFull and LCI_Accept = '1' then
@@ -246,10 +193,10 @@ begin
 
     for I in 0 to 2**Log2BufferDepth_C-1 loop
       case BufferStore(I).State is
-        when LSU_ReadSigned_C | LSU_ReadUnSigned_C =>
+        when LSOp_LoadSigned_C | LSOp_LoadUnSigned_C =>
           ReadsPending <= true;
           
-        when LSU_Write_C =>
+        when LSOp_Store_C =>
           WritesPending <= true;
 
         when others =>        
@@ -310,11 +257,11 @@ begin
     
     for I in 2**Log2TableSize_C-1 downto 0 loop
       case WorkTable(I).State is
-        when LSU_Idle_C =>
+        when LSOp_None_C =>
           WorkTableFull <= false;
           FreeIndex <= I;
 
-        when LSU_Write_C =>
+        when LSOp_Store_C =>
           WritesOutstanding <= true;
           
         when others =>
@@ -329,7 +276,7 @@ begin
 
   LCI_Present <= '0' when BufferEmpty or WorkTableFull else '1';
 
-  LCI_Write <= '1' when BufferStore(IndexOut).State = LSU_Write_C else '0';
+  LCI_Write <= '1' when BufferStore(IndexOut).State = LSOp_Store_C else '0';
 
   LCI_Tag <= std_logic_vector(to_unsigned(FreeIndex, TagSize_C));
 
@@ -366,7 +313,7 @@ begin
 
   SeeingValidResponse <=
     LCR_Present = '1' and to_integer(unsigned(LCR_Tag(TagSize_C-1 downto Log2TableSize_C))) = 0
-    and WorkTable(ResponseIndex).State /= LSU_Idle_C;
+    and WorkTable(ResponseIndex).State /= LSOp_None_C;
 
   ResponseIndex <= to_integer(unsigned(LCR_Tag(Log2TableSize_C-1 downto 0)));
 
@@ -382,7 +329,7 @@ begin
         R_Dest <= 0;
         R_Data <= (others => '0');
         
-      elsif SeeingValidResponse and WorkTable(ResponseIndex).State /= LSU_Write_C then
+      elsif SeeingValidResponse and WorkTable(ResponseIndex).State /= LSOp_Store_C then
         --
         -- We have a read response incoming
         --
@@ -396,7 +343,7 @@ begin
           end if;
         end loop;
 
-        if WorkTable(ResponseIndex).State = LSU_ReadSigned_C then
+        if WorkTable(ResponseIndex).State = LSOp_LoadSigned_C then
           FillByte := (others => TempData(ByteSize_C*2**WorkTable(ResponseIndex).Log2Size - 1));
         end if;
         

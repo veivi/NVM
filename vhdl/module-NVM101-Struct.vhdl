@@ -67,10 +67,7 @@ architecture Struct of NVM101 is
 
   function LSOpIsLoad(Op : LoadStoreOp_T) return boolean is
   begin
-    return Op = LSOp_LoadWord_C
-      or Op = LSOp_LoadByteSigned_C or Op = LSOp_LoadByteUnsigned_C
-      or Op = LSOp_LoadShortSigned_C or Op = LSOp_LoadShortUnsigned_C
-      or Op = LSOp_LoadLongSigned_C or Op = LSOp_LoadLongUnsigned_C;
+    return Op = LSOp_LoadSigned_C or Op = LSOp_LoadUnsigned_C;
   end function;
   
   signal Instruction : std_logic_vector(InstrSize_C-1 downto 0);
@@ -302,6 +299,7 @@ begin
     port map(Clk => Clk,
              Reset => Reset,
              C_Operation => ExecuteWord.LS_Operation,
+             C_Log2Size => ExecuteWord.LS_Log2Size,
              C_Stall => ExecuteStall,
              C_Span => ExecuteWord.LS_Span,
              C_Ready => LS_Ready,               
@@ -470,6 +468,7 @@ begin
       port map(Clk => Clk,
                Reset => Reset,
                C_Operation => ExecuteWord.VLS_Operation,
+               C_Log2Size => ExecuteWord.VLS_Log2Size,
                C_Stall => ExecuteStall,
                C_Span => ExecuteWord.VLS_Span,
                C_Ready => VLS_Ready(I),               
