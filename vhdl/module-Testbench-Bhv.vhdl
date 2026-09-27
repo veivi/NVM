@@ -10,6 +10,7 @@ end Testbench;
 
 architecture Bhv of Testbench is
   constant Contention_C : real := 0.1;
+  constant Log2IROMSize_C : integer := 10;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;
@@ -61,7 +62,7 @@ architecture Bhv of Testbench is
   impure function InitInstrStore(name : in string) return InstrArray_T is
         file file_pointer : text open read_mode is name;
         variable line_v : line;
-        variable output : InstrArray_T(0 to 2**10-1);
+        variable output : InstrArray_T(0 to 2**Log2IROMSize_C-1);
         variable i : integer := 0;
     begin
         while not endfile(file_pointer) loop
@@ -72,7 +73,7 @@ architecture Bhv of Testbench is
         return output;
     end function;
 
-  signal I_Store : InstrArray_T(0 to 2**10-1) := InitInstrStore("i_rom.txt");
+  signal I_Store : InstrArray_T(0 to 2**Log2IROMSize_C-1) := InitInstrStore("i_rom.txt");
 begin
   --
   -- Design Under Test
@@ -123,7 +124,7 @@ begin
   VU102_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C,
-                Precision_C => 14)
+                Precision_C => 12)
 
     port map(Clk => Clk,
              Reset => Reset,
@@ -192,8 +193,25 @@ begin
   -- Instruction memory
   --
 
-  I_Code <=
-    I_Store(to_integer(unsigned(I_Addr))) after 3 ns when I_Request = '1' else (others => 'X');
-  
+  I_ROM_Lookup_C : process(I_Addr, I_Request)
+  begin
+    if I_Request = '1' then
+      I_Code <= I_Store(to_integer(unsigned(I_Addr(Log2IROMSize_C-1 downto 0)))) after 3 ns;      
+    else
+      I_Code <= (others => 'X') after 4 ns;
+    end if;
+  end process;
+
   I_Ready <= '1';
+  
+  --
+  -- Debug output monitor, stop the simulation if we see all '1's
+  --
+
+  Debug_P : process(DebugOut)
+  begin
+    assert DebugOut /= std_logic_vector(to_signed(-1, WordSize_C))
+      report "Debug port stopping simulation"
+      severity failure;      
+  end process;
 end Bhv;

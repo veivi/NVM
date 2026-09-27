@@ -201,7 +201,7 @@ instruction_categories:
     format: "debug_imm"
     prefix: 56
     operands: [ "value" ]
-    imm-unsigned: "value"
+    imm-signed: "value"
     unit: "Debug"
 
   debug:

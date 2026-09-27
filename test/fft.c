@@ -1,11 +1,13 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <math.h>
 
-#define  LOG2LEN     6
-#define  FFT_LEN      (1<<LOG2LEN)
-#define  LOG2V       3
-#define  V           (1<<LOG2V)
-#define  pi          ((float) M_PI)
+#define LOG2LEN     6
+#define FFT_LEN     (1<<LOG2LEN)
+#define LOG2V       3
+#define V           (1<<LOG2V)
+#define PRECISION   12
+#define pi          ((float) M_PI)
 
 typedef struct complex {
   float real, imag;
@@ -91,8 +93,6 @@ void fft(complex_t A[])
 {
   int s = 0, k = 0, m = 0, half_m = 0, j = 0, tab_step = 0;
 
-  bit_reversal_permutation(A);
-  
   for(s = 1; s <= LOG2LEN; s++) {
     m = 1<<s;
     half_m = m/2;
@@ -115,8 +115,6 @@ void fft_with_vectors(complex_t A[])
 {
   int s = 0, m = 0, half_m = 0, tab_step = 0;
 
-  bit_reversal_permutation(A);
-  
   for(s = 1; s <= LOG2V; s++) {
     //
     // Early stage: our vectors will handle k with striding by m
@@ -188,7 +186,7 @@ void printbin(FILE *file, int16_t a)
   }
 }
 
-void store_complex_bin(const char *name, const char *mode, complex_t A[], int len)
+void store_complex_bin(const char *name, const char *mode, complex_t A[], int len, bool reverse)
 {
   FILE *file = fopen(name, mode);
 
@@ -196,10 +194,11 @@ void store_complex_bin(const char *name, const char *mode, complex_t A[], int le
     int i = 0;
   
     for(i = 0; i < len; i++) {
-      int16_t real = (int16_t) (A[i].real * (1<<14)), imag = (A[i].imag * (float) (1<<14));
-      // printf("W[i] = %d + i%d\n", real, imag);
-      printbin(file, real);
-      printbin(file, imag);
+      int index = reverse ? bit_reverse(i) : i;
+      complex_t a = A[index];
+      
+      printbin(file, (int16_t) (a.real * (1<<PRECISION)));
+      printbin(file, (int16_t) (a.imag * (float) (1<<PRECISION)));
       fprintf(file, "\n");
     }
 
@@ -217,15 +216,18 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     w[i] = COMPLEX(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
 
-  store_complex_bin("data_rom.txt", "w", w, FFT_LEN);
+  store_complex_bin("data_rom.txt", "w", w, FFT_LEN, false);
 
   for(i = 0; i < FFT_LEN; i++)
-    // fft_data[i] = COMPLEX(cosf(i*2*pi/8), sinf(i*2*pi/8));
-    fft_data[i] = COMPLEX(0.03f + 0.03f*sinf(i*2*pi/8) + 0.03f*sinf(i*2*pi/32), 0);
-    // fft_data[i] = COMPLEX(1.0f, 0.0f);
+    // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
+    fft_data[i] = COMPLEX(0.1f*cosf(i*2*pi/8), 0.0f);
+    //    fft_data[i] = COMPLEX(0.03f*sinf(i*2*pi/8) + 0.03f*sinf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   
-  store_complex_bin("data_rom.txt", "a+", fft_data, FFT_LEN);
+  bit_reversal_permutation(fft_data);
+  
+  store_complex_bin("data_rom.txt", "a+", fft_data, FFT_LEN, false);
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);

@@ -18,7 +18,10 @@ loop:
 	
 
 stop_simulation:
-	ldi s0, -1
-	jmp s0, 0	// This should stop the simulation with instruction access failure
+	drain
+	debugi -1
 	nop
 	nop
+
+	
+

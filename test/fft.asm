@@ -25,7 +25,6 @@ for_s_loop_early:
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
 	lsri s5, s4, 1  // s5 = "half_m" = m/2
-	
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	
 	//
@@ -90,6 +89,7 @@ end_for_v_loop_early:
 	nop
 
 end_for_j_loop:
+	drain
 	drain
 	
 	addi s3, s3, 1    // s = s + 1
