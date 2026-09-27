@@ -149,14 +149,14 @@ for_v_loop_late:
 	cvmul v2, v2, v0   // v2 = "t" = complex_vector_mul(t, a, omega)
 	
 	// 	  complex_vector_add(x, u, t);
-        // 	  complex_vector_write(x, A, k + v, 1)
-
-	cvadd v3, v1, v2
-	vsti v3, s10, 1
-	
 	// 	  complex_vector_sub(y, u, t);
-	
+
+	cvadd v3, v1, v2	
 	cvsub v4, v1, v2
+	
+        // 	  complex_vector_write(x, A, k + v, 1)
+	
+	vsti v3, s10, 1
 	
 	blt c0, for_v_loop_late  // Loop as long as v < half_m
 	vsti v4, s13, 1          // 	  complex_vector_write(y, A, k + v + half_m, 1)
