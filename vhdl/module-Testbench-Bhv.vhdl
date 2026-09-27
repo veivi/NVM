@@ -10,7 +10,7 @@ entity Testbench is
 end Testbench;
 
 architecture Bhv of Testbench is
-  constant Contention_C : real := 0.1;
+  constant Contention_C : real := 0.2;
   constant Log2IROMSize_C : integer := 10;
   constant Log2RAMSize_C : integer := 10;
   constant AddrSize_C : integer := 20;
@@ -76,7 +76,8 @@ architecture Bhv of Testbench is
   end function;
 
   signal I_Store : InstrArray_T(0 to 2**Log2IROMSize_C-1) := InitInstrStore("i_rom.txt");
-  signal Freeze : boolean;
+  
+  signal Freeze : boolean := false;
 begin
   --
   -- Design Under Test
