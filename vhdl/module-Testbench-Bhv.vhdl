@@ -4,6 +4,7 @@ use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
 use std.textio.all;
+use std.env.finish;
 
 entity Testbench is
 end Testbench;
@@ -74,6 +75,7 @@ architecture Bhv of Testbench is
     end function;
 
   signal I_Store : InstrArray_T(0 to 2**Log2IROMSize_C-1) := InitInstrStore("i_rom.txt");
+        signal Sim_Stop : boolean;
 begin
   --
   -- Design Under Test
@@ -175,6 +177,12 @@ begin
     wait for 5 ns;
     Clk <= '1';
     wait for 5 ns;
+
+    if Sim_Stop then
+      report "Oscillator stop";
+      finish;
+      wait;
+    end if;
   end process;
 
   --
@@ -200,16 +208,13 @@ begin
   -- Debug output monitor, stop the simulation if we see all '1's
   --
 
-  Debug_P : process
+  Debug_P : process(Clk)
   begin
-    if DebugOut = std_logic_vector(to_signed(-1, WordSize_C)) then
-      wait for 10 us;
-
-      assert false
-        report "Debug port stopping simulation"
-        severity failure;
-    else
-      wait for 10 ns;
-    end if;  
+    if rising_edge(Clk) then
+      if DebugOut = std_logic_vector(to_signed(-1, WordSize_C)) then
+        report "Debug port stopping simulation";
+        Sim_Stop <= true after 100 ns;
+      end if;
+    end if;
   end process;
 end Bhv;

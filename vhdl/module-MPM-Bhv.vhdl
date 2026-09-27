@@ -178,6 +178,7 @@ begin
 
       if Something then
         writeline(file_pointer, OutLine);
+        flush(file_pointer);
       else
         deallocate(OutLine);
       end if;
