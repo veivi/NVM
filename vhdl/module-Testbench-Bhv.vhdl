@@ -62,21 +62,21 @@ architecture Bhv of Testbench is
   type InstrArray_T is array (natural range <>) of InstrWord_T;
 
   impure function InitInstrStore(name : in string) return InstrArray_T is
-        file file_pointer : text open read_mode is name;
-        variable line_v : line;
-        variable output : InstrArray_T(0 to 2**Log2IROMSize_C-1);
-        variable i : integer := 0;
-    begin
-        while not endfile(file_pointer) loop
-          readline(file_pointer, line_v);
-          bread(line_v, output(i));
-          i := i + 1;
-        end loop;
-        return output;
-    end function;
+    file file_pointer : text open read_mode is name;
+    variable line_v : line;
+    variable output : InstrArray_T(0 to 2**Log2IROMSize_C-1);
+    variable i : integer := 0;
+  begin
+    while not endfile(file_pointer) loop
+      readline(file_pointer, line_v);
+      bread(line_v, output(i));
+      i := i + 1;
+    end loop;
+    return output;
+  end function;
 
   signal I_Store : InstrArray_T(0 to 2**Log2IROMSize_C-1) := InitInstrStore("i_rom.txt");
-        signal Sim_Stop : boolean;
+  signal Freeze : boolean;
 begin
   --
   -- Design Under Test
@@ -180,7 +180,7 @@ begin
     Clk <= '1';
     wait for 5 ns;
 
-    if Sim_Stop then
+    if Freeze then
       report "Oscillator stop";
       finish;
       wait;
@@ -215,7 +215,7 @@ begin
     if rising_edge(Clk) then
       if DebugOut = std_logic_vector(to_signed(-1, WordSize_C)) then
         report "Debug port stopping simulation";
-        Sim_Stop <= true after 100 ns;
+        Freeze <= true;
       end if;
     end if;
   end process;
