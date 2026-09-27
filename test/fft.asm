@@ -79,7 +79,7 @@ for_v_loop_early:
 	vst v2, s10, s4           // complex_vector_write(x, A, j + v, m)
 	
 	blt c1, for_v_loop_early  // Loop as long as v < FFT_LEN
-	vst v3, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
+	vst v3, s13, s4           // Delay slot, complex_vector_write(y, A, j + v + half_m, m)
 
 end_for_v_loop_early:
 	addi s7, s7, 1         // j++
@@ -157,7 +157,7 @@ for_v_loop_late:
 	vsti v3, s10, 1
 	
 	blt c0, for_v_loop_late  // while v < half_m
-	vsti v4, s13, 1          // complex_vector_write(y, A, k + v + half_m, 1)
+	vsti v4, s13, 1          // Delay slot, complex_vector_write(y, A, k + v + half_m, 1)
 	
 end_for_v_loop_late:
 	add s7, s7, s4           // k += m
