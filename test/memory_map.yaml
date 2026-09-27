@@ -6,11 +6,11 @@ segment_list:
 
   ram0:
     base: 0
-    size: 2048
+    size: 4096
 
   data_rom0:
-    base: 2048
-    size: 2048
+    base: 4096
+    size: 4096
     
 section_mapping:
   data: ram0

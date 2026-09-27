@@ -2,29 +2,30 @@
 	.import "fft_decimation_in_time"
 	.import "stop_simulation"
 	.export "init"
-
-	.section "bss"
+	.export "w_table"
 
 #include <common.h>
 #include <VU102.h>
 	
+	.section "bss"
+
 bss_start:	
 	.byte 5
 
 	.align 16
 test:	
-	.half 1
+	.long 1
 	.short 10
 	.word 1
 	
 	.align 4
 	
 vektoridata_alku:
-	.word 64
+	.long 64
 vektoridata_loppu:
 
 fft_data:
-	.word 64
+	.long 64
 	
 bss_end:	
 	
@@ -32,6 +33,14 @@ bss_end:
 
 merkkijono:	
 	.string "Paska merkkijono\0"
+	
+	.section "const"
+
+w_table:
+	.long 64
+
+test_data:
+	.long 64
 	
 	.section "code"
 	
@@ -49,24 +58,24 @@ clear_bss_loop:
 	bgt c0, clear_bss_loop
 	addi s1, s1, 32
 
-	ba write_neg_bytes
+tests_start:	
+	// ba write_neg_bytes
 	nop
 	
-	// FFT test
+	// Initialize fft_data with the test signal
 
+	ldi s0, test_data
 	ldi s1, fft_data
-	ldi s2, 64
-	ldi s3, 50
-	
-	lsli s3, s3, 16
+	ldi s2, 63
 	
 init_fft_loop:
-	st s3, s1, 0
+	ldx s3, s0, s2
 	subi s2, s2, 1
 	cmpi c0, s2, 0
-	bgt c0, init_fft_loop
-	addi s1, s1, 4
+	bge c0, init_fft_loop
+	stx s3, s1, s2
 
+	// Invoke FFT
 	
 	ldi s1, fft_data
 	jmpal fft_decimation_in_time

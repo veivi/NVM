@@ -37,7 +37,7 @@ entity MPM is
 end MPM;
 
 architecture Bhv of MPM is
-  constant Log2MemSize_C : integer := 9;
+  constant Log2MemSize_C : integer := 10;
   
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   

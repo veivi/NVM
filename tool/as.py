@@ -449,7 +449,7 @@ def main():
             elif node.name == "short":
                 sections[sectionName] += bytearray(2*node.args[0].value)
                 
-            elif node.name == "half":
+            elif node.name == "long":
                 sections[sectionName] += bytearray(4*node.args[0].value)
                 
             elif node.name == "word":

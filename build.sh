@@ -3,7 +3,8 @@
 design/tool/as.py design/test/test.asm
 design/tool/as.py design/test/fft.asm
 design/tool/as.py design/test/test2.asm
-design/tool/ld.py test.obj fft.obj test2.obj --map design/test/memory_map.yaml
+design/tool/ld.py test.obj fft.obj test2.obj --map design/test/memory_map.yaml >ld.report
+
 design/tool/generate.py
 
 nvc -a design/vhdl/package-NVM101Interface.vhdl

@@ -1,5 +1,6 @@
 	.export "fft_decimation_in_time"
 	.import "stop_simulation"
+	.import "w_table"
 
 #include <VU102.h>
 #include <common.h>
@@ -193,9 +194,4 @@ read_loop:
 
 	ret
 	nop
-	
-	.section "const"
-
-w_table:
-	.word 1024
 	

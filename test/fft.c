@@ -178,14 +178,34 @@ void fft_with_vectors(complex_t A[])
   }
 }
 
-void printbin(int16_t a)
+void printbin(FILE *file, int16_t a)
 {
   int i = 0;
   while(i < 8*sizeof(a)) {
-    printf("%c", a & 0x8000 ? '1' : '0');
+    fprintf(file, "%c", a & 0x8000 ? '1' : '0');
     a <<= 1;
     i++;
   }
+}
+
+void store_complex_bin(const char *name, const char *mode, complex_t A[], int len)
+{
+  FILE *file = fopen(name, mode);
+
+  if(file) {
+    int i = 0;
+  
+    for(i = 0; i < len; i++) {
+      int16_t real = (int16_t) (A[i].real * (1<<14)), imag = (A[i].imag * (float) (1<<14));
+      // printf("W[i] = %d + i%d\n", real, imag);
+      printbin(file, real);
+      printbin(file, imag);
+      fprintf(file, "\n");
+    }
+
+    fclose(file);
+  } else
+    printf("File %s could not be opened for writing.", name);
 }
 
 int main()
@@ -196,20 +216,16 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++)
     w[i] = COMPLEX(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
-  
-  for(i = 0; i < FFT_LEN; i++) {
-    int16_t real = (int16_t) (w[i].real * (1<<14)), imag = (w[i].imag * (float) (1<<14));
-    // printf("W[i] = %d + i%d\n", real, imag);
-    printbin(real);
-    printbin(imag);
-    printf("\n");
-  }
-    
+
+  store_complex_bin("data_rom.txt", "w", w, FFT_LEN);
+
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(cosf(i*2*pi/8), sinf(i*2*pi/8));
-    fft_data[i] = COMPLEX(1.0f + sinf(i*2*pi/8) + sinf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX(0.03f + 0.03f*sinf(i*2*pi/8) + 0.03f*sinf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(1.0f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
+  
+  store_complex_bin("data_rom.txt", "a+", fft_data, FFT_LEN);
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
