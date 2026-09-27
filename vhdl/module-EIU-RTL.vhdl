@@ -26,7 +26,8 @@ entity EIU is
        VRC_Index : in  RegIndex_T;
        VWA_Active : in std_logic;
        VWA_Index : in  RegIndex_T;
-       Fence_Operation : in FenceOp_T;
+       DecodeFence : in FenceOp_T;
+       ExecuteFence : in FenceOp_T;
        LoadsOutstanding : in std_logic;
        StoresOutstanding : in std_logic;
        ALU_Operation : in ALUOp_T;
@@ -43,6 +44,24 @@ entity EIU is
 end EIU;
 
 architecture RTL of EIU is
+
+  function Fence(Operation : FenceOp_T; LoadsOutstanding : std_logic; StoresOutstanding : std_logic) return std_logic is
+  begin
+    case Operation is
+      when FenceOp_ReadFence_C =>
+        return LoadsOutstanding;
+        
+      when FenceOp_WriteFence_C =>
+        return StoresOutstanding;
+
+      when FenceOp_Fence_C =>
+        return  StoresOutstanding or LoadsOutstanding;
+
+      when others =>
+        return '0';
+    end case;
+  end function;
+  
   signal RA_Stall : std_logic;
   signal RB_Stall : std_logic;
   signal RC_Stall : std_logic;
@@ -54,7 +73,8 @@ architecture RTL of EIU is
   signal LS_Stall : std_logic;
   signal VLS_Ready_All : std_logic;
   signal VLS_Stall : std_logic;
-  signal Fence_Stall : std_logic;
+  signal DecodeFence_Stall : std_logic;
+  signal ExecuteFence_Stall : std_logic;
   signal Ext_Stall : std_logic;
   signal VRF_ScoreboardFolded : std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
 begin
@@ -111,22 +131,9 @@ begin
   -- Fence decode
   --
 
-  Fence_P : process(Fence_Operation, LoadsOutstanding, StoresOutstanding)
-  begin
-    case Fence_Operation is
-      when FenceOp_ReadFence_C =>
-        Fence_Stall <= LoadsOutstanding;
-        
-      when FenceOp_WriteFence_C =>
-        Fence_Stall <= StoresOutstanding;
+  DecodeFence_Stall <= Fence(DecodeFence, LoadsOutstanding, StoresOutstanding);
 
-      when FenceOp_Fence_C =>
-        Fence_Stall <= StoresOutstanding or LoadsOutstanding;
-
-      when others =>
-        Fence_Stall <= '0';
-    end case;
-  end process;
+  ExecuteFence_Stall <= Fence(ExecuteFence, LoadsOutstanding, StoresOutstanding);
   
   --
   -- Vector Extension issue/result write conflict stall
@@ -144,11 +151,12 @@ begin
   --
   
   DecodeStall <= RA_Stall or RB_Stall or RC_Stall or WA_Stall
-              or VRA_Stall or VRB_Stall or VRC_Stall or VWA_Stall;
+             or VRA_Stall or VRB_Stall or VRC_Stall or VWA_Stall
+             or DecodeFence_Stall;
 
   --
   -- Execute stall detection
   --
   
-  ExecuteStall <= LS_Stall or VLS_Stall or Fence_Stall or Ext_Stall;
+  ExecuteStall <= LS_Stall or VLS_Stall or ExecuteFence_Stall or Ext_Stall;
 end RTL;

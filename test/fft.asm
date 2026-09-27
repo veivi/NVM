@@ -90,7 +90,6 @@ end_for_v_loop_early:
 
 end_for_j_loop:
 	drain
-	drain
 	
 	addi s3, s3, 1    // s = s + 1
 	cmpi c0, s3, LOG2V  
@@ -176,20 +175,6 @@ end_for_k_loop:
 	ble c0, for_s_loop_late
 	nop
 
-	// Read result
-
-	debugi 64
-	ldi s3, 1
-	lsl s3, s3, s2
-	
-read_loop:
-	ld s2, s1, 0
-	addi s1, s1, 4
-	subi s3, s3, 1
-	cmpi c0, s3, 0
-	bgt c0, read_loop
-	nop
-	
 	// Done
 
 	ret

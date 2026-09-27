@@ -81,10 +81,26 @@ init_fft_loop:
 	jmpal fft_decimation_in_time
 	ldi s2, 6
 
+	// Read result
+
+	debugi 64
+	drain
+	
+	ldi s3, 1
+	lsl s3, s3, s2
+	
+read_loop:
+	ld s2, s1, 0
+	addi s1, s1, 4
+	subi s3, s3, 1
+	cmpi c0, s3, 0
+	bgt c0, read_loop
+	nop
+	
 	// Done
 	
 	jmpa stop_simulation
-	debugi -1
+	nop
 	
 write_neg_bytes:	
 	ldi s1, bss_start
