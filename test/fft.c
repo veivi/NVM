@@ -269,8 +269,8 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
-    fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    //    fft_data[i] = COMPLEX(0.03f*sinf(i*2*pi/8) + 0.03f*sinf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
+    fft_data[i] = COMPLEX(0.05f + 0.15f*cosf(i*2*pi/8) + 0.15f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   
