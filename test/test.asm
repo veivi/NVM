@@ -56,7 +56,6 @@ init:
 clear_bss_loop:
 	vsti v0, s1, 1
 	subi s2, s2, 32
-	cmpi c0, s2, 0
 	bgt c0, clear_bss_loop
 	addi s1, s1, 32
 
@@ -74,7 +73,6 @@ init_fft_loop:
 	ldx s3, s0, s2
 	stx s3, s1, s2
 	subi s2, s2, 1
-	cmpi c0, s2, 0
 	bge c0, init_fft_loop
 
 	// Invoke FFT
@@ -95,7 +93,6 @@ read_loop:
 	ld s2, s1, 0
 	addi s1, s1, 4
 	subi s3, s3, 1
-	cmpi c0, s3, 0
 	bgt c0, read_loop
 	nop
 	
@@ -113,10 +110,11 @@ neg_loop:
 	stb s3, s1 + 0
 	addi s1, s1, 1
 	subi s2, s2, 1
-	cmpi c0, s2, 0
 	bgt c0, neg_loop
 	subi s3, s3, 1
-		
+
+	debugi 256
+	
 read_neg_bytes:	
 	ldi s1, bss_start
 	ldi s2, 100
@@ -131,6 +129,8 @@ byte_read_loop:
 	bgt c1, byte_read_loop
 	addi s1, s1, 4
 
+	debugi 257
+	
 nollataan_vektoridata:	
 	ldi s1, vektoridata_alku
 	ldi s2, vektoridata_loppu
@@ -141,7 +141,6 @@ clear_vektori_loop:
 	st s3, s1 + 0
 	addi s1, s1, 4
 	subi s2, s2, 4
-	cmpi c0, s2, 0
 	bgt c0, clear_vektori_loop
 	addi s3, s3, 2345
 	

@@ -17,60 +17,80 @@ end ALU;
 
 architecture RTL of ALU is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
+  signal ALUResult, CompareA, CompareB : std_logic_vector(WordSize_C-1 downto 0);
 begin
-  process(Operation, A, B)
+  ALU_P : process(Operation, A, B)
   begin
     -- Default result
     
-    Condition <= Cond_Equal_C;
-    Result <= (others => '0');
+    ALUResult <= (others => '0');
     
     case Operation is
       when ALUOp_OR_C =>
-        Result <= A or B;
+        ALUResult <= A or B;
 
       when ALUOp_AND_C =>
-        Result <= A and B;
+        ALUResult <= A and B;
 
       when ALUOp_XOR_C =>
-        Result <= A xor B;
+        ALUResult <= A xor B;
 
       when ALUOp_ADD_C =>
-        Result <= std_logic_vector(unsigned(A) + unsigned(B));
+        ALUResult <= std_logic_vector(unsigned(A) + unsigned(B));
 
       when ALUOp_SUB_C =>
-        Result <= std_logic_vector(unsigned(A) - unsigned(B));
-
-      when ALUOp_CMP_C =>
-        if signed(A) > signed(B) then
-          Condition <= Cond_GreaterThan_C;
-        elsif signed(A) < signed(B) then
-          Condition <= Cond_LessThan_C;
-        end if;
-        
-      when ALUOp_CMPU_C =>
-        if unsigned(A) > unsigned(B) then
-          Condition <= Cond_GreaterThan_C;
-        elsif unsigned(A) < unsigned(B) then
-          Condition <= Cond_LessThan_C;
-        end if;
+        ALUResult <= std_logic_vector(unsigned(A) - unsigned(B));
 
       when ALUOp_LSL_C =>
-        Result <= std_logic_vector(shift_left(unsigned(A),
+        ALUResult <= std_logic_vector(shift_left(unsigned(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
             
       when ALUOp_LSR_C =>
-        Result <= std_logic_vector(shift_right(unsigned(A),
+        ALUResult <= std_logic_vector(shift_right(unsigned(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
             
       when ALUOp_ASR_C =>
-        Result <= std_logic_vector(shift_right(signed(A),
+        ALUResult <= std_logic_vector(shift_right(signed(A),
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
             
       when others =>
         null;
     end case; 
   end process;
+
+  CompareInput_P : process(Operation, A, B, ALUResult)
+  begin
+    if Operation = ALUOp_CMP_C or Operation = ALUOp_CMPU_C then
+      -- Explicit comparison
+      CompareA <= A;
+      CompareB <= B;
+    else
+      -- Implicit comparison of result and zero
+      CompareA <= ALUResult;
+      CompareB <= (others => '0');
+    end if;
+  end process;
+  
+  Compare_P : process(Operation, CompareA, CompareB)
+  begin
+    Condition <= Cond_Equal_C;
+    
+    if Operation = ALUOp_CMPU_C then
+      if unsigned(CompareA) > unsigned(CompareB) then
+        Condition <= Cond_GreaterThan_C;
+      elsif unsigned(CompareA) < unsigned(CompareB) then
+        Condition <= Cond_LessThan_C;
+      end if;
+    else
+      if signed(CompareA) > signed(CompareB) then
+        Condition <= Cond_GreaterThan_C;
+      elsif signed(CompareA) < signed(CompareB) then
+        Condition <= Cond_LessThan_C;
+      end if;
+    end if;
+  end process;
+
+  Result <= ALUResult;
 end RTL;
 
 

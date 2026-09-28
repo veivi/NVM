@@ -253,6 +253,9 @@ for op in opcodes:
         (offset, length) = instruction_field(format, category["condition-write"])
         decoder_lines.append("      ControlWord.CR_Write_Active <= '1';")
         decoder_lines.append(f"      ControlWord.CR_Write_Index <= CondIndex(I_Code({offset+length-1} downto {offset}));")
+    if "condition-write-implicit" in category:
+        decoder_lines.append("      ControlWord.CR_Write_Active <= '1';")
+        decoder_lines.append(f"      ControlWord.CR_Write_Index <= {category["condition-write-implicit"]};")
     if "vector-condition-read" in category:
         (offset, length) = instruction_field(format, category["vector-condition-read"])
         decoder_lines.append("      ControlWord.VCR_Read_Active <= '1';")
@@ -261,6 +264,9 @@ for op in opcodes:
         (offset, length) = instruction_field(format, category["vector-condition-write"])
         decoder_lines.append("      ControlWord.VCR_Write_Active <= '1';")
         decoder_lines.append(f"      ControlWord.VCR_Write_Index <= CondIndex(I_Code({offset+length-1} downto {offset}));")
+    if "vector-condition-write-implicit" in category:
+        decoder_lines.append("      ControlWord.VCR_Write_Active <= '1';")
+        decoder_lines.append(f"      ControlWord.VCR_Write_Index <= {category["vector-condition-write-implicit"]};")
     if "sub-operation" in category:
         (offset, length) = instruction_field(format, category["sub-operation"])
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Active <= '1';")
