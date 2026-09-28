@@ -80,7 +80,6 @@ architecture Struct of NVM101 is
   signal VCR_Read_Datum : DatumVector_T(0 to 2**Log2VecSize_C-1);
 
   signal ExecuteDatum : Datum_T;
-  signal ExecuteEnable : std_logic;
   
   signal Imm_Data, Execute_Imm_Data : std_logic_vector(WordSize_C-1 downto 0);
   
@@ -589,11 +588,17 @@ begin
   -- Vector predication
   --
 
-  VectorMask_P : process(ControlWord, VCR_Read_Datum)
+  VectorMask_P : process(Clk)
   begin
-    for I in 0 to VecSize_C-1 loop
-      VALU_Mask(I) <= DatumEvaluate(VCR_Read_Datum(I), ControlWord.VALU_Predicate);
-    end loop;
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        VALU_Mask <= (others => '1');
+      else
+        for I in 0 to VecSize_C-1 loop
+          VALU_Mask(I) <= DatumEvaluate(VCR_Read_Datum(I), ControlWord.VALU_Predicate);
+        end loop;
+      end if;
+    end if;
   end process;
     
   --
