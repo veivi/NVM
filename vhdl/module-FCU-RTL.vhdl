@@ -56,7 +56,7 @@ architecture RTL of FCU is
   type VectorDatumArray_T is array (natural range <>) of VectorDatum_T;
   
   signal CR : DatumVector_T(0 to 2**Log2NumOfCondRegs_C-1);
-  signal VCR : VectorDatumArray_T(0 to 2**Log2NumOfCondRegs_C-1);
+  signal VectorCR : VectorDatumArray_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal Evaluated : std_logic;
 begin
   --
@@ -216,12 +216,12 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        VCR <= (others => (others => DefaultDatum_C));
+        VectorCR <= (others => (others => DefaultDatum_C));
       elsif IL_ExecuteStall = '0' and VCR_Write_Active = '1' then
-        VCR(VCR_Write_Index) <= VCR_Write_Datum;
+        VectorCR(VCR_Write_Index) <= VCR_Write_Datum;
       end if;
     end if;
   end process;
 
-  VCR_Read_Datum <= VCR(VCR_Read_Index);
+  VCR_Read_Datum <= VectorCR(VCR_Read_Index);
 end RTL;
