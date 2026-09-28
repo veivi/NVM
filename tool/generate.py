@@ -172,7 +172,7 @@ print(f"Minimal prefix is {min_prefix} bits")
 first = True
     
 for op in opcodes:
-    print(f"Generating decode for {op}...")
+    # print(f"Generating decode for {op}...")
     
     opcode = opcodes[op]
 

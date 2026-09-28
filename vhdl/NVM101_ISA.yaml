@@ -11,8 +11,8 @@ instruction_formats:
   nop: { opcode: 24 }
   system: { opcode: 16 }
   imm: { opcode: 6, value: 20, rd: 6 }
-  logic: { opcode: 6, _: 8, rs2: 6, rs1: 6, rd: 6 }
-  logic_imm: { opcode: 6, value: 14, rs: 6, rd: 6 }
+  logic: { opcode: 8, pr: 4, cr: 2, rs2: 6, rs1: 6, rd: 6 }
+  logic_imm: { opcode: 8, value: 12, rs: 6, rd: 6 }
   jump_imm: { opcode: 6, i_target : 26 }
   jump_ind: { opcode: 6, i_disp: 20, rs: 6 }
   compare: { opcode: 8, _: 6, rs2: 6, rs1: 6, _: 4, cr: 2 }
@@ -21,9 +21,9 @@ instruction_formats:
   compare_vec_imm: { opcode: 8, value: 12, vs: 6, _: 4, vcr: 2 }
   loadstore: { opcode: 8, disp: 12, rs: 6, rd: 6 }
   loadstore_indexed: { opcode: 8, scale: 6, rs2: 6, rs1: 6, rd: 6 }
-  logic_vec: { opcode: 10, _: 4, vs2: 6, vs1: 6, vd: 6 }
-  logic_vec_imm: { opcode: 10, value: 10, vs: 6, vd: 6 }
-  logic_vec_bc: { opcode: 10, _: 4, rs2: 6, vs1: 6, vd: 6 }
+  logic_vec: { opcode: 8, pr: 4, cr: 2, vs2: 6, vs1: 6, vd: 6 }
+  logic_vec_imm: { opcode: 8, pr: 4, cr: 2, value: 6, vs: 6, vd: 6 }
+  logic_vec_bc: { opcode: 8, pr: 4, cr: 2, rs2: 6, vs1: 6, vd: 6 }
   branch: { opcode: 10, i_disp: 20, cr: 2 }
   loadstore_vec: { opcode: 14, rs2 : 6, rs1: 6, vd: 6 }
   loadstore_vec_imm: { opcode: 14, stride : 6, rs: 6, vd: 6 }
@@ -228,7 +228,7 @@ instruction_categories:
     
   logic_vec:
     format: "logic_vec"
-    prefix: 60
+    prefix: 16
     operands: [ "vd", "vs1", "vs2" ]
     unit: "VALU"
     mode: "ALU_RegReg_C"
@@ -238,7 +238,7 @@ instruction_categories:
     
   logic_vec_imm:
     format: "logic_vec_imm"
-    prefix: 60
+    prefix: 16
     operands: [ "vd", "vs", "value" ]
     unit: "VALU"
     mode: "ALU_RegImm_C"
@@ -248,7 +248,7 @@ instruction_categories:
 
   logic_vec_bc:
     format: "logic_vec_bc"
-    prefix: 60
+    prefix: 16
     operands: [ "vd", "vs1", "rs2" ]
     unit: "VALU"
     mode: "ALU_RegReg_C"
