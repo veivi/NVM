@@ -65,11 +65,6 @@ architecture Struct of NVM101 is
   
   constant VecSize_C : integer := 2**Log2VecSize_C;
 
-  function LSOpIsLoad(Op : LoadStoreOp_T) return boolean is
-  begin
-    return Op = LSOp_LoadSigned_C or Op = LSOp_LoadUnsigned_C;
-  end function;
-  
   signal Instruction : std_logic_vector(InstrSize_C-1 downto 0);
   signal ControlWord : ControlWord_T;
   signal ExecuteWord : ControlWord_T;

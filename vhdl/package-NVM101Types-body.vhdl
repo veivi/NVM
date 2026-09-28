@@ -53,4 +53,9 @@ package body NVM101Types is
         return '1';
     end case;
   end function;
+
+  function LSOpIsLoad(Op : LoadStoreOp_T) return boolean is
+  begin
+    return Op = LSOp_LoadSigned_C or Op = LSOp_LoadUnsigned_C;
+  end function;
 end package body;
