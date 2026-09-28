@@ -85,7 +85,7 @@ begin
   
   Compare_P : process(Operation, CompareA, CompareB)
   begin
-    Datum <= ('0', '0', '0', '0');
+    Datum <= DefaultDatum_C;
     
     if Operation = ALUOp_CMPU_C then
       -- Explicit compare unsigned
