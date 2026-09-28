@@ -47,6 +47,8 @@ instruction_categories:
     register-read-b: "rs2"
     register-write: "rd"
     condition-read: "cr"
+    encoded-predicate: "pr"
+    condition-read: "cr"
     condition-write-implicit: 0
     
   logic_imm:
@@ -69,6 +71,7 @@ instruction_categories:
     vector-read-a: "vs1"
     vector-read-b: "vs2"
     vector-write: "vd"
+    encoded-predicate: "pr"
     vector-condition-read: "vcr"
     vector-condition-write-implicit: 0
     
@@ -81,6 +84,7 @@ instruction_categories:
     vector-read-a: "vs"
     imm-unsigned: "value"
     vector-write: "vd"
+    encoded-predicate: "pr"
     vector-condition-read: "vcr"
     vector-condition-write-implicit: 0
 
@@ -93,6 +97,7 @@ instruction_categories:
     vector-read-a: "vs1"
     register-read-b: "rs2"
     vector-write: "vd"
+    encoded-predicate: "pr"
     vector-condition-read: "vcr"
     vector-condition-write-implicit: 0
     

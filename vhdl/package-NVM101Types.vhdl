@@ -21,6 +21,18 @@ package NVM101Types is
 
   type ALUMode_T is ( ALU_RegReg_C, ALU_RegImm_C );
 
+  type Predicate_T is ( Pred_EQ_C,
+                     Pred_NE_C,
+                     Pred_LT_C,
+                     Pred_LE_C,
+                     Pred_GT_C,
+                     Pred_GE_C,
+                     Pred_A_C,
+                     Pred_CS_C,
+                     Pred_OVF_C );
+
+  function PredicateDecode(Pred : std_logic_vector) return Predicate_T;
+  
   type Datum_T is record
     LessThan : std_logic;
     GreaterThan : std_logic;
@@ -32,15 +44,6 @@ package NVM101Types is
   
   type DatumVector_T is array (natural range <>) of Datum_T;
   
-  type Predicate_T is ( Pred_EQ_C,
-                     Pred_NE_C,
-                     Pred_LT_C,
-                     Pred_LE_C,
-                     Pred_GT_C,
-                     Pred_GE_C,
-                     Pred_A_C,
-                     Pred_CS_C );
- 
   function DatumEvaluate(Datum : Datum_T; Pred : Predicate_T) return std_logic;
   
   type LoadStoreOp_T is ( LSOp_None_C,
@@ -133,6 +136,7 @@ package NVM101Types is
     ALU_Predicate : Predicate_T;
     ALU_Mode : ALUMode_T;
     VALU_Operation : ALUOp_T;
+    VALU_Predicate : Predicate_T;
     VALU_Mode : ALUMode_T;
     Imm_Operation : ImmOp_T;
     Fence_Operation : FenceOp_T;
@@ -147,7 +151,7 @@ package NVM101Types is
       '0', 0, '0', 0,
       '0', 0, '0', 0,
       FlowOp_None_C, Pred_A_C, DebugOp_None_C, LSOp_None_C, 0, LS_Displaced_C, 0, LSOp_None_C, 0, VLS_Imm_C, 0,
-      ALUOp_None_C, Pred_A_C, ALU_RegReg_C, ALUOp_None_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
+      ALUOp_None_C, Pred_A_C, ALU_RegReg_C, ALUOp_None_C, Pred_A_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
       '0', 0, 0);
 end package;
 

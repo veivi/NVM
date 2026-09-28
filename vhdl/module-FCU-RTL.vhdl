@@ -186,7 +186,7 @@ begin
   
   ConditionRead_P : process(CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Datum)
   begin
-    CR_Read_Value <= CR(VCR_Read_Index);
+    CR_Read_Value <= CR(CR_Read_Index);
   
     if CR_Write_Active = '1' and CR_Write_Index = CR_Read_Index then
       -- Feedforward
