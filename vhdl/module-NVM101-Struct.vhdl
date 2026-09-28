@@ -117,6 +117,7 @@ architecture Struct of NVM101 is
   signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_Datum : DatumVector_T(0 to VecSize_C-1);
   signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
+  signal VALU_Mask : std_logic_vector(VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
   signal VLS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
@@ -132,14 +133,13 @@ architecture Struct of NVM101 is
   signal VRF_ReadValid : std_logic_vector(VecSize_C-1 downto 0);
   signal VRF_WA_Active : std_logic;
   signal VRF_WA_Index : RegIndex_T;
-  
+
   signal VRF_RA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_RB_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_RC_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_WA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
-  signal VRF_WA_Valid : std_logic;
-  signal VRF_WA_Async : std_logic;
-    
+  signal VRF_WA_Valid : std_logic_vector(VecSize_C-1 downto 0);
+  signal VRF_WA_Async : std_logic;    
 begin
   --
   -- Fetch and Control Unit
@@ -549,7 +549,7 @@ begin
                
                WA_Active => VRF_WA_Active,
                WA_Async => VRF_WA_Async,
-               WA_Valid => VRF_WA_Valid,
+               WA_Valid => VRF_WA_Valid(I),
                WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
     
@@ -581,10 +581,21 @@ begin
   
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Async <= AVU_R_Present;
-  VRF_WA_Valid <=  AVU_R_Present when to_integer(unsigned(not VRF_ReadValid)) /= 0 else '1';
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
+  VRF_WA_Valid <=  (others => AVU_R_Present) when to_integer(unsigned(not VRF_ReadValid)) /= 0 else VALU_Mask;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
+  --
+  -- Vector predication
+  --
+
+  VectorMask_P : process(ControlWord, VCR_Read_Datum)
+  begin
+    for I in 0 to VecSize_C-1 loop
+      VALU_Mask(I) <= DatumEvaluate(VCR_Read_Datum(I), ControlWord.VALU_Predicate);
+    end loop;
+  end process;
+    
   --
   -- Vector ALU operation/operand multiplexing
   --
