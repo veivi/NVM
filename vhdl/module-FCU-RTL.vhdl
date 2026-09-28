@@ -57,8 +57,9 @@ architecture RTL of FCU is
   subtype VectorDatum_T is DatumVector_T(0 to 2**Log2VecSize_C-1);
   
   type VectorDatumArray_T is array (natural range <>) of VectorDatum_T;
-  
+
   signal CR : DatumVector_T(0 to 2**Log2NumOfCondRegs_C-1);
+  signal CR_Read_Value : Datum_T;
   signal VectorCR : VectorDatumArray_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal Evaluated : std_logic;
 begin
@@ -179,25 +180,28 @@ begin
     end if;
   end process;
 
-  CR_Read_Datum <= CR(VCR_Read_Index);
+  --
+  -- Condition read including feedforward
+  --
+  
+  ConditionRead_P : process(CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Datum)
+  begin
+    CR_Read_Value <= CR(VCR_Read_Index);
+  
+    if CR_Write_Active = '1' and CR_Write_Index = CR_Read_Index then
+      -- Feedforward
+      CR_Read_Value <= CR_Write_Datum;
+    end if;
+  end process;
+
+  CR_Read_Datum <= CR_Read_Value;
   
   --
   -- Condition evaluation
   --
 
-  Evaluate_P : process(ControlWord, CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Datum)
-    variable Temp : Datum_T;
-  begin
-    Temp := CR(CR_Read_Index);
-
-    if CR_Write_Active = '1' and CR_Write_Index = CR_Read_Index then
-      -- Feedforward
-      Temp := CR_Write_Datum;
-    end if;
-
-    Evaluated <= DatumEvaluate(Temp, ControlWord.FCU_Predicate);
-  end process;
-  
+  Evaluated <= DatumEvaluate(CR_Read_Value, ControlWord.FCU_Predicate);
+    
   --
   -- Vector Condition register storage
   --

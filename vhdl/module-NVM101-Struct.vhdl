@@ -395,7 +395,7 @@ begin
              WB_Index => LS_R_Dest,
              WB_Data => LS_R_Data);
 
-  RF_WA_Valid <= RF_ReadValid;
+  RF_WA_Valid <= RF_ReadValid and DatumEvaluate(ExecuteDatum, ExecuteWord.ALU_Predicate);
   RF_WA_Async <= '0';
   
   --
