@@ -110,7 +110,7 @@ architecture RTL of VU102 is
   begin
     Temp := std_logic_vector(-resize(signed(A), W));
     Temp := Saturate(Temp, W-1);
-    return Temp;
+    return Temp(W-2 downto 0);
   end function;
   
   function Multiply(A : Part_T; B : Part_T) return Word_T is

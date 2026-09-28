@@ -119,7 +119,8 @@ for_v_loop_late:
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 
-	lsl s8, s9, s16  // s8 = v<<log2_tab_step = v * tab_step
+	lsl s8, s9, s6  // s8 = v<<log2_tab_step = v * tab_step
+	lsli s8, s8, 2   // s8 = 4*v*tab_step
 	add s8, s17, s8  // s8 = &w_table[v * tab_step]
 	vld v0, s8, s16  // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
 	
@@ -138,8 +139,6 @@ for_v_loop_late:
 	
 	vldi v2, s13, 1     // v2 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
-	// 	  complex_vector_mul(t, u, omega);
-
 	addi s9, s9, V           // v += V
 	cmp c1, s9, s5
 	

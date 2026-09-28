@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
 
@@ -19,8 +20,18 @@ typedef struct complex {
 #define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
 #define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
 
+#define TO_FIXEDPOINT(a) (((uint32_t) (a.real * (1L<<PRECISION))<<16)|(uint32_t) (a.imag * (1<<PRECISION)))
+
 complex_t fft_data[FFT_LEN];
 complex_t w[FFT_LEN];
+
+uint32_t to_fixed_point(complex_t *a)
+{
+  int32_t result = (int32_t) (a->real * (float) (1<<PRECISION));
+  result = result<<16;
+  result |= ((int32_t) (a->imag * (float) (1<<PRECISION))) & 0xFFFF;
+  return result;
+}
 
 int bit_reverse(int I)
 {
@@ -47,18 +58,42 @@ void bit_reversal_permutation(complex_t *data)
   }
 }
 
-void complex_vector_read(complex_t value[], complex_t array[], int index, int stride)
+complex_t complex_array_ref(complex_t array[], int index, int base)
+{
+  complex_t value = array[index];
+  printf("%.4x ~%.8x | ", base + index*4, to_fixed_point(&value));
+  return value;
+} 
+
+void complex_array_set(complex_t value, complex_t array[], int index, int base)
+{
+  printf("%.4x:=%.8x | ", base + index*4, to_fixed_point(&value));
+  array[index] = value;
+} 
+
+void complex_vector_print(complex_t value[])
 {
   int i = 0;
   for(i = 0; i < V; i++)
-    value[i] = array[index + i*stride];
+    printf("%.8x (%.3f +i%.3f), ", to_fixed_point(&value[i]), value[i].real, value[i].imag);
+  printf("\n");
 }
 
-void complex_vector_write(const complex_t value[], complex_t array[], int index, int stride)
+
+void complex_vector_read(complex_t value[], complex_t array[], int index, int stride, int base)
 {
   int i = 0;
   for(i = 0; i < V; i++)
-    array[index + i*stride] = value[i];
+    value[i] = complex_array_ref(array, index + i*stride, base);
+  printf("\n");
+}
+
+void complex_vector_write(const complex_t value[], complex_t array[], int index, int stride, int base)
+{
+  int i = 0;
+  for(i = 0; i < V; i++)
+    complex_array_set(value[i], array, index + i*stride, base);
+  printf("\n");
 }
 
 void complex_vector_mul(complex_t result[], complex_t a[], complex_t b[])
@@ -130,18 +165,18 @@ void fft_with_vectors(complex_t A[])
       
     for(j = 0; j < half_m; j++) {
       int v = 0;
-      complex_t omega = w[j * tab_step];
+      complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
 
       for(v = 0; v < FFT_LEN; v += V*m) {
-	complex_t a[V], t[V], u[V], x[V];
+	complex_t a[V], t[V], u[V], x[V], y[V];
 
-	complex_vector_read(a, A, j + v + half_m, m);
-	complex_vector_read(u, A, j + v, m);
+	complex_vector_read(u, A, j + v, m, 0x130);
+	complex_vector_read(a, A, j + v + half_m, m, 0x130);
 	complex_vector_mul_bc(t, a, &omega);
 	complex_vector_add(x, u, t);
-	complex_vector_write(x, A, j + v, m);
-	complex_vector_sub(x, u, t);
-	complex_vector_write(x, A, j + v + half_m, m);
+	complex_vector_sub(y, u, t);
+	complex_vector_write(x, A, j + v, m, 0x130);
+	complex_vector_write(y, A, j + v + half_m, m, 0x130);
       }
     }
   }
@@ -163,14 +198,14 @@ void fft_with_vectors(complex_t A[])
       for(v = 0; v < half_m; v += V) {
 	complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
-	complex_vector_read(omega, w, v * tab_step, tab_step);
-	complex_vector_read(a, A, k + v + half_m, 1);
+	complex_vector_read(omega, w, v * tab_step, tab_step, 0x1000);
+	complex_vector_read(u, A, k + v, 1, 0x130);
+	complex_vector_read(a, A, k + v + half_m, 1, 0x130);
 	complex_vector_mul(t, a, omega);
-	complex_vector_read(u, A, k + v, 1);
 	complex_vector_add(x, u, t);
-	complex_vector_write(x, A, k + v, 1);
+	complex_vector_write(x, A, k + v, 1, 0x130);
 	complex_vector_sub(x, u, t);
-	complex_vector_write(x, A, k + v + half_m, 1);
+	complex_vector_write(x, A, k + v + half_m, 1, 0x130);
       }
     }
   }
@@ -181,6 +216,16 @@ void printbin(FILE *file, int16_t a)
   int i = 0;
   while(i < 8*sizeof(a)) {
     fprintf(file, "%c", a & 0x8000 ? '1' : '0');
+    a <<= 1;
+    i++;
+  }
+}
+
+void print_bin(FILE *file, uint32_t a)
+{
+  int i = 0;
+  while(i < 8*sizeof(a)) {
+    fprintf(file, "%c", a & 0x80000000UL ? '1' : '0');
     a <<= 1;
     i++;
   }
@@ -197,8 +242,9 @@ void store_complex_bin(const char *name, const char *mode, complex_t A[], int le
       int index = reverse ? bit_reverse(i) : i;
       complex_t a = A[index];
       
-      printbin(file, (int16_t) (a.real * (1<<PRECISION)));
-      printbin(file, (int16_t) (a.imag * (float) (1<<PRECISION)));
+      // printbin(file, (int16_t) (a.real * (1<<PRECISION)));
+      // printbin(file, (int16_t) (a.imag * (float) (1<<PRECISION)));
+      print_bin(file, to_fixed_point(&a));
       fprintf(file, "\n");
     }
 
@@ -219,8 +265,11 @@ int main()
   store_complex_bin("data_rom.txt", "w", w, FFT_LEN, false);
 
   for(i = 0; i < FFT_LEN; i++)
+    printf("W[%d] = %.8x\n", i, to_fixed_point(&w[i]));
+  
+  for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
-    fft_data[i] = COMPLEX(0.05f*cosf(i*2*pi/8), 0.0f);
+    fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
     //    fft_data[i] = COMPLEX(0.03f*sinf(i*2*pi/8) + 0.03f*sinf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
@@ -231,6 +280,9 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
+  
+  for(i = 0; i < FFT_LEN; i++)
+    printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
   
   fft_with_vectors(fft_data);
   // fft(fft_data);

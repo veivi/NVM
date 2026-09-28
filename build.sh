@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export ISA=NVM101
+
 design/tool/as.py design/test/test.asm
 design/tool/as.py design/test/fft.asm
 design/tool/as.py design/test/common.asm

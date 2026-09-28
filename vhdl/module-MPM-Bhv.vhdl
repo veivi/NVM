@@ -63,19 +63,25 @@ architecture Bhv of MPM is
   impure function InitReadOnlyStore(name : in string) return WordArray_T is
     file file_pointer : text open read_mode is name;
     variable line_v : line;
-    variable output : WordArray_T(0 to 2**10-1);
+    variable result : WordArray_T(0 to 2**Log2MemSize_C-1);
     variable i : integer := 0;
   begin
     while not endfile(file_pointer) loop
       readline(file_pointer, line_v);
-      bread(line_v, output(i));
+      bread(line_v, result(i));
+      write(line_v, name);
+      write(line_v, string'(" ROM["));
+      hwrite(line_v, to_unsigned(i*4, AddrSize_C));
+      write(line_v, string'("]:="));             
+      hwrite(line_v, result(i));
+      writeline(output, line_v);
       i := i + 1;
     end loop;
-    return output;
+    return result;
   end function;
 
   signal Storage : WordArray_T(0 to 2**Log2MemSize_C-1);
-  signal ReadOnlyMemory : WordArray_T(0 to 2**10-1) := InitReadOnlyStore("data_rom.txt");
+  signal ReadOnlyMemory : WordArray_T(0 to 2**Log2MemSize_C-1) := InitReadOnlyStore("data_rom.txt");
   signal State : StateArray_T(0 to NumOfPorts_C-1);
   signal Addr : AddrArray_T(0 to NumOfPorts_C-1);
   

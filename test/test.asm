@@ -225,11 +225,11 @@ clear_vektori_loop:
 	lsli s2, s2, 12   // s2 = 1-i
 	vandi v2, v2, 0
 	vbor v2, v2, s2   // Load 1-i into v2
-	
+
 	debugi 11
 
 	vsti v2, s1, 1
-	cvadd v1, v2, v2 // Test saturating complex add
+	cvadd v1, v2, v2 // Test saturating complex addition
 	vsti v1, s1, 1
 	cvadd v1, v1, v2
 	vsti v1, s1, 1
@@ -247,10 +247,50 @@ clear_vektori_loop:
 	vsti v1, s1, 1
 	cvadd v1, v1, v2
 	vsti v1, s1, 1
+	cvadd v1, v1, v2
+	vsti v1, s1, 1
+	
+	debugi 11
+	
+	drain
+	debugi 39
+
+	vsti v2, s1, 1
+	cvsub v1, v2, v2 // Test saturating complex subtraction
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	cvsub v1, v1, v2
+	vsti v1, s1, 1
+	
+	drain
+	debugi 40
+
+	vandi v3, v3, 0
+	cvsub v3, v3, v1   // Test negation of max neg value (which could overflow)
+	vsti v3, s1, 1
+	drain
 	
 	drain
 	debugi 12
 
+	
 	vandi v2, v2, 0  // Load 1.5+0i into v2 
 	vori v2, v2, 3
 	vlsli v2, v2, 27
