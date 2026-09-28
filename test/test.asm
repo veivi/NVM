@@ -60,7 +60,7 @@ clear_bss_loop:
 	addi s1, s1, 32
 
 tests_start:	
-	// ba write_neg_bytes
+	ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal
@@ -124,8 +124,7 @@ byte_read_loop:
 	ldb s5, s1 + 2
 	ldbu s6, s1 + 3
 	subi s2, s2, 4
-	cmpi c1, s2, 0
-	bgt c1, byte_read_loop
+	bgt c0, byte_read_loop
 	addi s1, s1, 4
 
 	debugi 257
