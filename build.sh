@@ -9,6 +9,7 @@ design/tool/generate.py
 
 nvc -a design/vhdl/package-NVM101Interface.vhdl
 nvc -a design/vhdl/package-NVM101Types.vhdl
+nvc -a design/vhdl/package-NVM101Types-body.vhdl
 nvc -a design/vhdl/module-EIU-RTL.vhdl
 nvc -a design/vhdl/module-FCU-RTL.vhdl
 nvc -a design/vhdl/module-VRFU-RTL.vhdl

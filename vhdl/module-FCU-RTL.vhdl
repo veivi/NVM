@@ -32,8 +32,11 @@ entity FCU is
 
        ControlWord : in ControlWord_T;
        ExecuteWord : in ControlWord_T;
+
+       -- Condition register interface
        
        CR_Read_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
+       CR_Read_Datum : out Datum_T;
        CR_Write_Active : in std_logic;
        CR_Write_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
        CR_Write_Datum : in Datum_T;
@@ -176,6 +179,8 @@ begin
     end if;
   end process;
 
+  CR_Read_Datum <= CR(VCR_Read_Index);
+  
   --
   -- Condition evaluation
   --
@@ -189,23 +194,8 @@ begin
       -- Feedforward
       Temp := CR_Write_Datum;
     end if;
-    
-    case ControlWord.FCU_Predicate is
-      when Pred_NE_C =>
-        Evaluated <= Temp.LessThan or Temp.GreaterThan;
-      when Pred_EQ_C =>
-        Evaluated <= not (Temp.LessThan or Temp.GreaterThan);
-      when Pred_LE_C =>
-        Evaluated <= not Temp.GreaterThan;
-      when Pred_LT_C =>
-        Evaluated <= Temp.LessThan;
-      when Pred_GE_C =>
-        Evaluated <= not Temp.LessThan;
-      when Pred_GT_C =>
-        Evaluated <= Temp.GreaterThan;
-      when others =>
-        Evaluated <= '1';
-    end case;
+
+    Evaluated <= DatumEvaluate(Temp, ControlWord.FCU_Predicate);
   end process;
   
   --

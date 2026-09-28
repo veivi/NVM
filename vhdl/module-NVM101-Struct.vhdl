@@ -76,6 +76,12 @@ architecture Struct of NVM101 is
   signal DecodeStall, ExecuteStall : std_logic;
   signal Stall : std_logic;
   
+  signal CR_Read_Datum : Datum_T;
+  signal VCR_Read_Datum : DatumVector_T(0 to 2**Log2VecSize_C-1);
+
+  signal ExecuteDatum : Datum_T;
+  signal ExecuteEnable : std_logic;
+  
   signal Imm_Data, Execute_Imm_Data : std_logic_vector(WordSize_C-1 downto 0);
   
   signal LS_Ready : std_logic;
@@ -109,7 +115,7 @@ architecture Struct of NVM101 is
   signal VALU_Operation : ALUOp_T;
   signal VALU_OperandA : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
-  signal VALU_Datum, VCR_ReadValue : DatumVector_T(0 to VecSize_C-1);
+  signal VALU_Datum : DatumVector_T(0 to VecSize_C-1);
   signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
@@ -162,12 +168,13 @@ begin
              CR_Write_Index => ExecuteWord.CR_Write_Index,
              CR_Write_Datum => ALU_Datum,
              CR_Read_Index => ControlWord.CR_Read_Index,
+             CR_Read_Datum => CR_Read_Datum,
              
              VCR_Write_Active => ExecuteWord.VCR_Write_Active,
              VCR_Write_Index => ExecuteWord.VCR_Write_Index,
              VCR_Write_Datum => VALU_Datum,
              VCR_Read_Index => ExecuteWord.VCR_Read_Index,
-             VCR_Read_Datum => VCR_ReadValue,
+             VCR_Read_Datum => VCR_Read_Datum,
              
              Imm_Data => Imm_Data,
              Reg_Data => RF_RA_Data);
@@ -272,6 +279,7 @@ begin
       if Reset = '1' then
         ExecuteWord <= DefaultControlWord_C;
         Execute_Imm_Data <= (others => '0');
+        ExecuteDatum <= DefaultDatum_C;
         
       elsif ExecuteStall = '0' then
         -- We can proceed with execution
@@ -280,9 +288,11 @@ begin
           -- Decode is cool, accept the new result
           ExecuteWord <= ControlWord;
           Execute_Imm_Data <= Imm_Data;
+          ExecuteDatum <= CR_Read_Datum;
         else
           -- Decode has stalled, insert an execution bubble
           ExecuteWord <= DefaultControlWord_C;
+          ExecuteDatum <= DefaultDatum_C;
         end if;
       end if;
     end if;
