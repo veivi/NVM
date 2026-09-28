@@ -58,11 +58,8 @@ architecture RTL of FCU is
   signal CR : ConditionVector_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal VCR : VCRArray_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal Evaluated : boolean;
-  signal CR0 : Condition_T;
 begin
-  CR0 <= CR(0);
-
---
+  --
   -- Instruction pointer storage
   --
 
@@ -220,8 +217,8 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         VCR <= (others => (others => Cond_Equal_C));
-      elsif IL_ExecuteStall = '0' and CR_Write_Active = '1' then
-        VCR(CR_Write_Index) <= VCR_Write_Data;
+      elsif IL_ExecuteStall = '0' and VCR_Write_Active = '1' then
+        VCR(VCR_Write_Index) <= VCR_Write_Data;
       end if;
     end if;
   end process;

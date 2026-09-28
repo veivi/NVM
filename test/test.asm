@@ -151,8 +151,8 @@ clear_vektori_loop:
 	vaddi v0, v0, 1
 	vsti v0, s1, 1
 
-	vandi v0, v0, 127
-	vcmpi vc3, v0, 64
+	vandi v0, v0, 255
+	vcmpi vc3, v0, 50
 	
 	vandi v1, v1, 0  // Clear v1
 	vori v1, v1, 3   
