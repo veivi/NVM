@@ -90,11 +90,10 @@ init_fft_loop:
 	lsl s3, s3, s2
 	
 read_loop:
-	ld s2, s1, 0
-	addi s1, s1, 4
 	subi s3, s3, 1
+	ld s2, s1, 0
 	bgt c0, read_loop
-	nop
+	addi s1, s1, 4
 	
 	// Done
 	
