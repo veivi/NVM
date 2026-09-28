@@ -83,7 +83,6 @@ for_v_loop_early:
 
 end_for_v_loop_early:
 	addi s7, s7, 1         // j++
-
 	cmp c0, s7, s5
 	blt c0, for_j_loop     // while j < half_m
 	nop

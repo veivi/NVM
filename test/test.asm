@@ -67,13 +67,13 @@ tests_start:
 
 	ldi s0, test_data
 	ldi s1, fft_data
-	ldi s2, 63
+	ldi s2, 64
 	
 init_fft_loop:
-	ldx s3, s0, s2
-	stx s3, s1, s2
 	subi s2, s2, 1
-	bge c0, init_fft_loop
+	ldx s3, s0, s2
+	bgt c0, init_fft_loop
+	stx s3, s1, s2
 
 	// Invoke FFT
 	
