@@ -11,11 +11,13 @@ instruction_formats:
   nop: { opcode: 24 }
   system: { opcode: 16 }
   imm: { opcode: 6, value: 20, rd: 6 }
-  logic: { opcode: 8, pr: 4, cr: 2, rs2: 6, rs1: 6, rd: 6 }
-  logic_imm: { opcode: 8, value: 12, rs: 6, rd: 6 }
   jump_imm: { opcode: 6, i_target : 26 }
   jump_ind: { opcode: 6, i_disp: 20, rs: 6 }
-  compare: { opcode: 8, _: 6, rs2: 6, rs1: 6, _: 4, cr: 2 }
+  ext: { opcode: 6, subop: 8, vs2 : 6, vs1: 6, vd: 6 }
+  ext_bc: { opcode: 6, subop: 8, rs2 : 6, vs1: 6, vd: 6 }
+  logic: { opcode: 8, pr: 4, cr: 2, rs2: 6, rs1: 6, rd: 6 }
+  logic_imm: { opcode: 8, value: 12, rs: 6, rd: 6 }
+  compare: { opcode: 8, _: 4, cr: 2, _: 6, rs2: 6, rs1: 6 }
   compare_imm: { opcode: 8, value: 12, rs: 6, _: 4, cr: 2 }
   compare_vec: { opcode: 8, _: 6, vs2: 6, vs1: 6, _: 4, vcr: 2 }
   compare_vec_imm: { opcode: 8, value: 12, vs: 6, _: 4, vcr: 2 }
@@ -24,43 +26,17 @@ instruction_formats:
   logic_vec: { opcode: 8, pr: 4, cr: 2, vs2: 6, vs1: 6, vd: 6 }
   logic_vec_imm: { opcode: 8, pr: 4, cr: 2, value: 6, vs: 6, vd: 6 }
   logic_vec_bc: { opcode: 8, pr: 4, cr: 2, rs2: 6, vs1: 6, vd: 6 }
-  branch: { opcode: 10, i_disp: 20, cr: 2 }
+  branch: { opcode: 8, pr: 4, cr: 2, i_disp: 18 }
   loadstore_vec: { opcode: 14, rs2 : 6, rs1: 6, vd: 6 }
   loadstore_vec_imm: { opcode: 14, stride : 6, rs: 6, vd: 6 }
   debug: { opcode: 10, rs: 6 }
   debug_imm: { opcode: 10, value: 22 }
-  ext: { opcode: 6, subop: 8, vs2 : 6, vs1: 6, vd: 6 }
-  ext_bc: { opcode: 6, subop: 8, rs2 : 6, vs1: 6, vd: 6 }
 
 #
 # INSTRUCTION CATEGORIES
 #
 
 instruction_categories:
-  imm_unsigned:
-    format: "imm"
-    prefix: 36
-    operands: [ "rd", "value" ]
-    unit: "Imm"
-    imm-unsigned: "value"
-    register-write: "rd"
-    
-  imm:
-    format: "imm"
-    prefix: 36
-    operands: [ "rd", "value" ]
-    unit: "Imm"
-    imm-signed: "value"
-    register-write: "rd"
-    
-  imm_high:
-    format: "imm"
-    prefix: 36
-    operands: [ "rd", "value" ]
-    unit: "Imm"
-    imm-high: "value"
-    register-write: "rd"
-    
   logic:
     format: "logic"
     prefix: 0
@@ -81,6 +57,36 @@ instruction_categories:
     imm-unsigned: "value"
     register-write: "rd"
   
+  logic_vec:
+    format: "logic_vec"
+    prefix: 16
+    operands: [ "vd", "vs1", "vs2" ]
+    unit: "VALU"
+    mode: "ALU_RegReg_C"
+    vector-read-a: "vs1"
+    vector-read-b: "vs2"
+    vector-write: "vd"
+    
+  logic_vec_imm:
+    format: "logic_vec_imm"
+    prefix: 16
+    operands: [ "vd", "vs", "value" ]
+    unit: "VALU"
+    mode: "ALU_RegImm_C"
+    vector-read-a: "vs"
+    imm-unsigned: "value"
+    vector-write: "vd"
+
+  logic_vec_bc:
+    format: "logic_vec_bc"
+    prefix: 16
+    operands: [ "vd", "vs1", "rs2" ]
+    unit: "VALU"
+    mode: "ALU_RegReg_C"
+    vector-read-a: "vs1"
+    register-read-b: "rs2"
+    vector-write: "vd"
+    
   compare:
     format: "compare"
     prefix: 32
@@ -141,9 +147,33 @@ instruction_categories:
     imm-unsigned: "value"
     vector-condition-write: "vcr"
     
+  imm_unsigned:
+    format: "imm"
+    prefix: 34
+    operands: [ "rd", "value" ]
+    unit: "Imm"
+    imm-unsigned: "value"
+    register-write: "rd"
+    
+  imm:
+    format: "imm"
+    prefix: 34
+    operands: [ "rd", "value" ]
+    unit: "Imm"
+    imm-signed: "value"
+    register-write: "rd"
+    
+  imm_high:
+    format: "imm"
+    prefix: 34
+    operands: [ "rd", "value" ]
+    unit: "Imm"
+    imm-high: "value"
+    register-write: "rd"
+    
   loadstore:
     format: "loadstore"
-    prefix: 40
+    prefix: 38
     operands: [ "rd", "rs", "disp" ]
     unit: "LS"
     mode: "LS_Displaced_C"
@@ -153,7 +183,7 @@ instruction_categories:
     
   loadstore_indexed:
     format: "loadstore_indexed"
-    prefix: 44
+    prefix: 42
     operands: [ "rd", "rs1", "rs2" ]
     unit: "LS"
     mode: "LS_Indexed_C"
@@ -164,7 +194,7 @@ instruction_categories:
    
   loadstore_vec:
     format: "loadstore_vec"
-    prefix: 48
+    prefix: 46
     operands: [ "vd", "rs1", "rs2" ]
     unit: "VLS"
     mode: "VLS_Reg_C"
@@ -174,7 +204,7 @@ instruction_categories:
     
   loadstore_vec_imm:
     format: "loadstore_vec_imm"
-    prefix: 49
+    prefix: 46
     operands: [ "vd", "rs", "stride" ]
     unit: "VLS"
     mode: "VLS_Imm_C"
@@ -182,83 +212,54 @@ instruction_categories:
     imm-unsigned: "stride"
     vector-read-c: "vd"
     
-  jump_imm:
-    format: "jump_imm"
-    prefix: 50
-    operands: [ "i_target" ]
-    imm-unsigned: "i_target"
-    unit: "FCU"
-    
-  jump_ind:
-    format: "jump_ind"
-    prefix: 51
-    operands: [ "rs", "i_disp" ]
-    imm-signed: "i_disp"
-    register-read-a: "rs"
-    unit: "FCU"
-
   debug_imm:
     format: "debug_imm"
-    prefix: 56
+    prefix: 47
     operands: [ "value" ]
     imm-signed: "value"
     unit: "Debug"
 
   debug:
     format: "debug"
-    prefix: 56
+    prefix: 47
     operands: [ "rs" ]
     register-read-a: "rs"
     unit: "Debug"
 
+  jump_imm:
+    format: "jump_imm"
+    prefix: 56
+    operands: [ "i_target" ]
+    imm-unsigned: "i_target"
+    unit: "FCU"
+    
+  jump_ind:
+    format: "jump_ind"
+    prefix: 56
+    operands: [ "rs", "i_disp" ]
+    imm-signed: "i_disp"
+    register-read-a: "rs"
+    unit: "FCU"
+
   cond_branch:
     format: "branch"
-    prefix: 56
+    prefix: 60
     operands: [ "cr", "i_disp" ]
     unit: "FCU"
     condition-read: "cr"
+    predicate: "pr"
     imm-signed: "i_disp"
     
   branch:
     format: "branch"
-    prefix: 56
+    prefix: 60
     operands: [ "i_disp" ]
     unit: "FCU"
     imm-signed: "i_disp"
     
-  logic_vec:
-    format: "logic_vec"
-    prefix: 16
-    operands: [ "vd", "vs1", "vs2" ]
-    unit: "VALU"
-    mode: "ALU_RegReg_C"
-    vector-read-a: "vs1"
-    vector-read-b: "vs2"
-    vector-write: "vd"
-    
-  logic_vec_imm:
-    format: "logic_vec_imm"
-    prefix: 16
-    operands: [ "vd", "vs", "value" ]
-    unit: "VALU"
-    mode: "ALU_RegImm_C"
-    vector-read-a: "vs"
-    imm-unsigned: "value"
-    vector-write: "vd"
-
-  logic_vec_bc:
-    format: "logic_vec_bc"
-    prefix: 16
-    operands: [ "vd", "vs1", "rs2" ]
-    unit: "VALU"
-    mode: "ALU_RegReg_C"
-    vector-read-a: "vs1"
-    register-read-b: "rs2"
-    vector-write: "vd"
-    
   ext:
     format: "ext"
-    prefix: 58
+    prefix: 62
     operands: [ "subop", "vd", "vs1", "vs2" ]
     unit: "Ext"
     sub-operation: "subop"
@@ -269,7 +270,7 @@ instruction_categories:
 
   ext_bc:
     format: "ext_bc"
-    prefix: 59
+    prefix: 63
     operands: [ "subop", "vd", "vs1", "rs2" ]
     unit: "Ext"
     sub-operation: "subop"
@@ -280,13 +281,13 @@ instruction_categories:
 
   fence:
     format: "system"
-    prefix: 63
+    prefix: 55
     unit: "Fence"
     operands: []
 
   system:
     format: "system"
-    prefix: 63
+    prefix: 55
     unit: "FCU"
     operands: []
     
@@ -488,49 +489,103 @@ instruction_set:
   BNE:
     category: "cond_branch"
     opcode: 0
-    operation: "FlowOp_BNE_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_NE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] NE"
 
   BEQ:
     category: "cond_branch"
     opcode: 1
-    operation: "FlowOp_BEQ_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_EQ_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] EQ"
 
   BLT:
     category: "cond_branch"
     opcode: 2
-    operation: "FlowOp_BLT_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_LT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LT"
 
   BLE:
     category: "cond_branch"
     opcode: 3
-    operation: "FlowOp_BLE_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_LE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LE"
 
   BGT:
     category: "cond_branch"
     opcode: 4
-    operation: "FlowOp_BGT_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_GT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GT"
 
   BGE:
     category: "cond_branch"
     opcode: 5
-    operation: "FlowOp_BGE_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_GE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GE"
 
   BA:
     category: "branch"
     opcode: 6
-    operation: "FlowOp_BA_C"
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_A_C"
     behaviour: "IP = IP + sign_extend(offset)"
+
+#
+# Conditional Branch And Link
+#
+
+  BLNE:
+    category: "cond_branch"
+    opcode: 7
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_NE_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] NE"
+
+  BLEQ:
+    category: "cond_branch"
+    opcode: 8
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_EQ_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] EQ"
+
+  BLLT:
+    category: "cond_branch"
+    opcode: 9
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_LT_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LT"
+
+  BLLE:
+    category: "cond_branch"
+    opcode: 10
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_LE_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LE"
+
+  BLGT:
+    category: "cond_branch"
+    opcode: 11
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_GT_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GT"
+
+  BLGE:
+    category: "cond_branch"
+    opcode: 12
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_GE_C"
+    behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GE"
 
   BL:
     category: "branch"
-    opcode: 7
-    operation: "FlowOp_BL_C"
+    opcode: 13
+    operation: "FlowOp_BC_C"
+    predicate: "Pred_A_C"
     behaviour: "R0 = IP; IP = IP + sign_extend(offset)"
 
 #

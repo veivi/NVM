@@ -47,19 +47,22 @@ package NVM101Types is
                                   VLS_Reg_C );
 
   type FlowOp_T is ( FlowOp_None_C,
-                     FlowOp_BEQ_C,
-                     FlowOp_BNE_C,
-                     FlowOp_BLT_C,
-                     FlowOp_BLE_C,
-                     FlowOp_BGE_C,
-                     FlowOp_BGT_C,
-                     FlowOp_BA_C,
-                     FlowOp_BL_C,
+                     FlowOp_BC_C,
+                     FlowOp_BCL_C,
                      FlowOp_JMP_C,
                      FlowOp_JMPL_C,
                      FlowOp_JMPA_C,
                      FlowOp_JMPAL_C,
                      FlowOp_RET_C );
+ 
+  type Predicate_T is ( Pred_EQ_C,
+                     Pred_NE_C,
+                     Pred_LT_C,
+                     Pred_LE_C,
+                     Pred_GT_C,
+                     Pred_GE_C,
+                     Pred_A_C,
+                     Pred_CS_C );
  
   type DebugOp_T is ( DebugOp_None_C,
                       DebugOp_DEBUG_C,
@@ -107,6 +110,7 @@ package NVM101Types is
     VCR_Write_Active : std_logic;
     VCR_Write_Index : CondRegIndex_T;
     FCU_Operation : FlowOp_T;
+    FCU_Predicate : Predicate_T;
     Debug_Operation : DebugOp_T;
     LS_Operation : LoadStoreOp_T;
     LS_Log2Size : SizeSpec_T;
@@ -132,7 +136,7 @@ package NVM101Types is
       '0', 0, '0', 0, '0', 0, '0', 0,
       '0', 0, '0', 0,
       '0', 0, '0', 0,
-      FlowOp_None_C, DebugOp_None_C, LSOp_None_C, 0, LS_Displaced_C, 0, LSOp_None_C, 0, VLS_Imm_C, 0,
+      FlowOp_None_C, Pred_A_C, DebugOp_None_C, LSOp_None_C, 0, LS_Displaced_C, 0, LSOp_None_C, 0, VLS_Imm_C, 0,
       ALUOp_None_C, ALU_RegReg_C, ALUOp_None_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
       '0', 0, 0);
 end package;

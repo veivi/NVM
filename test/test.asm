@@ -26,6 +26,8 @@ vektoridata_loppu:
 
 fft_data:
 	.long 64
+
+	.align 32
 	
 bss_end:	
 	

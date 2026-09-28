@@ -23,10 +23,6 @@ entity FCU is
        
        Instruction : out std_logic_vector(InstrSize_C-1 downto 0);
 
-       -- Debug output
-
-       DebugOut : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
-       
        -- Interlock interface
        
        IL_Stall : in std_logic;
@@ -62,8 +58,11 @@ architecture RTL of FCU is
   signal CR : ConditionVector_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal VCR : VCRArray_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal Evaluated : boolean;
+  signal CR0 : Condition_T;
 begin
-  --
+  CR0 <= CR(0);
+
+--
   -- Instruction pointer storage
   --
 
@@ -79,13 +78,19 @@ begin
         DIP <= FIP;
         FIP <= NIP;
 
-        if ControlWord.FCU_Operation = FlowOp_BL_C
-          or ControlWord.FCU_Operation = FlowOp_JMPAL_C
-          or ControlWord.FCU_Operation = FlowOp_JMPL_C then
-          -- We're supposed to store the return address to LR
-          
-          LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
-        end if;
+        case ControlWord.FCU_Operation is
+          when FlowOp_BCL_C =>
+            if Evaluated then
+              LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
+            end if;
+
+          when FlowOp_JMPAL_C | FlowOp_JMPL_C =>
+            LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
+
+          when others =>
+            -- No linking
+            null;            
+        end case;
       else
       end if;
     end if;
@@ -109,8 +114,7 @@ begin
 
     else
       case ControlWord.FCU_Operation is
-        when FlowOp_BNE_C | FlowOp_BEQ_C | FlowOp_BLE_C | FlowOp_BL_C 
-          | FlowOp_BLT_C | FlowOp_BGE_C | FlowOp_BGT_C | FlowOp_BA_C | FlowOp_BL_C =>
+        when FlowOp_BC_C | FlowOp_BCL_C =>
           if Evaluated then
             -- Branch taken!
             NIP <= std_logic_vector(signed(DIP)
@@ -189,18 +193,18 @@ begin
       Temp := CR_Write_Data;
     end if;
     
-    case ControlWord.FCU_Operation is
-      when FlowOp_BNE_C =>
+    case ControlWord.FCU_Predicate is
+      when Pred_NE_C =>
         Evaluated <= Temp /= Cond_Equal_C;
-      when FlowOp_BEQ_C =>
+      when Pred_EQ_C =>
         Evaluated <= Temp = Cond_Equal_C;
-      when FlowOp_BLE_C =>
+      when Pred_LE_C =>
         Evaluated <= Temp /= Cond_GreaterThan_C;
-      when FlowOp_BLT_C =>
+      when Pred_LT_C =>
         Evaluated <= Temp = Cond_LessThan_C;
-      when FlowOp_BGE_C =>
+      when Pred_GE_C =>
         Evaluated <= Temp /= Cond_LessThan_C;
-      when FlowOp_BGT_C =>
+      when Pred_GT_C =>
         Evaluated <= Temp = Cond_GreaterThan_C;
       when others =>
         Evaluated <= true;
