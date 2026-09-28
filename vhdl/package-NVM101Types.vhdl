@@ -21,6 +21,17 @@ package NVM101Types is
 
   type ALUMode_T is ( ALU_RegReg_C, ALU_RegImm_C );
 
+  type Datum_T is record
+    LessThan : std_logic;
+    GreaterThan : std_logic;
+    Carry : std_logic;
+    Overflow : std_logic;
+  end record;
+
+  constant DefaultDatum_C : Datum_T := (others => '0');
+  
+  type DatumVector_T is array (natural range <>) of Datum_T;
+  
   type Condition_T is ( Cond_LessThan_C, Cond_Equal_C, Cond_GreaterThan_C );
 
   type ConditionVector_T is array (natural range <>) of Condition_T;

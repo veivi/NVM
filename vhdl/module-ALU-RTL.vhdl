@@ -12,7 +12,7 @@ entity ALU is
        A : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        B : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
-       Condition : out Condition_T);
+       Datum : out Datum_T);
 end ALU;
 
 architecture RTL of ALU is
@@ -85,23 +85,23 @@ begin
   
   Compare_P : process(Operation, CompareA, CompareB)
   begin
-    Condition <= Cond_Equal_C;
+    Datum <= ('0', '0', '0', '0');
     
     if Operation = ALUOp_CMPU_C then
       -- Explicit compare unsigned
       
       if unsigned(CompareA) > unsigned(CompareB) then
-        Condition <= Cond_GreaterThan_C;
+        Datum.GreaterThan <= '1';
       elsif unsigned(CompareA) < unsigned(CompareB) then
-        Condition <= Cond_LessThan_C;
+        Datum.LessThan <= '1';
       end if;
     else 
       -- Explicit or implicit compare signed
       
       if signed(CompareA) > signed(CompareB) then
-        Condition <= Cond_GreaterThan_C;
+        Datum.GreaterThan <= '1';
       elsif signed(CompareA) < signed(CompareB) then
-        Condition <= Cond_LessThan_C;
+        Datum.LessThan <= '1';
       end if;
     end if;
   end process;

@@ -100,7 +100,7 @@ architecture Struct of NVM101 is
   signal ALU_Operation : ALUOp_T;
   signal ALU_Operand : std_logic_vector(WordSize_C-1 downto 0);
   signal ALU_Result : std_logic_vector(WordSize_C-1 downto 0);
-  signal ALU_Condition : Condition_T;
+  signal ALU_Datum : Datum_T;
 
   signal LoadsOutstanding, StoresOutstanding : std_logic;
   signal LS_LoadsOutstanding, LS_StoresOutstanding : std_logic;
@@ -109,7 +109,7 @@ architecture Struct of NVM101 is
   signal VALU_Operation : ALUOp_T;
   signal VALU_OperandA : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
-  signal VALU_Condition, VCR_ReadValue : ConditionVector_T(0 to VecSize_C-1);
+  signal VALU_Datum, VCR_ReadValue : DatumVector_T(0 to VecSize_C-1);
   signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
@@ -160,14 +160,14 @@ begin
              
              CR_Write_Active => ExecuteWord.CR_Write_Active,
              CR_Write_Index => ExecuteWord.CR_Write_Index,
-             CR_Write_Data => ALU_Condition,
+             CR_Write_Datum => ALU_Datum,
              CR_Read_Index => ControlWord.CR_Read_Index,
              
              VCR_Write_Active => ExecuteWord.VCR_Write_Active,
              VCR_Write_Index => ExecuteWord.VCR_Write_Index,
-             VCR_Write_Data => VALU_Condition,
+             VCR_Write_Datum => VALU_Datum,
              VCR_Read_Index => ExecuteWord.VCR_Read_Index,
-             VCR_Read_Data => VCR_ReadValue,
+             VCR_Read_Datum => VCR_ReadValue,
              
              Imm_Data => Imm_Data,
              Reg_Data => RF_RA_Data);
@@ -413,7 +413,7 @@ begin
              A => RF_RA_Data,
              B => ALU_Operand,
              Result => ALU_Result,
-             Condition => ALU_Condition);
+             Datum => ALU_Datum);
 
   --
   -- ALU operation/operand multiplexing
@@ -560,7 +560,7 @@ begin
                A => VALU_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C),
                B => VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C),
                Result => VALU_Result((I+1)*WordSize_C-1 downto I*WordSize_C),
-               Condition => VALU_Condition(I));
+               Datum => VALU_Datum(I));
     
   end generate;
 

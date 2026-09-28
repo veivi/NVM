@@ -27,7 +27,7 @@ vektoridata_loppu:
 fft_data:
 	.long 64
 
-	.align 32  // Force the sectopm to be multiple of vector size
+	.align 32  // Force the section to be multiple of vector size
 	
 bss_end:	
 	
@@ -60,7 +60,7 @@ clear_bss_loop:
 	addi s1, s1, 32
 
 tests_start:	
-	// ba write_neg_bytes
+	ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal

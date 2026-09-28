@@ -36,13 +36,13 @@ entity FCU is
        CR_Read_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
        CR_Write_Active : in std_logic;
        CR_Write_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
-       CR_Write_Data : in Condition_T;
+       CR_Write_Datum : in Datum_T;
 
        VCR_Read_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
-       VCR_Read_Data : out ConditionVector_T(0 to 2**Log2VecSize_C-1);
+       VCR_Read_Datum : out DatumVector_T(0 to 2**Log2VecSize_C-1);
        VCR_Write_Active : in std_logic;
        VCR_Write_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
-       VCR_Write_Data : in ConditionVector_T(0 to 2**Log2VecSize_C-1);
+       VCR_Write_Datum : in DatumVector_T(0 to 2**Log2VecSize_C-1);
        
        Imm_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        Reg_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));
@@ -51,13 +51,13 @@ end FCU;
 architecture RTL of FCU is
   signal NIP, FIP, DIP, LR : std_logic_vector(AddrSize_C-1 downto 0);
 
-  subtype VCRElem_T is ConditionVector_T(0 to 2**Log2VecSize_C-1);
+  subtype VectorDatum_T is DatumVector_T(0 to 2**Log2VecSize_C-1);
   
-  type VCRArray_T is array (natural range <>) of VCRElem_T;
+  type VectorDatumArray_T is array (natural range <>) of VectorDatum_T;
   
-  signal CR : ConditionVector_T(0 to 2**Log2NumOfCondRegs_C-1);
-  signal VCR : VCRArray_T(0 to 2**Log2NumOfCondRegs_C-1);
-  signal Evaluated : boolean;
+  signal CR : DatumVector_T(0 to 2**Log2NumOfCondRegs_C-1);
+  signal VCR : VectorDatumArray_T(0 to 2**Log2NumOfCondRegs_C-1);
+  signal Evaluated : std_logic;
 begin
   --
   -- Instruction pointer storage
@@ -77,7 +77,7 @@ begin
 
         case ControlWord.FCU_Operation is
           when FlowOp_BCL_C =>
-            if Evaluated then
+            if Evaluated = '1' then
               LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
             end if;
 
@@ -112,7 +112,7 @@ begin
     else
       case ControlWord.FCU_Operation is
         when FlowOp_BC_C | FlowOp_BCL_C =>
-          if Evaluated then
+          if Evaluated = '1' then
             -- Branch taken!
             NIP <= std_logic_vector(signed(DIP)
                                     + signed(Imm_Data(AddrSize_C-1 downto 0)));
@@ -169,9 +169,9 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        CR <= (others => Cond_Equal_C);
+        CR <= (others => DefaultDatum_C);
       elsif IL_ExecuteStall = '0' and CR_Write_Active = '1' then
-        CR(CR_Write_Index) <= CR_Write_Data;
+        CR(CR_Write_Index) <= CR_Write_Datum;
       end if;
     end if;
   end process;
@@ -180,31 +180,31 @@ begin
   -- Condition evaluation
   --
 
-  Evaluate_P : process(ControlWord, CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Data)
-    variable Temp : Condition_T;
+  Evaluate_P : process(ControlWord, CR, CR_Read_Index, CR_Write_Active, CR_Write_Index, CR_Write_Datum)
+    variable Temp : Datum_T;
   begin
     Temp := CR(CR_Read_Index);
 
     if CR_Write_Active = '1' and CR_Write_Index = CR_Read_Index then
       -- Feedforward
-      Temp := CR_Write_Data;
+      Temp := CR_Write_Datum;
     end if;
     
     case ControlWord.FCU_Predicate is
       when Pred_NE_C =>
-        Evaluated <= Temp /= Cond_Equal_C;
+        Evaluated <= Temp.LessThan or Temp.GreaterThan;
       when Pred_EQ_C =>
-        Evaluated <= Temp = Cond_Equal_C;
+        Evaluated <= not (Temp.LessThan or Temp.GreaterThan);
       when Pred_LE_C =>
-        Evaluated <= Temp /= Cond_GreaterThan_C;
+        Evaluated <= not Temp.GreaterThan;
       when Pred_LT_C =>
-        Evaluated <= Temp = Cond_LessThan_C;
+        Evaluated <= Temp.LessThan;
       when Pred_GE_C =>
-        Evaluated <= Temp /= Cond_LessThan_C;
+        Evaluated <= not Temp.LessThan;
       when Pred_GT_C =>
-        Evaluated <= Temp = Cond_GreaterThan_C;
+        Evaluated <= Temp.GreaterThan;
       when others =>
-        Evaluated <= true;
+        Evaluated <= '1';
     end case;
   end process;
   
@@ -216,12 +216,12 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        VCR <= (others => (others => Cond_Equal_C));
+        VCR <= (others => (others => DefaultDatum_C));
       elsif IL_ExecuteStall = '0' and VCR_Write_Active = '1' then
-        VCR(VCR_Write_Index) <= VCR_Write_Data;
+        VCR(VCR_Write_Index) <= VCR_Write_Datum;
       end if;
     end if;
   end process;
 
-  VCR_Read_Data <= VCR(VCR_Read_Index);
+  VCR_Read_Datum <= VCR(VCR_Read_Index);
 end RTL;
