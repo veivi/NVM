@@ -142,7 +142,7 @@ for_v_loop_late:
 	// 	  complex_vector_mul(t, u, omega);
 
 	addi s9, s9, V           // v += V
-	cmp c0, s9, s5
+	cmp c1, s9, s5
 	
 	cvmul v2, v2, v0   // v2 = "t" = complex_vector_mul(t, a, omega)
 	
@@ -156,7 +156,7 @@ for_v_loop_late:
 	
 	vsti v3, s10, 1
 	
-	blt c0, for_v_loop_late  // while v < half_m
+	blt c1, for_v_loop_late  // while v < half_m
 	vsti v4, s13, 1          // Delay slot, complex_vector_write(y, A, k + v + half_m, 1)
 	
 end_for_v_loop_late:
