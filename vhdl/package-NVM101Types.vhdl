@@ -22,14 +22,15 @@ package NVM101Types is
   type ALUMode_T is ( ALU_RegReg_C, ALU_RegImm_C );
 
   type Predicate_T is ( Pred_EQ_C,
-                     Pred_NE_C,
-                     Pred_LT_C,
-                     Pred_LE_C,
-                     Pred_GT_C,
-                     Pred_GE_C,
-                     Pred_A_C,
-                     Pred_CS_C,
-                     Pred_OVF_C );
+                        Pred_NE_C,
+                        Pred_LT_C,
+                        Pred_LE_C,
+                        Pred_GT_C,
+                        Pred_GE_C,
+                        Pred_A_C,
+                        Pred_CS_C,
+                        Pred_CC_C,
+                        Pred_OVF_C );
 
   function PredicateDecode(Pred : std_logic_vector) return Predicate_T;
   
