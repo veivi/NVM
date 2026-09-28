@@ -228,14 +228,14 @@ instruction_categories:
 
   jump_imm:
     format: "jump_imm"
-    prefix: 56
+    prefix: 48
     operands: [ "i_target" ]
     imm-unsigned: "i_target"
     unit: "FCU"
     
   jump_ind:
     format: "jump_ind"
-    prefix: 56
+    prefix: 48
     operands: [ "rs", "i_disp" ]
     imm-signed: "i_disp"
     register-read-a: "rs"
@@ -243,7 +243,7 @@ instruction_categories:
 
   cond_branch:
     format: "branch"
-    prefix: 60
+    prefix: 56
     operands: [ "cr", "i_disp" ]
     unit: "FCU"
     condition-read: "cr"
@@ -252,14 +252,14 @@ instruction_categories:
     
   branch:
     format: "branch"
-    prefix: 60
+    prefix: 56
     operands: [ "i_disp" ]
     unit: "FCU"
     imm-signed: "i_disp"
     
   ext:
     format: "ext"
-    prefix: 62
+    prefix: 60
     operands: [ "subop", "vd", "vs1", "vs2" ]
     unit: "Ext"
     sub-operation: "subop"
@@ -270,7 +270,7 @@ instruction_categories:
 
   ext_bc:
     format: "ext_bc"
-    prefix: 63
+    prefix: 61
     operands: [ "subop", "vd", "vs1", "rs2" ]
     unit: "Ext"
     sub-operation: "subop"
@@ -281,13 +281,13 @@ instruction_categories:
 
   fence:
     format: "system"
-    prefix: 55
+    prefix: 63
     unit: "Fence"
     operands: []
 
   system:
     format: "system"
-    prefix: 55
+    prefix: 63
     unit: "FCU"
     operands: []
     
