@@ -133,7 +133,10 @@ begin
   ReadPortA_P : process(Clk)
   begin
     if rising_edge(Clk) then
-      if ExecuteStall = '0' then
+      if Reset = '1' then
+        RA_Data <= (others => '0');
+
+      elsif ExecuteStall = '0' then
         if RA_Active = '1' then
           if WA_Active = '1' and WA_Index = RA_Index then
             -- Feed-forward from port A
@@ -149,7 +152,10 @@ begin
   ReadPortB_P : process(Clk)
   begin
     if rising_edge(Clk) then
-      if ExecuteStall = '0' then
+      if Reset = '1' then
+        RB_Data <= (others => '0');
+        
+      elsif ExecuteStall = '0' then
         if RB_Active = '1' then
           if WA_Active = '1' and WA_Index = RB_Index then
             -- Feed-forward from port A
@@ -165,7 +171,10 @@ begin
   ReadPortC_P : process(Clk)
   begin
     if rising_edge(Clk) then
-      if ExecuteStall = '0' then
+      if Reset = '1' then
+        RC_Data <= (others => '0');
+
+      elsif ExecuteStall = '0' then
         if RC_Active = '1' then
           if WA_Active = '1' and WA_Index = RC_Index then
             -- Feed-forward from port A

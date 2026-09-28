@@ -19,6 +19,10 @@ architecture RTL of ALU is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   signal ALUResult, CompareA, CompareB : std_logic_vector(WordSize_C-1 downto 0);
 begin
+  --
+  -- Logic implementation
+  --
+  
   ALU_P : process(Operation, A, B)
   begin
     -- Default result
@@ -58,6 +62,10 @@ begin
     end case; 
   end process;
 
+  --
+  -- Comparator operand select
+  --
+  
   CompareInput_P : process(Operation, A, B, ALUResult)
   begin
     if Operation = ALUOp_CMP_C or Operation = ALUOp_CMPU_C then
@@ -70,18 +78,26 @@ begin
       CompareB <= (others => '0');
     end if;
   end process;
+
+  --
+  -- Comparator
+  --
   
   Compare_P : process(Operation, CompareA, CompareB)
   begin
     Condition <= Cond_Equal_C;
     
     if Operation = ALUOp_CMPU_C then
+      -- Explicit compare unsigned
+      
       if unsigned(CompareA) > unsigned(CompareB) then
         Condition <= Cond_GreaterThan_C;
       elsif unsigned(CompareA) < unsigned(CompareB) then
         Condition <= Cond_LessThan_C;
       end if;
-    else
+    else 
+      -- Explicit or implicit compare signed
+      
       if signed(CompareA) > signed(CompareB) then
         Condition <= Cond_GreaterThan_C;
       elsif signed(CompareA) < signed(CompareB) then
