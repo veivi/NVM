@@ -1,5 +1,6 @@
 	.import "funktio"
 	.import "fft_decimation_in_time"
+	.import "fft_dit_unroll"
 	.import "stop_simulation"
 	.export "init"
 	.export "w_table"
@@ -80,7 +81,8 @@ init_fft_loop:
 	debug 0x57A7     // Stopwatch start
 	
 	ldi s1, fft_data
-	jmpal fft_decimation_in_time
+	// jmpal fft_decimation_in_time
+	jmpal fft_dit_unroll
 	ldi s2, 8
 
 	// Read result

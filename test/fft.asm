@@ -51,7 +51,7 @@ for_v_loop_early:
 	add s10, s7, s9    // s10 = j + v
 	lsl s10, s10, 2   // s10 = 4*(j + v)
 	add s10, s10, s1   // s10 = &A[j + v]
-	vld2 v0, s10, s4   // v0 = "u" = complex_vector_read(A, j + v, m)
+	vld v0, s10, s4   // v0 = "u" = complex_vector_read(A, j + v, m)
 	
 	// 	  complex_vector_read(a, A, j + v + half_m, m);
 

@@ -649,8 +649,7 @@ begin
 
     -- Compute the major stride for load/store multiple
     
-    VLS_C_Stride <= std_logic_vector(resize(shift_left(unsigned(Stride),
-                                                       Log2VecSize_C + ExecuteWord.VLS_Span), AddrSize_C));
+    VLS_C_Stride <= std_logic_vector(resize(shift_left(unsigned(Stride), Log2VecSize_C), AddrSize_C));
   end process;
   
   --
