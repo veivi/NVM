@@ -7,16 +7,12 @@
 
 	.section "code"
 
-fft_dit_unroll2:
-	
-	
 fft_dit_unroll:
 	debug 96
 	
 	// Params: s1 = data, s2 = log2(N)
 
-	// Unroll by 4:
-	// for(s = 1; s <= LOG2V+2; s++) {
+	// for(s = 1; s <= LOG2V+1; s++) {
 	//   m = 1<<s;
 	//   half_m = m/2;
 	//   tab_step = 1<<(LOG2LEN - s);
@@ -44,7 +40,7 @@ for_j_loop:
 	lsl s8, s7, s6    // s8 = j<<log2_tab_step = j * tab_step
 	ldx s8, s17, s8   // s8 = "omega" =  w[j * tab_step]
 	
-	// 	for(v = 0; v < FFT_LEN; v += 4*V*m) {
+	// 	for(v = 0; v < FFT_LEN; v += 2*V*m) {
 	
 	clear(s9)         // s9 = "v" = 0
 	
@@ -55,60 +51,46 @@ for_v_loop_early:
 	add s10, s7, s9    // s10 = j + v
 	lsl s10, s10, 2   // s10 = 4*(j + v)
 	add s10, s10, s1   // s10 = &A[j + v]
-	vld4 v0, s10, s4   // v0-3 = "u" = complex_vector_read(A, j + v, m)
+	vld2 v0, s10, s4   // v0-1 = "u" = complex_vector_read(A, j + v, m)
 	
 	// 	  complex_vector_read(a, A, j + v + half_m, m);
 
 	lsl s12, s5, 2     // s12 = 4*half_m
 	add s13, s10, s12  // s13 =  &A[j + v + half_m]
-	vld4 v4, s13, s4   // v4-7 = "a" = complex_vector_read(A, j + v + half_m, m)
+	vld2 v2, s13, s4   // v2-3 = "a" = complex_vector_read(A, j + v + half_m, m)
 
 	// 	  complex_vector_mul_bc(t, a, &omega);
 
 	lsl s14, s4, LOG2V // s14 = m<<LOG2V = V*m
-	lsl s14, s14, 2    // s14 = 4*V*m
-	add s9, s9, s14     // v += 4*V*m
+	lsl s14, s14, 1    // s14 = 2*V*m
+	add s9, s9, s14     // v += 2*V*m
 	cmp c1, s9, s15     // c1 = compare(v, FFT_LEN)
 	
-	cvbmul v4, v4, s8  // v4-7 = "t" = complex_vector_mul_bc(a, &omega)
-	cvbmul v5, v5, s8
-	cvbmul v6, v6, s8
-	cvbmul v7, v7, s8
+	cvbmul v2, v2, s8  // v2-3 = "t" = complex_vector_mul_bc(a, &omega)
+	cvbmul v3, v3, s8
 	
 	// 	  complex_vector_add(x, u, t);
 	// 	  complex_vector_sub(y, u, t);
 
-	cvadd v8, v0, v4   // v8-9 = "x" = complex_vector_add(u, t)
-	cvadd v9, v1, v5
-	cvadd v10, v2, v6
-	cvadd v11, v3, v7
+	cvadd v4, v0, v2   // v2-3 = "x" = complex_vector_add(u, t)
+	cvadd v5, v1, v3
+	
+	cvsub v6, v0, v2   // v4-5 = "y" = complex_vector_sub(u, t)
+	cvsub v7, v1, v3   
+	
+	// 	  complex_vector_write(x, A, j + v, m);
+	// 	  complex_vector_write(y, A, j + v + half_m, m);
 	
 	lsl s14, s4, LOG2V        // s14 = V*m
 	lsl s14, s14, 2           // s14 = 4*V*m
-	vst v8, s10, s4           // complex_vector_write(x, A, j + v, m)
+	vst v4, s10, s4           // complex_vector_write(x, A, j + v, m)
 	add s10, s10, s14
-	vst v9, s10, s4           // complex_vector_write(x, A, j + v + V*m, m)
-	add s10, s10, s14
-	vst v10, s10, s4           // complex_vector_write(x, A, j + v + 2*V*m, m)
-	add s10, s10, s14
-	vst v11, s10, s4           // complex_vector_write(x, A, j + v + 3*V*m, m)
+	vst v5, s10, s4           // complex_vector_write(x, A, j + v + V*m, m)
 	
-	cvsub v8, v0, v4   // v8-9 = "y" = complex_vector_sub(u, t)
-	cvsub v9, v1, v5   
-	cvsub v10, v2, v6   
-	cvsub v11, v3, v7   
-	
-	// 	  complex_vector_write(x, A, j + v, m);
-	// 	  complex_vector_write(y, A, j + v + half_m, m);	
-	
-	vst v8, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
+	vst v6, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
 	add s13, s13, s14         // s13 = &A[j + v + half_m + V*m]
-	vst v9, s13, s4           // complex_vector_write(x, A, j + v + V*m, m)
-	add s13, s13, s14         // s13 = &A[j + v + half_m + 2*V*m]
-	vst v10, s13, s4           // complex_vector_write(x, A, j + v + 2*V*m, m)
-	add s13, s13, s14         // s13 = &A[j + v + half_m + 3*V*m]
 	blt c1, for_v_loop_early  // Loop as long as v < FFT_LEN
-	vst v11, s13, s4           // Delay slot, complex_vector_write(y, A, j + v + half_m + 3*V*m, m)
+	vst v7, s13, s4           // Delay slot, complex_vector_write(y, A, j + v + half_m + V*m, m)
 
 end_for_v_loop_early:
 	add s7, s7, 1         // j++
@@ -117,10 +99,9 @@ end_for_v_loop_early:
 	nop
 
 end_for_j_loop:
-	// sub s3, s3, 1    // s = s - 1
 	cmp c1, s3, LOG2V  
-	add s3, s3, 1    // s = s + 2
-	ble c1, for_s_loop_early   // while s-1 <= LOG2V
+	add s3, s3, 1    // s = s + 1
+	ble c1, for_s_loop_early   // while s-1 < LOG2V
 	drain  // Delay slot
 
 	//
