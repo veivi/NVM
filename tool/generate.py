@@ -169,14 +169,21 @@ for f in formats:
 
 print(f"Minimal prefix is {min_prefix} bits")
 
-first = True
-    
-for op in opcodes:
-    # print(f"Generating decode for {op}...")
+
+def generate_opcode(op, variant, first):
+
+    print(f"Generating decode for {op}{variant}...")
     
     opcode = opcodes[op]
-
-    category = categories[opcode["category"]]
+    
+    categoryName = opcode["category"]
+    delta = 0
+    
+    if variant != "":
+        categoryName += "_" + variant
+        delta = opcode["variant-delta"]
+        
+    category = categories[categoryName]
     
     format = formats[category["format"]]
 
@@ -184,7 +191,10 @@ for op in opcodes:
 
     decoder_lines.append( "")
     decoder_lines.append( "    --")
-    decoder_lines.append(f"    -- Mnemonic {op}")
+    if variant != "":
+        decoder_lines.append(f"    -- Mnemonic {op} ({variant})")
+    else:
+        decoder_lines.append(f"    -- Mnemonic {op}")
     decoder_lines.append( "    --")
     decoder_lines.append( "")
     
@@ -193,7 +203,7 @@ for op in opcodes:
     else:
         line = "    elsif "
         
-    line += f"to_integer(unsigned(I_Code({offset+length-1} downto {offset}))) = {category["prefix"]<<(length - min_prefix)} + {opcode["opcode"]} then"
+    line += f"to_integer(unsigned(I_Code({offset+length-1} downto {offset}))) = {category["prefix"]<<(length - min_prefix)} + {opcode["opcode"]} + {delta} then"
     decoder_lines.append(line)
     
     if "operation" in opcode:
@@ -277,9 +287,22 @@ for op in opcodes:
     if "ext-result" in category:
         (offset, length) = instruction_field(format, category["ext-result"])
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Dest <= RegIndex(I_Code({offset+length-1} downto {offset}));")
-    
-    first = False
 
+#
+# Loop through all opcodes
+#
+
+first = True
+
+for op in opcodes:
+    opcode = opcodes[op]
+    
+    generate_opcode(op, "", first)
+
+    if "variant-name" in opcode:
+        generate_opcode(op, opcode["variant-name"], first)
+        
+    first = False
     
 decoder_lines.extend(["    end if;",
                       "  end process;",

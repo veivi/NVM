@@ -351,6 +351,8 @@ instruction_set:
   AND:
     category: "logic"
     opcode: 2
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_AND_C"
     behaviour: "R[rd] = R[rs1] AND R[rs2]"
 
