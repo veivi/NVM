@@ -10,7 +10,8 @@ entity Testbench is
 end Testbench;
 
 architecture Bhv of Testbench is
-  constant Contention_C : real := 0.0;
+  constant ClockCycle_C : time := 10 ns;
+  constant Contention_C : real := 0.1;
   constant Log2IROMSize_C : integer := 10;
   constant Log2RAMSize_C : integer := 10;
   constant AddrSize_C : integer := 20;
@@ -176,10 +177,10 @@ begin
 
   Osc_P : process
   begin
-    Clk <= '0';
-    wait for 5 ns;
     Clk <= '1';
-    wait for 5 ns;
+    wait for ClockCycle_C/2;
+    Clk <= '0';
+    wait for ClockCycle_C/2;
 
     if Freeze then
       report "Oscillator stop";
@@ -195,7 +196,7 @@ begin
   Reset_P : process
   begin
     Reset <= '1';
-    wait for 20 ns;
+    wait for 5*ClockCycle_C;
     Reset <= '0';
     wait;
   end process;

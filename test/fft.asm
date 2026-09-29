@@ -93,11 +93,12 @@ end_for_j_loop:
 	ble c0, for_s_loop_early   // while s <= LOG2V
 	drain  // Delay slot
 
-for_s_loop_late:
 	//
 	// Late stage: our vectors will handle j directly, striding used only for w
 	//
+	// for(s = LOG2V+1; s <= LOG2LEN; s++) {
 
+for_s_loop_late:
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
 	lsr s5, s4, 1  // s5 = "half_m" = m/2

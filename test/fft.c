@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define LOG2LEN     6
+#define LOG2LEN     8
 #define FFT_LEN     (1<<LOG2LEN)
 #define LOG2V       3
 #define V           (1<<LOG2V)
@@ -19,8 +19,6 @@ typedef struct complex {
 #define COMPLEX_SUB(a, b) (complex_t) { (a).real - (b).real, (a).imag - (b).imag }
 #define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
 #define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
-
-#define TO_FIXEDPOINT(a) (((uint32_t) (a.real * (1L<<PRECISION))<<16)|(uint32_t) (a.imag * (1<<PRECISION)))
 
 complex_t fft_data[FFT_LEN];
 complex_t w[FFT_LEN];
@@ -211,16 +209,6 @@ void fft_with_vectors(complex_t A[])
   }
 }
 
-void printbin(FILE *file, int16_t a)
-{
-  int i = 0;
-  while(i < 8*sizeof(a)) {
-    fprintf(file, "%c", a & 0x8000 ? '1' : '0');
-    a <<= 1;
-    i++;
-  }
-}
-
 void print_bin(FILE *file, uint32_t a)
 {
   int i = 0;
@@ -270,7 +258,7 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX(0.05f + 0.15f*cosf(i*2*pi/8) + 0.15f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX(0.03f + 0.05f*cosf(i*2*pi/8) + 0.05f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   

@@ -125,6 +125,8 @@ begin
         writeline(file_pointer, Outline);
         write(OutLine, string'("-- DEBUG "));
         hwrite(OutLine, DebugOut);
+        write(OutLine, string'(" at time "));
+        write(OutLine, now);
         writeline(file_pointer, Outline);
         write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
         writeline(file_pointer, Outline);
