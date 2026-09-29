@@ -314,15 +314,23 @@ def assemble(mnemonic, params):
     # print(f"Mnemonic {mnemonic}")
     ispec = opcodes[mnemonic]
 
+    catName = ispec["category"]
+    delta = 0
+    
     if "variant-name" in ispec:
         print(f"Instruction has variants")
+        print(params[-1])
+        if type(params[-1]) == Immediate:
+            print("Imm operand")
+            catName += "_" + ispec["variant-name"]
+            delta = ispec["variant-delta"]
     
-    category = categories[ispec["category"]]    
+    category = categories[catName]    
     format = formats[category["format"]]
     formal_args = category["operands"]
 
     (opcode_offset, opcode_size) = instruction_field(format, "opcode")    
-    iword = ((category["prefix"]<<(opcode_size - min_prefix)) + ispec["opcode"]) << opcode_offset
+    iword = ((category["prefix"]<<(opcode_size - min_prefix)) + ispec["opcode"] + delta) << opcode_offset
     ref = None
     
     param_index = 0

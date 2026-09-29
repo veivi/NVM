@@ -57,7 +57,7 @@ clear_bss_loop:
 	vsti v0, s1, 1
 	subi s2, s2, 32
 	bgt c0, clear_bss_loop
-	addi s1, s1, 32
+	add s1, s1, 32
 
 tests_start:	
 	// ba write_neg_bytes
@@ -93,7 +93,7 @@ read_loop:
 	subi s3, s3, 1
 	ld s2, s1, 0
 	bgt c0, read_loop
-	addi s1, s1, 4
+	add s1, s1, 4
 	
 	// Done
 	
@@ -107,7 +107,7 @@ write_neg_bytes:
 
 neg_loop:
 	stb s3, s1 + 0
-	addi s1, s1, 1
+	add s1, s1, 1
 	subi s2, s2, 1
 	bgt c0, neg_loop
 	subi s3, s3, 1
@@ -125,7 +125,7 @@ byte_read_loop:
 	ldbu s6, s1 + 3
 	subi s2, s2, 4
 	bgt c0, byte_read_loop
-	addi s1, s1, 4
+	add s1, s1, 4
 
 	debugi 257
 	
@@ -137,10 +137,10 @@ nollataan_vektoridata:
 
 clear_vektori_loop:
 	st s3, s1 + 0
-	addi s1, s1, 4
+	add s1, s1, 4
 	subi s2, s2, 4
 	bgt c0, clear_vektori_loop
-	addi s3, s3, 2345
+	add s3, s3, 2345
 	
 	// Testataan vector loadeja
 
@@ -148,23 +148,23 @@ clear_vektori_loop:
 	ldi s1, vektoridata_alku
 	
 	vldi v0, s1, 1
-	vaddi v0, v0, 1
+	vadd v0, v0, 1
 	vsti v0, s1, 1
 
-	vandi v0, v0, 255
+	vand v0, v0, 255
 	vcmpi vc3, v0, 50
 	
-	vandi v1, v1, 0  // Clear v1
+	vand v1, v1, 0  // Clear v1
 	vori v1, v1, 3   
 	vstib v1, s1, 1  // Write as a sequence of bytes
 	vldib v2, s1, 1  // Read back into v2
-	vaddi v2, v2, 10
+	vadd v2, v2, 10
 	vstib v2, s1, 1
 	vldib v3, s1, 1
-	vaddi v3, v3, 1
-	vaddi v4, v3, 1
-	vaddi v5, v4, 1
-	vaddi v6, v5, 1
+	vadd v3, v3, 1
+	vadd v4, v3, 1
+	vadd v5, v4, 1
+	vadd v6, v5, 1
 	vstib v3, s1, 3
 	vstib v4, s1, 4
 	vstib v5, s1, 5
@@ -175,8 +175,8 @@ clear_vektori_loop:
 	drain
 	sync
 	
-	addi s1, s1, 128
-	vaddi v3, v3, 16
+	add s1, s1, 128
+	vadd v3, v3, 16
 
 	debugi 16
 	vstib v3, s1, 10
@@ -185,7 +185,7 @@ clear_vektori_loop:
 
 	// Then with write fence
 	
-	vaddi v3, v3, 16
+	vadd v3, v3, 16
 	
 	debugi 32	
 	vstib v3, s1, 10
@@ -195,7 +195,7 @@ clear_vektori_loop:
 	
 	// Then with read and write fence
 	
-	vaddi v5, v3, 16
+	vadd v5, v3, 16
 	
 	sync
 	debugi 48
@@ -209,13 +209,13 @@ clear_vektori_loop:
 	// Vector Extension test
 	//
 
-	addi s1, s1, 128
+	add s1, s1, 128
 	
 	ldi s2, 3957
 	lsli s2, s2, 16
 	ori s2, s2, 1060   // s2 = cos(15) + i*sin(15)
 
-	vandi v0, v0, 0
+	vand v0, v0, 0
 	vbor v0, v0, s2
 	vsti v0, s1, 1    // v0 is now all s2 from above
 
@@ -223,7 +223,7 @@ clear_vektori_loop:
 	lsli s2, s2, 16
 	ori s2, s2, 15
 	lsli s2, s2, 12   // s2 = 1-i
-	vandi v2, v2, 0
+	vand v2, v2, 0
 	vbor v2, v2, s2   // Load 1-i into v2
 
 	debugi 11
@@ -282,7 +282,7 @@ clear_vektori_loop:
 	drain
 	debugi 40
 
-	vandi v3, v3, 0
+	vand v3, v3, 0
 	cvsub v3, v3, v1   // Test negation of max neg value (which could overflow)
 	vsti v3, s1, 1
 	drain
@@ -291,10 +291,10 @@ clear_vektori_loop:
 	debugi 12
 
 	
-	vandi v2, v2, 0  // Load 1.5+0i into v2 
+	vand v2, v2, 0  // Load 1.5+0i into v2 
 	vori v2, v2, 3
 	vlsli v2, v2, 27
-	vandi v3, v3, 0  // Load 0-1.5i into v3
+	vand v3, v3, 0  // Load 0-1.5i into v3
 	vori v3, v3, 31
 	vlsli v3, v3, 11
 	vadd v2, v2, v3   // Load 1.5-1.5i into v2
@@ -322,7 +322,7 @@ clear_vektori_loop:
 	drain
 	debugi 13
 
-	vandi v2, v2, 0  // Load 1+0i into v2 
+	vand v2, v2, 0  // Load 1+0i into v2 
 	vori v2, v2, 1
 	vlsli v2, v2, 28
 	

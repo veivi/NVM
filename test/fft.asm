@@ -82,13 +82,13 @@ for_v_loop_early:
 	vst v3, s13, s4           // Delay slot, complex_vector_write(y, A, j + v + half_m, m)
 
 end_for_v_loop_early:
-	addi s7, s7, 1         // j++
+	add s7, s7, 1         // j++
 	cmp c0, s7, s5
 	blt c0, for_j_loop     // while j < half_m
 	nop
 
 end_for_j_loop:
-	addi s3, s3, 1    // s = s + 1
+	add s3, s3, 1    // s = s + 1
 	cmpi c0, s3, LOG2V  
 	ble c0, for_s_loop_early   // while s <= LOG2V
 	drain  // Delay slot
@@ -139,7 +139,7 @@ for_v_loop_late:
 	
 	vldi v2, s13, 1     // v2 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
-	addi s9, s9, V           // v += V
+	add s9, s9, V           // v += V
 	cmp c1, s9, s5
 	
 	cvmul v2, v2, v0   // v2 = "t" = complex_vector_mul(t, a, omega)
@@ -164,7 +164,7 @@ end_for_v_loop_late:
 	nop
 
 end_for_k_loop:	
-	addi s3, s3, 1    // s = s + 1
+	add s3, s3, 1    // s = s + 1
 	cmp c0, s3, s2   
 	ble c0, for_s_loop_late // while s <= LOG2LEN
 	drain   // Delay slot

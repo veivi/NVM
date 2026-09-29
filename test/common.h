@@ -1,7 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#define clear(s)   andi s, s, 0
-#define vclear(v)  vandi v, v, 0
+#define clear(s)   and s, s, 0
+#define vclear(v)  vand v, v, 0
 
 #endif

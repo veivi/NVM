@@ -356,12 +356,6 @@ instruction_set:
     operation: "ALUOp_AND_C"
     behaviour: "R[rd] = R[rs1] AND R[rs2]"
 
-  ANDI:
-    category: "logic_imm"
-    opcode: 3
-    operation: "ALUOp_AND_C"
-    behaviour: "R[rd] = R[rs] AND zero_extend(value)"
-
   XOR:
     category: "logic"
     opcode: 10
@@ -381,12 +375,6 @@ instruction_set:
     variant-delta: 1
     operation: "ALUOp_ADD_C"
     behaviour: "R[rd] = R[rs1] + R[rs2]"
-
-  ADDI:
-    category: "logic_imm"
-    opcode: 5
-    operation: "ALUOp_ADD_C"
-    behaviour: "R[rd] = R[rs] + zero_extend(value)"
 
   SUB:
     category: "logic"
@@ -967,14 +955,10 @@ instruction_set:
   VAND:
     category: "logic_vec"
     opcode: 0
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_AND_C"
     behaviour: "R[rd] = R[rs1] AND R[rs2]"
-
-  VANDI:
-    category: "logic_vec_imm"
-    opcode: 1
-    operation: "ALUOp_AND_C"
-    behaviour: "R[rd] = R[rs] AND zero_extend(value)"
 
   VXOR:
     category: "logic_vec"
@@ -991,14 +975,10 @@ instruction_set:
   VADD:
     category: "logic_vec"
     opcode: 4
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_ADD_C"
     behaviour: "R[rd] = R[rs1] + R[rs2]"
-
-  VADDI:
-    category: "logic_vec_imm"
-    opcode: 5
-    operation: "ALUOp_ADD_C"
-    behaviour: "R[rd] = R[rs] + zero_extend(value)"
 
   VSUB:
     category: "logic_vec"
