@@ -374,8 +374,8 @@ int main()
     printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
   
   // fft(fft_data);
-  fft_with_vectors(fft_data);
-  // fft_vectors_unroll2(fft_data);
+  // fft_with_vectors(fft_data);
+  fft_vectors_unroll2(fft_data);
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,

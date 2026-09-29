@@ -11,7 +11,7 @@ end Testbench;
 
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
-  constant Contention_C : real := 0.1;
+  constant Contention_C : real := 0.0;
   constant Log2IROMSize_C : integer := 10;
   constant Log2RAMSize_C : integer := 10;
   constant AddrSize_C : integer := 20;
@@ -23,6 +23,7 @@ architecture Bhv of Testbench is
   constant Log2NumOfRegs_C : integer := 6;
   constant Log2VecSize_C : integer := 3;
   constant VecSize_C : integer := 2**Log2VecSize_C;
+  
   signal Clk : std_logic;
   signal Reset : std_logic;
 
