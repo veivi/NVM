@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define LOG2LEN     8
+#define LOG2LEN     9
 #define FFT_LEN     (1<<LOG2LEN)
 #define LOG2V       3
 #define V           (1<<LOG2V)
