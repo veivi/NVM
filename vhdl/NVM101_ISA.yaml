@@ -377,6 +377,8 @@ instruction_set:
   ADD:
     category: "logic"
     opcode: 4
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_ADD_C"
     behaviour: "R[rd] = R[rs1] + R[rs2]"
 

@@ -311,9 +311,12 @@ def assemble(mnemonic, params):
     if mnemonic == "NOP":
         return (iword_to_bytes(0), None)
 
-#    print(f"Mnemonic {mnemonic}")
+    # print(f"Mnemonic {mnemonic}")
     ispec = opcodes[mnemonic]
 
+    if "variant-name" in ispec:
+        print(f"Instruction has variants")
+    
     category = categories[ispec["category"]]    
     format = formats[category["format"]]
     formal_args = category["operands"]
