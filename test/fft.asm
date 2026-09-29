@@ -8,7 +8,7 @@
 	.section "code"
 
 fft_decimation_in_time:
-	debugi 48
+	debug 48
 	
 	// Params: s1 = data, s2 = log2(N)
 
@@ -24,7 +24,7 @@ fft_decimation_in_time:
 for_s_loop_early:
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
-	lsri s5, s4, 1  // s5 = "half_m" = m/2
+	lsr s5, s4, 1  // s5 = "half_m" = m/2
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	
 	//
@@ -49,19 +49,19 @@ for_v_loop_early:
 	// 	  complex_vector_read(u, A, j + v, m);
 
 	add s10, s7, s9    // s10 = j + v
-	lsli s10, s10, 2   // s10 = 4*(j + v)
+	lsl s10, s10, 2   // s10 = 4*(j + v)
 	add s10, s10, s1   // s10 = &A[j + v]
 	vld v0, s10, s4   // v0 = "u" = complex_vector_read(A, j + v, m)
 	
 	// 	  complex_vector_read(a, A, j + v + half_m, m);
 
-	lsli s12, s5, 2     // s12 = 4*half_m
+	lsl s12, s5, 2     // s12 = 4*half_m
 	add s13, s10, s12  // s13 =  &A[j + v + half_m]
 	vld v1, s13, s4   // v1 = "a" = complex_vector_read(A, j + v + half_m, m)
 
 	// 	  complex_vector_mul_bc(t, a, &omega);
 
-	lsli s14, s4, LOG2V // s14 = m<<LOG2V = V*m
+	lsl s14, s4, LOG2V // s14 = m<<LOG2V = V*m
 	add s9, s9, s14     // v += V*m
 	cmp c1, s9, s15     // c1 = compare(v, FFT_LEN)
 	
@@ -89,7 +89,7 @@ end_for_v_loop_early:
 
 end_for_j_loop:
 	add s3, s3, 1    // s = s + 1
-	cmpi c0, s3, LOG2V  
+	cmp c0, s3, LOG2V  
 	ble c0, for_s_loop_early   // while s <= LOG2V
 	drain  // Delay slot
 
@@ -100,7 +100,7 @@ for_s_loop_late:
 
 	ldi s4, 1
 	lsl s4, s4, s3  // s4 = "m" = 1<<s
-	lsri s5, s4, 1  // s5 = "half_m" = m/2
+	lsr s5, s4, 1  // s5 = "half_m" = m/2
 	sub s6, s2, s3  // s6 = "log2_tab_step" = LOG2LEN - s
 	
 	ldi s16, 1
@@ -120,24 +120,24 @@ for_v_loop_late:
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 
 	lsl s8, s9, s6  // s8 = v<<log2_tab_step = v * tab_step
-	lsli s8, s8, 2   // s8 = 4*v*tab_step
+	lsl s8, s8, 2   // s8 = 4*v*tab_step
 	add s8, s17, s8  // s8 = &w_table[v * tab_step]
 	vld v0, s8, s16  // v0 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
 	
 	// 	  complex_vector_read(u, A, k + v, 1);
 	
 	add s10, s7, s9    // s10 = k + v
-	lsli s10, s10, 2   // s10 = 4*(k + v)
+	lsl s10, s10, 2   // s10 = 4*(k + v)
 	add s10, s10, s1   // s10 = &A[k + v]
 
-	vldi v1, s10, 1    // v1 = "u" = complex_vector_read(A, k + v, 1);
+	vld v1, s10, 1    // v1 = "u" = complex_vector_read(A, k + v, 1);
 
 	//        complex_vector_read(a, A, k + v + half_m, 1);
 	
-	lsli s12, s5, 2     // s12 = 4*half_m
+	lsl s12, s5, 2     // s12 = 4*half_m
 	add s13, s10, s12  // s13 =  &A[k + v + half_m]
 	
-	vldi v2, s13, 1     // v2 = "a" = complex_vector_read(A, k + v + half_m, 1);
+	vld v2, s13, 1     // v2 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
 	add s9, s9, V           // v += V
 	cmp c1, s9, s5
@@ -152,10 +152,10 @@ for_v_loop_late:
 	
         // 	  complex_vector_write(x, A, k + v, 1)
 	
-	vsti v3, s10, 1
+	vst v3, s10, 1
 	
 	blt c1, for_v_loop_late  // while v < half_m
-	vsti v4, s13, 1          // Delay slot, complex_vector_write(y, A, k + v + half_m, 1)
+	vst v4, s13, 1          // Delay slot, complex_vector_write(y, A, k + v + half_m, 1)
 	
 end_for_v_loop_late:
 	add s7, s7, s4           // k += m

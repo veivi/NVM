@@ -6,7 +6,7 @@
 
 stop_simulation:
 	drain
-	debugi -1
+	debug -1
 
 stop_loop:
 	ba stop_loop

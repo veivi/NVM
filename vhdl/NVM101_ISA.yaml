@@ -208,7 +208,7 @@ instruction_categories:
    
   loadstore_vec:
     format: "loadstore_vec"
-    prefix: 46
+    prefix: 59
     operands: [ "vd", "rs1", "rs2" ]
     unit: "VLS"
     mode: "VLS_Reg_C"
@@ -218,7 +218,7 @@ instruction_categories:
     
   loadstore_vec_imm:
     format: "loadstore_vec_imm"
-    prefix: 46
+    prefix: 59
     operands: [ "vd", "rs", "stride" ]
     unit: "VLS"
     mode: "VLS_Imm_C"
@@ -228,14 +228,14 @@ instruction_categories:
     
   debug_imm:
     format: "debug_imm"
-    prefix: 47
+    prefix: 52
     operands: [ "value" ]
     imm-signed: "value"
     unit: "Debug"
 
   debug:
     format: "debug"
-    prefix: 47
+    prefix: 52
     operands: [ "rs" ]
     register-read-a: "rs"
     unit: "Debug"
@@ -257,7 +257,7 @@ instruction_categories:
 
   cond_branch:
     format: "branch"
-    prefix: 56
+    prefix: 54
     operands: [ "cr", "i_disp" ]
     unit: "FCU"
     condition-read: "cr"
@@ -266,7 +266,7 @@ instruction_categories:
     
   branch:
     format: "branch"
-    prefix: 56
+    prefix: 54
     operands: [ "i_disp" ]
     unit: "FCU"
     imm-signed: "i_disp"
@@ -356,83 +356,59 @@ instruction_set:
     operation: "ALUOp_AND_C"
     behaviour: "R[rd] = R[rs1] AND R[rs2]"
 
-  XOR:
-    category: "logic"
-    opcode: 10
-    operation: "ALUOp_XOR_C"
-    behaviour: "R[rd] = R[rs1] XOR R[rs2]"
-
-  XORI:
-    category: "logic_imm"
-    opcode: 11
-    operation: "ALUOp_XOR_C"
-    behaviour: "R[rd] = R[rs] XOR zero_extend(value)"
-
   ADD:
     category: "logic"
     opcode: 4
     variant-name: "imm"
     variant-delta: 1
     operation: "ALUOp_ADD_C"
-    behaviour: "R[rd] = R[rs1] + R[rs2]"
+    behaviour: "R[rd] = R[rs1] - R[rs2]"
 
   SUB:
     category: "logic"
     opcode: 6
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_SUB_C"
     behaviour: "R[rd] = R[rs1] - R[rs2]"
-
-  SUBI:
-    category: "logic_imm"
-    opcode: 7
-    operation: "ALUOp_SUB_C"
-    behaviour: "R[rd] = R[rs] - zero_extend(value)"
 
   OR:
     category: "logic"
     opcode: 8
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs1] OR R[rs2]"
 
-  ORI:
-    category: "logic_imm"
-    opcode: 9
-    operation: "ALUOp_OR_C"
-    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+  XOR:
+    category: "logic"
+    opcode: 10
+    variant-name: "imm"
+    variant-delta: 1
+    operation: "ALUOp_XOR_C"
+    behaviour: "R[rd] = R[rs1] XOR R[rs2]"
 
   LSL:
     category: "logic"
     opcode: 12
-    operation: "ALUOp_LSL_C"
-    behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
-
-  LSLI:
-    category: "logic_imm"
-    opcode: 13
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_LSL_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
 
   LSR:
     category: "logic"
     opcode: 14
-    operation: "ALUOp_LSR_C"
-    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
-
-  LSRI:
-    category: "logic_imm"
-    opcode: 15
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_LSR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
   ASR:
     category: "logic"
     opcode: 16
-    operation: "ALUOp_ASR_C"
-    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
-
-  ASRI:
-    category: "logic_imm"
-    opcode: 17
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
@@ -443,50 +419,34 @@ instruction_set:
   CMP:
     category: "compare"
     opcode: 0
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_CMP_C"
     behaviour: "CR[cr] = COMPARE(R[rs1], R[rs2])"
-
-  CMPI:
-    category: "compare_imm"
-    opcode: 1
-    operation: "ALUOp_CMP_C"
-    behaviour: "CR[cr] = COMPARE(R[rs], sign_extend(value))"
 
   CMPU:
     category: "compare"
     opcode: 2
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_CMPU_C"
     behaviour: "CR[cr] = COMPARE(R[rs1], R[rs2])"
-
-  CMPUI:
-    category: "compare_imm_unsigned"
-    opcode: 3
-    operation: "ALUOp_CMPU_C"
-    behaviour: "CR[cr] = COMPARE(R[rs], zero_extend(value))"
 
   VCMP:
     category: "compare_vec"
     opcode: 4
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_CMP_C"
     behaviour: "CR[cr] = COMPARE(R[rs1], R[rs2])"
-
-  VCMPI:
-    category: "compare_vec_imm"
-    opcode: 5
-    operation: "ALUOp_CMP_C"
-    behaviour: "CR[cr] = COMPARE(R[rs], sign_extend(value))"
 
   VCMPU:
     category: "compare_vec"
     opcode: 6
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_CMPU_C"
     behaviour: "CR[cr] = COMPARE(R[rs1], R[rs2])"
-
-  VCMPUI:
-    category: "compare_vec_imm_unsigned"
-    opcode: 7
-    operation: "ALUOp_CMPU_C"
-    behaviour: "CR[cr] = COMPARE(R[rs], zero_extend(value))"
 
 #
 # Conditional Branch
@@ -779,171 +739,108 @@ instruction_set:
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
 
 #
-# Vector Load, Indirect, Immediate Stride
-#
-
-  VLDI:
-    category: "loadstore_vec_imm"
-    opcode: 0
-    size: "Log2BPW_C"
-    operation: "LSOp_LoadSigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDIL:
-    category: "loadstore_vec_imm"
-    opcode: 1
-    size: 2
-    operation: "LSOp_LoadSigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDILU:
-    category: "loadstore_vec_imm"
-    opcode: 2
-    size: 2
-    operation: "LSOp_LoadUnsigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDIS:
-    category: "loadstore_vec_imm"
-    opcode: 3
-    size: 1
-    operation: "LSOp_LoadSigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDISU:
-    category: "loadstore_vec_imm"
-    opcode: 4
-    size: 1
-    operation: "LSOp_LoadUnsigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDIB:
-    category: "loadstore_vec_imm"
-    opcode: 5
-    size: 0
-    operation: "LSOp_LoadSigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VLDIBU:
-    category: "loadstore_vec_imm"
-    opcode: 6
-    size: 0
-    operation: "LSOp_LoadUnsigned_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-
-#
-# Vector Store, Indirect, Immediate Stride
-#
-
-  VSTI:
-    category: "loadstore_vec_imm"
-    opcode: 7
-    size: "Log2BPW_C"
-    operation: "LSOp_Store_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VSTIL:
-    category: "loadstore_vec_imm"
-    opcode: 8
-    size: 2
-    operation: "LSOp_Store_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VSTIS:
-    category: "loadstore_vec_imm"
-    opcode: 9
-    size: 1
-    operation: "LSOp_Store_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-    
-  VSTIB:
-    category: "loadstore_vec_imm"
-    opcode: 10
-    size: 0
-    operation: "LSOp_Store_C"
-    behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
-
-#
-# Vector Load, Indirect, Stride
+# Vector Load, Indirect
 #
 
   VLD:
     category: "loadstore_vec"
-    opcode: 11
+    opcode: 0
+    variant-name: "imm"
+    variant-delta: 1
     size: "Log2BPW_C"
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDL:
     category: "loadstore_vec"
-    opcode: 12
+    opcode: 2
+    variant-name: "imm"
+    variant-delta: 1
     size: 2
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDLU:
     category: "loadstore_vec"
-    opcode: 13
+    opcode: 4
+    variant-name: "imm"
+    variant-delta: 1
     size: 2
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDS:
     category: "loadstore_vec"
-    opcode: 14
+    opcode: 6
+    variant-name: "imm"
+    variant-delta: 1
     size: 1
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDSU:
     category: "loadstore_vec"
-    opcode: 15
+    opcode: 8
+    variant-name: "imm"
+    variant-delta: 1
     size: 1
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDB:
     category: "loadstore_vec"
-    opcode: 16
+    opcode: 10
+    variant-name: "imm"
+    variant-delta: 1
     size: 0
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VLDBU:
     category: "loadstore_vec"
-    opcode: 17
+    opcode: 12
+    variant-name: "imm"
+    variant-delta: 1
     size: 0
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
 
 #
-# Vector Store, Indirect, Stride
+# Vector Store, Indirect
 #
 
   VST:
     category: "loadstore_vec"
-    opcode: 18
+    opcode: 14
+    variant-name: "imm"
+    variant-delta: 1
     size: "Log2BPW_C"
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTL:
     category: "loadstore_vec"
-    opcode: 19
+    opcode: 16
+    variant-name: "imm"
+    variant-delta: 1
     size: 2
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTS:
     category: "loadstore_vec"
-    opcode: 20
+    opcode: 18
+    variant-name: "imm"
+    variant-delta: 1
     size: 1
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
   VSTB:
     category: "loadstore_vec"
-    opcode: 21
+    opcode: 20
+    variant-name: "imm"
+    variant-delta: 1
     size: 0
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
@@ -963,14 +860,10 @@ instruction_set:
   VXOR:
     category: "logic_vec"
     opcode: 2
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_XOR_C"
     behaviour: "R[rd] = R[rs1] XOR R[rs2]"
-
-  VXORI:
-    category: "logic_vec_imm"
-    opcode: 3
-    operation: "ALUOp_XOR_C"
-    behaviour: "R[rd] = R[rs] XOR zero_extend(value)"
 
   VADD:
     category: "logic_vec"
@@ -983,42 +876,40 @@ instruction_set:
   VSUB:
     category: "logic_vec"
     opcode: 6
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_SUB_C"
     behaviour: "R[rd] = R[rs1] - R[rs2]"
-
-  VSUBI:
-    category: "logic_vec_imm"
-    opcode: 7
-    operation: "ALUOp_SUB_C"
-    behaviour: "R[rd] = R[rs] - zero_extend(value)"
 
   VOR:
     category: "logic_vec"
     opcode: 8
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs1] OR R[rs2]"
 
-  VORI:
-    category: "logic_vec_imm"
-    opcode: 9
-    operation: "ALUOp_OR_C"
-    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
-
-  VLSLI:
-    category: "logic_vec_imm"
+  VLSL:
+    category: "logic_vec"
     opcode: 10
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_LSL_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
 
-  VLSRI:
-    category: "logic_vec_imm"
-    opcode: 11
+  VLSR:
+    category: "logic_vec"
+    opcode: 12
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_LSR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
-  VASRI:
-    category: "logic_vec_imm"
-    opcode: 12
+  VASR:
+    category: "logic_vec"
+    opcode: 14
+    variant-name: "imm"
+    variant-delta: 1
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
@@ -1028,49 +919,49 @@ instruction_set:
 
   VBAND:
     category: "logic_vec_bc"
-    opcode: 13
+    opcode: 16
     operation: "ALUOp_AND_C"
     behaviour: "R[rd] = R[rs1] AND R[rs2]"
 
   VBXOR:
     category: "logic_vec_bc"
-    opcode: 14
+    opcode: 17
     operation: "ALUOp_XOR_C"
     behaviour: "R[rd] = R[rs1] XOR R[rs2]"
 
   VBADD:
     category: "logic_vec_bc"
-    opcode: 15
+    opcode: 18
     operation: "ALUOp_ADD_C"
     behaviour: "R[rd] = R[rs1] + R[rs2]"
 
   VBSUB:
     category: "logic_vec_bc"
-    opcode: 16
+    opcode: 19
     operation: "ALUOp_SUB_C"
     behaviour: "R[rd] = R[rs1] - R[rs2]"
 
   VBOR:
     category: "logic_vec_bc"
-    opcode: 17
+    opcode: 20
     operation: "ALUOp_OR_C"
     behaviour: "R[rd] = R[rs1] OR R[rs2]"
 
   VBLSL:
     category: "logic_vec_bc"
-    opcode: 18
+    opcode: 21
     operation: "ALUOp_LSL_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"    
 
   VBLSR:
     category: "logic_vec_bc"
-    opcode: 19
+    opcode: 22
     operation: "ALUOp_LSR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
   VBASR:
     category: "logic_vec_bc"
-    opcode: 20
+    opcode: 23
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
@@ -1107,16 +998,18 @@ instruction_set:
 #
 
   DEBUG:
-    category: "debug"
-    opcode: 100
-    operation: "DebugOp_DEBUG_C"
-    behaviour: "Debug from register"
-
-  DEBUGI:
     category: "debug_imm"
-    opcode: 101
+    opcode: 0
     operation: "DebugOp_DEBUGI_C"
-    behaviour: "Debug Immediate"
+    behaviour: "Debug from register/immediate"
+
+  DEBUGR:
+    category: "debug"
+    opcode: 1
+    operation: "DebugOp_DEBUG_C"
+    behaviour: "Debug from register/immediate"
+
+
 
 
     

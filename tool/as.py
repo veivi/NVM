@@ -318,12 +318,16 @@ def assemble(mnemonic, params):
     delta = 0
     
     if "variant-name" in ispec:
-        print(f"Instruction has variants")
-        print(params[-1])
-        if type(params[-1]) == Immediate:
-            print("Imm operand")
-            catName += "_" + ispec["variant-name"]
+        if type(params[-1]) in (Immediate, Ident):
+            # Must be an immediate variant
+            
+            varName = ispec["variant-name"]
+            if varName != "imm":
+                raise ParseError("Instruction {mnemonic} has no variant-imm")
+            
+            catName += "_" + varName
             delta = ispec["variant-delta"]
+            # print(f"  {mnemonic} with imm operand, delta = {delta}")
     
     category = categories[catName]    
     format = formats[category["format"]]
@@ -345,7 +349,7 @@ def assemble(mnemonic, params):
             if type(op) == Register:
                 iword |= op.index << offset
             else:
-                raise ParseError(f"rs/rs1/rs2/rd expects a scalar register")
+                raise ParseError(f"{mnemonic} rs/rs1/rs2/rd expects a scalar register")
             
         elif arg in ("vd", "vs", "vs1", "vs2"):
             op = params[param_index]
@@ -353,7 +357,7 @@ def assemble(mnemonic, params):
             if type(op) == VectorRegister:
                 iword |= op.index << offset
             else:
-                raise ParseError(f"vd/vs/vs1/vs2 expects a vector register")
+                raise ParseError(f"{mnemonic} vd/vs/vs1/vs2 expects a vector register")
             
         elif arg == "cr":
             op = params[param_index]
@@ -361,7 +365,7 @@ def assemble(mnemonic, params):
             if type(op) == ConditionRegister:
                 iword |= op.index << offset
             else:
-                raise ParseError(f"cr expects a condition register")
+                raise ParseError(f"{mnemonic} cr expects a condition register")
             
         elif arg == "vcr":
             op = params[param_index]
@@ -369,7 +373,7 @@ def assemble(mnemonic, params):
             if type(op) == VectorConditionRegister:
                 iword |= op.index << offset
             else:
-                raise ParseError(f"vcr expects a vector condition register")
+                raise ParseError(f"{mnemonic} vcr expects a vector condition register")
             
         elif arg == "unit":
             op = params[param_index]
@@ -377,7 +381,7 @@ def assemble(mnemonic, params):
             if type(op) == Unit:
                 iword |= op.index << offset
             else:
-                raise ParseError(f"unit id expected")
+                raise ParseError(f"{mnemonic} unit id expected")
             
         elif arg == "i_disp":
             op = params[param_index]
@@ -389,7 +393,7 @@ def assemble(mnemonic, params):
                 ref = { "type": arg, "symbol": op.name, "bit_offset": offset, "num_bits": size }
                 
             else:
-                raise ParseError(f"disp expects an identifier")
+                raise ParseError(f"{mnemonic} disp expects an identifier")
                 
         elif arg == "i_target":
             op = params[param_index]
@@ -398,7 +402,7 @@ def assemble(mnemonic, params):
                 ref = { "type": arg, "symbol": op.name, "bit_offset": offset, "num_bits": size }
                 
             else:
-                raise ParseError(f"target expects an identifier")
+                raise ParseError(f"{mnemonic} target expects an identifier")
                 
         elif arg in ("value", "index", "disp", "op", "scale", "stride", "subop"):
             op = params[param_index]
@@ -411,7 +415,7 @@ def assemble(mnemonic, params):
                 ref = { "type": arg, "symbol": op.name, "bit_offset": offset, "num_bits": size }
                 
             else:
-                raise ParseError(f"immediate expected for a value/index/offset")
+                raise ParseError(f"{mnemonic} immediate expected for a value/index/offset")
                 
         else:
             raise ParseError(f"Unidentified field '{arg}' in instr '{mnemonic}' format {format}")        
@@ -425,7 +429,8 @@ def assemble(mnemonic, params):
 def main():
     os.system(f"cpp -Idesign/test -DV=8 -DLOG2V=3 {filename} >{filename_pp}")
     file = open(filename_pp)
-    
+
+    print(f"Assembling {filename}...")
     ast = Parser(tokenize(file.read())).parse_program()
 
     sections = dict()

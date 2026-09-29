@@ -172,7 +172,7 @@ print(f"Minimal prefix is {min_prefix} bits")
 
 def generate_opcode(op, variant, first):
 
-    print(f"Generating decode for {op}{variant}...")
+    # print(f"Generating decode for {op}{variant}...")
     
     opcode = opcodes[op]
     

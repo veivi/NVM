@@ -54,8 +54,8 @@ init:
 	vclear(v0)
 
 clear_bss_loop:
-	vsti v0, s1, 1
-	subi s2, s2, 32
+	vst v0, s1, 1
+	sub s2, s2, 32
 	bgt c0, clear_bss_loop
 	add s1, s1, 32
 
@@ -70,7 +70,7 @@ tests_start:
 	ldi s2, 64
 	
 init_fft_loop:
-	subi s2, s2, 1
+	sub s2, s2, 1
 	ldx s3, s0, s2
 	bgt c0, init_fft_loop
 	stx s3, s1, s2
@@ -83,14 +83,14 @@ init_fft_loop:
 
 	// Read result
 
-	debugi 64
+	debug 64
 	drain
 	
 	ldi s3, 1
 	lsl s3, s3, s2
 	
 read_loop:
-	subi s3, s3, 1
+	sub s3, s3, 1
 	ld s2, s1, 0
 	bgt c0, read_loop
 	add s1, s1, 4
@@ -108,11 +108,11 @@ write_neg_bytes:
 neg_loop:
 	stb s3, s1 + 0
 	add s1, s1, 1
-	subi s2, s2, 1
+	sub s2, s2, 1
 	bgt c0, neg_loop
-	subi s3, s3, 1
+	sub s3, s3, 1
 
-	debugi 256
+	debug 256
 	
 read_neg_bytes:	
 	ldi s1, bss_start
@@ -123,11 +123,11 @@ byte_read_loop:
 	ldbu s4, s1 + 1
 	ldb s5, s1 + 2
 	ldbu s6, s1 + 3
-	subi s2, s2, 4
+	sub s2, s2, 4
 	bgt c0, byte_read_loop
 	add s1, s1, 4
 
-	debugi 257
+	debug 257
 	
 nollataan_vektoridata:	
 	ldi s1, vektoridata_alku
@@ -138,37 +138,37 @@ nollataan_vektoridata:
 clear_vektori_loop:
 	st s3, s1 + 0
 	add s1, s1, 4
-	subi s2, s2, 4
+	sub s2, s2, 4
 	bgt c0, clear_vektori_loop
 	add s3, s3, 2345
 	
 	// Testataan vector loadeja
 
-	debugi 1
+	debug 1
 	ldi s1, vektoridata_alku
 	
-	vldi v0, s1, 1
+	vld v0, s1, 1
 	vadd v0, v0, 1
-	vsti v0, s1, 1
+	vst v0, s1, 1
 
 	vand v0, v0, 255
-	vcmpi vc3, v0, 50
+	vcmp vc3, v0, 50
 	
 	vand v1, v1, 0  // Clear v1
-	vori v1, v1, 3   
-	vstib v1, s1, 1  // Write as a sequence of bytes
-	vldib v2, s1, 1  // Read back into v2
+	vor v1, v1, 3   
+	vstb v1, s1, 1  // Write as a sequence of bytes
+	vldb v2, s1, 1  // Read back into v2
 	vadd v2, v2, 10
-	vstib v2, s1, 1
-	vldib v3, s1, 1
+	vstb v2, s1, 1
+	vldb v3, s1, 1
 	vadd v3, v3, 1
 	vadd v4, v3, 1
 	vadd v5, v4, 1
 	vadd v6, v5, 1
-	vstib v3, s1, 3
-	vstib v4, s1, 4
-	vstib v5, s1, 5
-	vstib v6, s1, 6
+	vstb v3, s1, 3
+	vstb v4, s1, 4
+	vstb v5, s1, 5
+	vstb v6, s1, 6
 
 	// Memory fence test, first without barriers
 
@@ -178,32 +178,32 @@ clear_vektori_loop:
 	add s1, s1, 128
 	vadd v3, v3, 16
 
-	debugi 16
-	vstib v3, s1, 10
-	vldib v4, s1, 10
-	debugi 17
+	debug 16
+	vstb v3, s1, 10
+	vldb v4, s1, 10
+	debug 17
 
 	// Then with write fence
 	
 	vadd v3, v3, 16
 	
-	debugi 32	
-	vstib v3, s1, 10
+	debug 32	
+	vstb v3, s1, 10
 	drain
-	vldib v4, s1, 10
-	debugi 33	
+	vldb v4, s1, 10
+	debug 33	
 	
 	// Then with read and write fence
 	
 	vadd v5, v3, 16
 	
 	sync
-	debugi 48
-	vstib v5, s1, 10
+	debug 48
+	vstb v5, s1, 10
 	drain
-	vldib v6, s1, 10
+	vldb v6, s1, 10
 	sync
-	debugi 49
+	debug 49
 
 	//
 	// Vector Extension test
@@ -212,177 +212,177 @@ clear_vektori_loop:
 	add s1, s1, 128
 	
 	ldi s2, 3957
-	lsli s2, s2, 16
-	ori s2, s2, 1060   // s2 = cos(15) + i*sin(15)
+	lsl s2, s2, 16
+	or s2, s2, 1060   // s2 = cos(15) + i*sin(15)
 
 	vand v0, v0, 0
 	vbor v0, v0, s2
-	vsti v0, s1, 1    // v0 is now all s2 from above
+	vst v0, s1, 1    // v0 is now all s2 from above
 
 	ldi s2, 1
-	lsli s2, s2, 16
-	ori s2, s2, 15
-	lsli s2, s2, 12   // s2 = 1-i
+	lsl s2, s2, 16
+	or s2, s2, 15
+	lsl s2, s2, 12   // s2 = 1-i
 	vand v2, v2, 0
 	vbor v2, v2, s2   // Load 1-i into v2
 
-	debugi 11
+	debug 11
 
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvadd v1, v2, v2 // Test saturating complex addition
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v1
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v1
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvadd v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	
-	debugi 11
+	debug 11
 	
 	drain
-	debugi 39
+	debug 39
 
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvsub v1, v2, v2 // Test saturating complex subtraction
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvsub v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	
 	drain
-	debugi 40
+	debug 40
 
 	vand v3, v3, 0
 	cvsub v3, v3, v1   // Test negation of max neg value (which could overflow)
-	vsti v3, s1, 1
+	vst v3, s1, 1
 	drain
 	
 	drain
-	debugi 12
+	debug 12
 
 	
 	vand v2, v2, 0  // Load 1.5+0i into v2 
-	vori v2, v2, 3
-	vlsli v2, v2, 27
+	vor v2, v2, 3
+	vlsl v2, v2, 27
 	vand v3, v3, 0  // Load 0-1.5i into v3
-	vori v3, v3, 31
-	vlsli v3, v3, 11
+	vor v3, v3, 31
+	vlsl v3, v3, 11
 	vadd v2, v2, v3   // Load 1.5-1.5i into v2
 	
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v1, v2, v2 // Test saturating complex multiply
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v1
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v1
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	cvmul v1, v1, v2
-	vsti v1, s1, 1
+	vst v1, s1, 1
 	
 	drain
-	debugi 13
+	debug 13
 
 	vand v2, v2, 0  // Load 1+0i into v2 
-	vori v2, v2, 1
-	vlsli v2, v2, 28
+	vor v2, v2, 1
+	vlsl v2, v2, 28
 	
 	// Complex multiply: rotate elements of v2 15 degrees at a time
 	
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1
+	vst v2, s1, 1
 	cvmul v2, v2, v0
-	vsti v2, s1, 1    // This should be close to 1 + 0i
+	vst v2, s1, 1    // This should be close to 1 + 0i
 
 	drain
-	debugi 10
+	debug 10
 	
 	// Try once more
 	
@@ -414,10 +414,10 @@ clear_vektori_loop:
 	cvmul v2, v2, v0
 	cvmul v2, v2, v0
 	
-	vsti v2, s1, 1    // This should be close to 1 + 0i
+	vst v2, s1, 1    // This should be close to 1 + 0i
 
 	drain
-	debugi 11
+	debug 11
 
 	// Done
 
@@ -425,5 +425,5 @@ clear_vektori_loop:
 	sync
 	
 	jmpa stop_simulation
-	debugi -1
+	debug -1
 
