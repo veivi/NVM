@@ -213,11 +213,25 @@ begin
   --
 
   Debug_P : process(Clk)
+    variable timeStart : time;
+    variable cycles : integer;
+    variable Prev : std_logic_vector(WordSize_C-1 downto 0);
   begin
     if rising_edge(Clk) then
       if DebugOut = std_logic_vector(to_signed(-1, WordSize_C)) then
         report "Debug port stopping simulation";
         Freeze <= true;
+      elsif DebugOut /= Prev then
+        if DebugOut = std_logic_vector(to_unsigned(16#57A7#, WordSize_C)) then
+          report "Time measurement STARTED";
+          timeStart := now;
+        elsif DebugOut = std_logic_vector(to_unsigned(16#570B#, WordSize_C)) then
+          cycles := (now - timeStart) / ClockCycle_C;
+          report "Time measurement STOPPED, duration = " & integer'image(cycles) & " cycles";
+          timeStart := now;
+        end if;
+
+        Prev := DebugOut;
       end if;
     end if;
   end process;

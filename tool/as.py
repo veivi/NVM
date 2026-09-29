@@ -47,7 +47,7 @@ token_spec = [
     ("CREGISTER", r"[cC]\d+"),
     ("VCREGISTER", r"vc\d+"),
     ("UNIT",      r"[uU]\d+"),
-    ("HEX",       r"-?0x\d+"),
+    ("HEX",       r"-?0x[\da-zA-Z]+"),
     ("DEC",       r"-?\d+"),
     ("IDENT",     r"[A-Za-z_]\w*"),
     ("COMMA",     r","),

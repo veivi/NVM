@@ -76,14 +76,15 @@ init_fft_loop:
 	stx s3, s1, s2
 
 	// Invoke FFT
-	
+
+	debug 0x57A7
 	ldi s1, fft_data
 	jmpal fft_decimation_in_time
 	ldi s2, 8
 
 	// Read result
 
-	debug 64
+	debug 0x570B
 	drain
 	
 	ldi s3, 1

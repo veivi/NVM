@@ -258,10 +258,10 @@ begin
   --
 
   LoadsOutstanding <=
-    '1' when to_integer(unsigned(VLS_LoadsOutstanding)) /= 0 else LS_LoadsOutstanding;
+    '1' when unsigned(VLS_LoadsOutstanding) /= 0 else LS_LoadsOutstanding;
   
   StoresOutstanding <=
-    '1' when to_integer(unsigned(VLS_StoresOutstanding)) /= 0 else LS_StoresOutstanding;
+    '1' when unsigned(VLS_StoresOutstanding) /= 0 else LS_StoresOutstanding;
   
   --
   -- Control Word storage for execution stage
@@ -576,7 +576,7 @@ begin
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Async <= AVU_R_Present;
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
-  VRF_WA_Valid <=  (others => AVU_R_Present) when to_integer(unsigned(not VRF_ReadValid)) /= 0 else VALU_Mask;
+  VRF_WA_Valid <=  (others => AVU_R_Present) when unsigned(not VRF_ReadValid) /= 0 else VALU_Mask;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
   --
