@@ -27,8 +27,8 @@ instruction_formats:
   logic_vec_imm: { opcode: 8, pr: 4, vcr: 2, value: 6, vs: 6, vd: 6 }
   logic_vec_bc: { opcode: 8, pr: 4, vcr: 2, rs2: 6, vs1: 6, vd: 6 }
   branch: { opcode: 8, pr: 4, cr: 2, i_disp: 18 }
-  loadstore_vec: { opcode: 14, rs2 : 6, rs1: 6, vd: 6 }
-  loadstore_vec_imm: { opcode: 14, stride : 6, rs: 6, vd: 6 }
+  loadstore_vec: { opcode: 11, span: 3, rs2 : 6, rs1: 6, vd: 6 }
+  loadstore_vec_imm: { opcode: 11, span: 3, stride : 6, rs: 6, vd: 6 }
   debug: { opcode: 10, rs: 6 }
   debug_imm: { opcode: 10, value: 22 }
 
@@ -212,6 +212,7 @@ instruction_categories:
     operands: [ "vd", "rs1", "rs2" ]
     unit: "VLS"
     mode: "VLS_Reg_C"
+    multiple-span: "span"
     register-read-a: "rs1"
     register-read-b: "rs2"
     vector-read-c: "vd"
@@ -222,6 +223,7 @@ instruction_categories:
     operands: [ "vd", "rs", "stride" ]
     unit: "VLS"
     mode: "VLS_Imm_C"
+    multiple-span: "span"
     register-read-a: "rs"
     imm-unsigned: "stride"
     vector-read-c: "vd"

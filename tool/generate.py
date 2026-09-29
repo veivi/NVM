@@ -255,6 +255,9 @@ def generate_opcode(op, variant, first):
         (offset, length) = instruction_field(format, category["vector-write"])
         decoder_lines.append("      ControlWord.VRF_W_Active <= '1';")
         decoder_lines.append(f"      ControlWord.VRF_W_Index <= RegIndex(I_Code({offset+length-1} downto {offset}));")
+    if "multiple-span" in category:
+        (offset, length) = instruction_field(format, category["multiple-span"])
+        decoder_lines.append(f"      ControlWord.{category["unit"]}_Span <= to_integer(unsigned(I_Code({offset+length-1} downto {offset})));")
     if "encoded-predicate" in category:
         (offset, length) = instruction_field(format, category["encoded-predicate"])
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Predicate <= PredicateDecode(I_Code({offset+length-1} downto {offset}));")

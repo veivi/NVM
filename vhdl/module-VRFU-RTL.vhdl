@@ -103,7 +103,7 @@ begin
   begin
     Set <= (others => '0');
     Last := std_logic_vector(to_unsigned(SB_Index, Log2NumOfRegs_C))
-          or std_logic_vector(to_unsigned(SB_Span, Log2NumOfRegs_C));
+          or std_logic_vector(to_unsigned(2**SB_Span-1, Log2NumOfRegs_C));
     for I in SB_Index to to_integer(unsigned(Last)) loop
       Set(I) <= SB_Set and not DecodeStall and not ExecuteStall;
     end loop; 

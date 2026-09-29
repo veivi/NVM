@@ -398,7 +398,7 @@ begin
 
   RF_SB_Set <= '1' when LSOpIsLoad(ControlWord.LS_Operation) else '0';
   RF_SB_Index <= ControlWord.RF_RC_Index;
-  RF_SB_Span <= 0;
+  RF_SB_Span <= ControlWord.LS_Span;
   
   --
   -- Scalar RF Write A Multiplexing
@@ -646,17 +646,20 @@ begin
         VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C) <= Execute_Imm_Data;
       end loop;
     end if;
+
+    -- Compute the major stride for load/store multiple
+    
+    VLS_C_Stride <= std_logic_vector(resize(shift_left(unsigned(Stride),
+                                                       Log2VecSize_C + ExecuteWord.VLS_Span), AddrSize_C));
   end process;
   
-  VLS_C_Stride <= (others => '0');
-    
   --
   -- Vector scoreboard control
   --
 
   VRF_SB_Set <= '1' when LSOpIsLoad(ControlWord.VLS_Operation) or ControlWord.Ext_Active = '1' else '0';
   VRF_SB_Index <= ControlWord.Ext_Dest when ControlWord.Ext_Active = '1' else ControlWord.VRF_RC_Index;
-  VRF_SB_Span <= 0;
+  VRF_SB_Span <= ControlWord.VLS_Span;
 
   --
   -- Vector Extension Interface

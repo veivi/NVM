@@ -125,7 +125,7 @@ begin
           BufferStore(IndexIn).Addr <= C_Addr;
           BufferStore(IndexIn).Stride <= C_Stride;
           BufferStore(IndexIn).Dest <= C_Dest;
-          BufferStore(IndexIn).Count <= C_Span;
+          BufferStore(IndexIn).Count <= 2**C_Span - 1;
           BufferStore(IndexIn).WriteData <= (others => '0');
 
           if C_Operation = LSOp_Store_C then

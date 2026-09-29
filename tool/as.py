@@ -47,7 +47,7 @@ token_spec = [
     ("CREGISTER", r"[cC]\d+"),
     ("VCREGISTER", r"vc\d+"),
     ("UNIT",      r"[uU]\d+"),
-    ("HEX",       r"-?0x[\da-zA-Z]+"),
+    ("HEX",       r"-?0x[\da-fA-F]+"),
     ("DEC",       r"-?\d+"),
     ("IDENT",     r"[A-Za-z_]\w*"),
     ("COMMA",     r","),
@@ -134,6 +134,12 @@ class Immediate:
         self.value = value
     def __repr__(self):
         return f"Imm({self.value})"
+
+class Multiple:
+    def __init__(self, value):
+        self.value = value
+    def __repr__(self):
+        return f"Multiple({self.value})"
 
 class Ident:
     def __init__(self, name):
@@ -237,7 +243,7 @@ class Parser:
     def parse_operand_list(self):
         """operand_list := operand (COMMA operand)*"""
         operands = [self.parse_operand()]
-        while self.check("COMMA") or self.check("PLUS"):
+        while type(operands[-1]) == Directive or self.check("COMMA") or self.check("PLUS"):
             self.advance()
             operands.append(self.parse_operand())
         return operands
@@ -272,6 +278,7 @@ class Parser:
         elif tok.type == "IDENT":
             self.advance()
             return Ident(tok.value)
+            return Multiple(int(tok.value[1:]))
         elif tok.type == "BRACKET_L":
             self.advance()
             
@@ -312,6 +319,20 @@ def assemble(mnemonic, params):
         return (iword_to_bytes(0), None)
 
     # print(f"Mnemonic {mnemonic}")
+
+    multiple = 1
+    log2multiple = 0
+    
+    if mnemonic[-1].isdigit():
+        multiple = ord(mnemonic[-1]) - ord('0')
+        mnemonic = mnemonic[:-1]
+
+        while multiple > 1:
+            log2multiple = log2multiple + 1
+            multiple /= 2
+
+        print(f"Multiple {multiple} (log2 {log2multiple})")
+    
     ispec = opcodes[mnemonic]
 
     catName = ispec["category"]
@@ -336,7 +357,11 @@ def assemble(mnemonic, params):
     (opcode_offset, opcode_size) = instruction_field(format, "opcode")    
     iword = ((category["prefix"]<<(opcode_size - min_prefix)) + ispec["opcode"] + delta) << opcode_offset
     ref = None
-    
+
+    if "multiple-span" in category:
+        (span_offset, span_size) = instruction_field(format, "span")
+        iword |= log2multiple<<span_offset;
+        
     param_index = 0
 
     for arg in formal_args:
