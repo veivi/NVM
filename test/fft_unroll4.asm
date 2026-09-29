@@ -114,10 +114,10 @@ end_for_v_loop_early:
 	nop
 
 end_for_j_loop:
-	// sub s3, s3, 1    // s = s - 1
+	sub s3, s3, 1    // s = s - 1
 	cmp c1, s3, LOG2V  
-	add s3, s3, 1    // s = s + 2
-	ble c1, for_s_loop_early   // while s-1 <= LOG2V
+	add s3, s3, 2    // s = s + 2
+	ble c1, for_s_loop_early   // while s-2 <= LOG2V
 	drain  // Delay slot
 
 	//

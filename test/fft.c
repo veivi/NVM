@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define LOG2LEN     9
+#define LOG2LEN     10
 #define FFT_LEN     (1<<LOG2LEN)
 #define LOG2V       3
 #define V           (1<<LOG2V)
@@ -227,15 +227,15 @@ void fft_with_vectors(complex_t A[])
   }
 }
 
-#define EFF_LOG2V  (LOG2V+1)
-#define EFF_V      (1<<EFF_LOG2V)
+#define EFF2_LOG2V  (LOG2V+1)
+#define EFF2_V      (1<<EFF2_LOG2V)
   
 void fft_vectors_unroll2(complex_t A[])
 {
   int s = 0, m = 0, half_m = 0, tab_step = 0;
   int count = 0;
 
-  for(s = 1; s <= EFF_LOG2V; s++) {
+  for(s = 1; s <= EFF2_LOG2V; s++) {
     //
     // Early stage: our vectors will handle k with striding by m
     //
@@ -252,8 +252,8 @@ void fft_vectors_unroll2(complex_t A[])
       int v = 0;
       complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
 
-      for(v = 0; v < FFT_LEN; v += EFF_V*m) {
-	complex_t a[EFF_V], t[EFF_V], u[EFF_V], x[EFF_V], y[EFF_V];
+      for(v = 0; v < FFT_LEN; v += EFF2_V*m) {
+	complex_t a[EFF2_V], t[EFF2_V], u[EFF2_V], x[EFF2_V], y[EFF2_V];
 
 	complex_vector_read_mul(2, u, A, j + v, m, 0x130);
 	complex_vector_read_mul(2, a, A, j + v + half_m, m, 0x130);
@@ -275,7 +275,7 @@ void fft_vectors_unroll2(complex_t A[])
 
   count = 0;
   
-  for(s = EFF_LOG2V+1; s <= LOG2LEN; s++) {
+  for(s = EFF2_LOG2V+1; s <= LOG2LEN; s++) {
     //
     // Late stage: our vectors will handle j directly, striding used only for w
     //
@@ -289,8 +289,8 @@ void fft_vectors_unroll2(complex_t A[])
     for(k = 0; k < FFT_LEN; k += m) {
       int v = 0;
 	
-      for(v = 0; v < half_m; v += EFF_V) {
-	complex_t omega[EFF_V], a[EFF_V], t[EFF_V], u[EFF_V], x[EFF_V];
+      for(v = 0; v < half_m; v += EFF2_V) {
+	complex_t omega[EFF2_V], a[EFF2_V], t[EFF2_V], u[EFF2_V], x[EFF2_V];
 	  
 	complex_vector_read_mul(2, omega, w, v * tab_step, tab_step, 0x1000);
 	complex_vector_read_mul(2, u, A, k + v, 1, 0x130);
@@ -303,6 +303,101 @@ void fft_vectors_unroll2(complex_t A[])
 	complex_vector_sub(x, u, t);
 	complex_vector_sub(&x[V], &u[V], &t[V]);
 	complex_vector_write_mul(2, x, A, k + v + half_m, 1, 0x130);
+
+	printf("Late %d\n", count++);
+      }
+    }
+  }
+}
+
+#define EFF4_LOG2V  (LOG2V+2)
+#define EFF4_V      (1<<EFF4_LOG2V)
+  
+void fft_vectors_unroll4(complex_t A[])
+{
+  int s = 0, m = 0, half_m = 0, tab_step = 0;
+  int count = 0;
+
+  for(s = 1; s <= EFF4_LOG2V; s++) {
+    //
+    // Early stage: our vectors will handle k with striding by m
+    //
+    // if(half_m < V)
+    //   m/2 < V <==> m < 2*V <==> 1<<s < 2*V <==> s < LOG2V + 1
+
+    m = 1<<s;
+    half_m = m/2;
+    tab_step = 1<<(LOG2LEN - s);
+
+    int j = 0;
+      
+    for(j = 0; j < half_m; j++) {
+      int v = 0;
+      complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
+
+      for(v = 0; v < FFT_LEN; v += EFF4_V*m) {
+	complex_t a[EFF4_V], t[EFF4_V], u[EFF4_V], x[EFF4_V], y[EFF4_V];
+
+	complex_vector_read_mul(4, u, A, j + v, m, 0x130);
+	complex_vector_read_mul(4, a, A, j + v + half_m, m, 0x130);
+	
+	complex_vector_mul_bc(t, a, &omega);
+	complex_vector_mul_bc(&t[V], &a[V], &omega);
+	complex_vector_mul_bc(&t[2*V], &a[2*V], &omega);
+	complex_vector_mul_bc(&t[3*V], &a[3*V], &omega);
+	
+	complex_vector_add(x, u, t);
+	complex_vector_add(&x[V], &u[V], &t[V]);
+	complex_vector_add(&x[2*V], &u[2*V], &t[2*V]);
+	complex_vector_add(&x[3*V], &u[3*V], &t[3*V]);
+	complex_vector_sub(y, u, t);
+	complex_vector_sub(&y[V], &u[V], &t[V]);
+	complex_vector_sub(&y[2*V], &u[2*V], &t[2*V]);
+	complex_vector_sub(&y[3*V], &u[3*V], &t[3*V]);
+	
+	complex_vector_write_mul(4, x, A, j + v, m, 0x130);
+	complex_vector_write_mul(4, y, A, j + v + half_m, m, 0x130);
+	printf("Early %d\n", count++);
+      }
+    }
+  }
+
+  count = 0;
+  
+  for(s = EFF4_LOG2V+1; s <= LOG2LEN; s++) {
+    //
+    // Late stage: our vectors will handle j directly, striding used only for w
+    //
+
+    m = 1<<s;
+    half_m = m/2;
+    tab_step = 1<<(LOG2LEN - s);
+    
+    int k = 0;
+    
+    for(k = 0; k < FFT_LEN; k += m) {
+      int v = 0;
+	
+      for(v = 0; v < half_m; v += EFF4_V) {
+	complex_t omega[EFF4_V], a[EFF4_V], t[EFF4_V], u[EFF4_V], x[EFF4_V];
+	  
+	complex_vector_read_mul(4, omega, w, v * tab_step, tab_step, 0x1000);
+	complex_vector_read_mul(4, u, A, k + v, 1, 0x130);
+	complex_vector_read_mul(4, a, A, k + v + half_m, 1, 0x130);
+	complex_vector_mul(t, a, omega);
+	complex_vector_mul(&t[V], &a[V], &omega[V]);
+	complex_vector_mul(&t[2*V], &a[2*V], &omega[2*V]);
+	complex_vector_mul(&t[3*V], &a[3*V], &omega[3*V]);
+	complex_vector_add(x, u, t);
+	complex_vector_add(&x[V], &u[V], &t[V]);
+	complex_vector_add(&x[2*V], &u[2*V], &t[2*V]);
+	complex_vector_add(&x[3*V], &u[3*V], &t[3*V]);
+	complex_vector_write_mul(4, x, A, k + v, 1, 0x130);
+	complex_vector_sub(x, u, t);
+	complex_vector_sub(&x[V], &u[V], &t[V]);
+	complex_vector_sub(&x[2*V], &u[2*V], &t[2*V]);
+	complex_vector_sub(&x[3*V], &u[3*V], &t[3*V]);
+	complex_vector_write_mul(4, x, A, k + v + half_m, 1, 0x130);
 
 	printf("Late %d\n", count++);
       }
@@ -375,7 +470,8 @@ int main()
   
   // fft(fft_data);
   // fft_with_vectors(fft_data);
-  fft_vectors_unroll2(fft_data);
+  // fft_vectors_unroll2(fft_data);
+  fft_vectors_unroll4(fft_data);
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,

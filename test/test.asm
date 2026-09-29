@@ -83,7 +83,7 @@ init_fft_loop:
 	
 	ldi s1, fft_data
 	// jmpal fft_decimation_in_time
-	jmpal fft_dit_unroll2
+	jmpal fft_dit_unroll4
 	ldi s2, 9
 
 	// Read result
