@@ -212,10 +212,11 @@ begin
   LS_ReadActive <=
     '1' when C_Operation = LSOp_Store_C
     else '1' when not BufferEmpty and BufferStore(IndexOut).State = LSOp_Store_C
-    and BufferStore(IndexOut).Count > 0 else '0';
+    else '0';
   
   LS_ReadIndex <=
     C_Dest when C_Operation = LSOp_Store_C
+    else  BufferStore(IndexOut).Dest when LCI_Accept = '0'
     else ( BufferStore(IndexOut).Dest + 1 ) mod 2**Log2NumOfRegs_C;
   
   --
