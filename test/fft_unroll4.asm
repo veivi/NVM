@@ -46,11 +46,13 @@ for_j_loop:
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_early:
+#ifdef DEBUG
 	lsl s50, s3, 16
 	lsl s51, s7, 8
 	or s50, s50, s51
 	or s50, s50, s9
 	debugr s50
+#endif
 	
 	// 	  complex_t a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(u, A, j + v, m);
@@ -134,12 +136,13 @@ for_k_loop:
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_late:	
+#ifdef DEBUG
 	lsl s50, s3, 16
 	lsl s51, s7, 8
 	or s50, s50, s51
 	or s50, s50, s9
 	debugr s50
-	
+#endif	
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 

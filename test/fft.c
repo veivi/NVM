@@ -8,7 +8,7 @@
 #endif
 
 #define FFT_LEN     (1<<LOG2LEN)
-#define LOG2V       2
+#define LOG2V       1
 #define V           (1<<LOG2V)
 #define PRECISION   12
 #define pi          ((float) M_PI)
