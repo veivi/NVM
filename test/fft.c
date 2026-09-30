@@ -3,6 +3,10 @@
 #include <stdbool.h>
 #include <math.h>
 
+#ifndef LOG2LEN
+#error Need to define LOG2LEN at compile time
+#endif
+
 #define FFT_LEN     (1<<LOG2LEN)
 #define LOG2V       2
 #define V           (1<<LOG2V)
@@ -452,7 +456,7 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX(0.02f + 0.03f*cosf(i*2*pi/8) + 0.03f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX(0.005f + 0.015f*cosf(i*2*pi/8) + 0.015f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   

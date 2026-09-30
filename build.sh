@@ -2,12 +2,12 @@
 
 export ISA=NVM101
 
-options="-v $V -D FFT_LEN=256,LOG2FFT_LEN=8"
+options="-v 4 -D FFT_LEN=64,LOG2FFT_LEN=6 --unroll 1"
 
 design/tool/as.py $options design/test/test.asm
 design/tool/as.py $options design/test/fft.asm
-design/tool/as.py $options --unroll 4 design/test/fft_unroll4.asm
-design/tool/as.py $options --unroll 2 design/test/fft_unroll2.asm
+design/tool/as.py $options design/test/fft_unroll4.asm
+design/tool/as.py $options design/test/fft_unroll2.asm
 design/tool/as.py $options design/test/common.asm
 design/tool/ld.py test.obj fft.obj fft_unroll4.obj fft_unroll2.obj common.obj --map design/test/memory_map.yaml >ld.report
 
