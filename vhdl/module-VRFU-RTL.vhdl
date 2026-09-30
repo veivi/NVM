@@ -213,8 +213,7 @@ begin
     end if;
   end process;
   
-
-  ReadPortLS_P : process(Clk)
+ ReadPortLS_P : process(Clk)
   begin
     if rising_edge(Clk) then
       if Reset = '1' then

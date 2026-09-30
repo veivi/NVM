@@ -21,7 +21,7 @@ entity VLSU is
        C_Stall : in std_logic;
        C_Ready : out std_logic;
        C_Span : in RegSpan_T;
-       C_Dest : in RegIndex_T;
+       C_Target : in RegIndex_T;
        C_Addr : in std_logic_vector(AddrSize_C-1 downto 0);
        C_Stride : in std_logic_vector(AddrSize_C-1 downto 0);
        C_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
@@ -95,7 +95,8 @@ architecture RTL of VLSU is
 
   signal BufferStore : BufferArray_T(0 to 2**Log2BufferDepth_C-1);
 
-  signal IndexIn, IndexOut : integer range 0 to 2**Log2BufferDepth_C-1;
+  signal IndexIn, IndexOut, NextOutboundIndex
+    : integer range 0 to 2**Log2BufferDepth_C-1;
   signal BufferFull, BufferEmpty : boolean;
   
   signal WorkTable : WorkArray_T(0 to 2**Log2TableSize_C-1);
@@ -129,7 +130,7 @@ begin
           BufferStore(IndexIn).Log2Size <= C_Log2Size;
           BufferStore(IndexIn).Addr <= C_Addr;
           BufferStore(IndexIn).Stride <= C_Stride;
-          BufferStore(IndexIn).Dest <= C_Dest;
+          BufferStore(IndexIn).Dest <= C_Target;
           BufferStore(IndexIn).Count <= 2**C_Span - 1;
         end if;
 
@@ -173,7 +174,8 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         IndexOut <= 0;
-      elsif not BufferEmpty and BufferStore(IndexOut).Count = 0 and not WorkTableFull and LCI_Accept = '1' then
+      elsif not BufferEmpty and BufferStore(IndexOut).Count = 0
+        and not WorkTableFull and LCI_Accept = '1' then
         IndexOut <= ( IndexOut + 1 ) mod 2**Log2BufferDepth_C;
       end if;
     end if;
@@ -209,16 +211,19 @@ begin
   -- Store data read
   --
 
+  NextOutboundIndex <=
+    IndexOut when BufferStore(IndexOut).Count > 0
+    else (IndexOut + 1) mod 2**Log2BufferDepth_C;
+    
   LS_ReadActive <=
-    '1' when C_Operation = LSOp_Store_C
-    else '1' when not BufferEmpty and BufferStore(IndexOut).State = LSOp_Store_C
-    else '0';
+    '1' when BufferEmpty and C_Operation = LSOp_Store_C
+    else LCI_Accept when not BufferEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+    else '0';    
   
   LS_ReadIndex <=
-    C_Dest when C_Operation = LSOp_Store_C
-    else  BufferStore(IndexOut).Dest when LCI_Accept = '0'
-    else ( BufferStore(IndexOut).Dest + 1 ) mod 2**Log2NumOfRegs_C;
-  
+    C_Target when BufferEmpty and C_Operation = LSOp_Store_C
+    else BufferStore(NextOutboundIndex).Dest;
+
   --
   -- Status output
   --
