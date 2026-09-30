@@ -217,11 +217,13 @@ begin
     
   LS_ReadActive <=
     '1' when BufferEmpty and C_Operation = LSOp_Store_C
-    else LCI_Accept when not BufferEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
-    else '0';    
+    else LCI_Accept when BufferFull and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+    else '1' when C_Operation = LSOp_Store_C
+    else '0';
   
   LS_ReadIndex <=
-    C_Target when BufferEmpty and C_Operation = LSOp_Store_C
+    C_Target when ( BufferEmpty or BufferStore(NextOutboundIndex).Count = 0 )
+    and C_Operation = LSOp_Store_C
     else BufferStore(NextOutboundIndex).Dest;
 
   --

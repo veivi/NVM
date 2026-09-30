@@ -57,9 +57,9 @@ init:
 
 clear_bss_loop:
 	vst v0, s1, 1
-	sub s2, s2, 32
+	sub s2, s2, V_BYTES
 	bgt c0, clear_bss_loop
-	add s1, s1, 32
+	add s1, s1, V_BYTES
 
 tests_start:	
 	ba write_neg_bytes
