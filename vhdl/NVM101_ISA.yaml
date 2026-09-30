@@ -193,7 +193,7 @@ instruction_categories:
     mode: "LS_Displaced_C"
     register-read-a: "rs"
     imm-unsigned: "disp"
-    register-read-c: "rd"
+    target: "rd"
     
   loadstore_indexed:
     format: "loadstore_indexed"
@@ -204,7 +204,7 @@ instruction_categories:
     register-read-a: "rs1"
     register-read-b: "rs2"
     imm-unsigned: "scale"
-    register-read-c: "rd"
+    target: "rd"
    
   loadstore_vec:
     format: "loadstore_vec"
@@ -215,7 +215,7 @@ instruction_categories:
     multiple-span: "span"
     register-read-a: "rs1"
     register-read-b: "rs2"
-    vector-read-c: "vd"
+    target: "vd"
     
   loadstore_vec_imm:
     format: "loadstore_vec_imm"
@@ -226,7 +226,7 @@ instruction_categories:
     multiple-span: "span"
     register-read-a: "rs"
     imm-unsigned: "stride"
-    vector-read-c: "vd"
+    target: "vd"
     
   debug_imm:
     format: "debug_imm"

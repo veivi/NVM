@@ -81,9 +81,12 @@ architecture Struct of NVM101 is
   signal LS_Ready : std_logic;
   signal LS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
   
-  signal LS_R_Present : std_logic;
-  signal LS_R_Dest : RegIndex_T;
-  signal LS_R_Data : std_logic_vector(WordSize_C-1 downto 0);
+  signal LS_ReadActive : std_logic;
+  signal LS_ReadIndex : RegIndex_T;
+  signal LS_ReadData : std_logic_vector(WordSize_C-1 downto 0);
+  signal LS_WriteActive : std_logic;
+  signal LS_WriteIndex : RegIndex_T;
+  signal LS_WriteData : std_logic_vector(WordSize_C-1 downto 0);
   
   signal RF_SB_Set : std_logic;
   signal RF_SB_Index : RegIndex_T;
@@ -116,9 +119,13 @@ architecture Struct of NVM101 is
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
   signal VLS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
   
-  signal VLS_R_Present : std_logic_vector(VecSize_C-1 downto 0);
-  signal VLS_R_Dest : RegIndexArray_T(0 to VecSize_C-1);
-  signal VLS_R_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
+  signal VLS_ReadActive : std_logic_vector(VecSize_C-1 downto 0);
+  signal VLS_ReadIndex : RegIndexArray_T(0 to VecSize_C-1);
+  signal VLS_ReadData : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
+  
+  signal VLS_WriteActive : std_logic_vector(VecSize_C-1 downto 0);
+  signal VLS_WriteIndex : RegIndexArray_T(0 to VecSize_C-1);
+  signal VLS_WriteData : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   
   signal VRF_SB_Set : std_logic;
   signal VRF_SB_Index : RegIndex_T;
@@ -241,9 +248,13 @@ begin
              LoadsOutstanding => LoadsOutstanding,
              StoresOutstanding => StoresOutstanding,
              ALU_Operation => ExecuteWord.ALU_Operation,
-             LS_Operation => ExecuteWord.LS_Operation,
+             LS_DecodeOperation => ControlWord.LS_Operation,
+             LS_ExecuteOperation => ExecuteWord.LS_Operation,
+             LS_Target => ControlWord.LS_Target,
              LS_Ready => LS_Ready,
-             VLS_Operation => ExecuteWord.VLS_Operation,
+             VLS_DecodeOperation => ControlWord.VLS_Operation,
+             VLS_ExecuteOperation => ExecuteWord.VLS_Operation,
+             VLS_Target => ControlWord.VLS_Target,
              VLS_Ready => VLS_Ready,
              ExtC_Operation => ExecuteWord.Ext_Operation,
              ExtC_Accept => AVU_C_Accept,
@@ -310,13 +321,16 @@ begin
              C_Stall => ExecuteStall,
              C_Span => ExecuteWord.LS_Span,
              C_Ready => LS_Ready,               
-             C_Dest => ExecuteWord.RF_RC_Index,
+             C_Dest => ExecuteWord.LS_Target,
              C_Addr => ALU_Result(AddrSize_C-1 downto 0),
              C_Stride => LS_C_Stride,
              C_Data => RF_RC_Data,
-             R_Present => LS_R_Present,
-             R_Dest => LS_R_Dest,
-             R_Data => LS_R_Data,
+             LS_WriteActive => LS_WriteActive,
+             LS_WriteIndex => LS_WriteIndex,
+             LS_WriteData => LS_WriteData,
+             LS_ReadActive => LS_ReadActive,
+             LS_ReadIndex => LS_ReadIndex,
+             LS_ReadData => LS_ReadData,
              LoadsOutstanding => LS_LoadsOutstanding,
              StoresOutstanding => LS_StoresOutstanding,
              LCI_Present => LCI_Present(VecSize_C),
@@ -382,12 +396,18 @@ begin
              WA_Async => RF_WA_Async,
              WA_Index => ExecuteWord.RF_W_Index,
              WA_Data => RF_WA_Data,
-    
-             -- Write B is used by the LSU load results
+
+             -- LS Read port
+
+             LS_ReadActive => LS_ReadActive,
+             LS_ReadIndex => LS_ReadIndex,
+             LS_ReadData => LS_ReadData,
+             
+             -- LS Write port
                
-             WB_Active => LS_R_Present,
-             WB_Index => LS_R_Dest,
-             WB_Data => LS_R_Data);
+             LS_WriteActive => LS_WriteActive,
+             LS_WriteIndex => LS_WriteIndex,
+             LS_WriteData => LS_WriteData);
 
   RF_WA_Valid <= RF_ReadValid and DatumEvaluate(ExecuteDatum, ExecuteWord.ALU_Predicate);
   RF_WA_Async <= '0';
@@ -396,8 +416,8 @@ begin
   -- Scalar scoreboard control
   --
 
-  RF_SB_Set <= '1' when LSOpIsLoad(ControlWord.LS_Operation) else '0';
-  RF_SB_Index <= ControlWord.RF_RC_Index;
+  RF_SB_Set <= '1' when ControlWord.LS_Operation /= LSOp_None_C else '0';
+  RF_SB_Index <= ControlWord.LS_Target;
   RF_SB_Span <= ControlWord.LS_Span;
   
   --
@@ -479,15 +499,18 @@ begin
                C_Stall => ExecuteStall,
                C_Span => ExecuteWord.VLS_Span,
                C_Ready => VLS_Ready(I),               
-               C_Dest => ExecuteWord.VRF_RC_Index,
+               C_Dest => ExecuteWord.VLS_Target,
                C_Addr => VALU_Result(I*WordSize_C+AddrSize_C-1 downto I*WordSize_C),
                C_Stride => VLS_C_Stride,
                C_Data => VRF_RC_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
                LoadsOutstanding => VLS_LoadsOutstanding(I),
                StoresOutstanding => VLS_StoresOutstanding(I),
-               R_Present => VLS_R_Present(I),
-               R_Dest => VLS_R_Dest(I),
-               R_Data => VLS_R_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
+               LS_WriteActive => VLS_WriteActive(I),
+               LS_WriteIndex => VLS_WriteIndex(I),
+               LS_WriteData => VLS_WriteData((I+1)*WordSize_C-1 downto I*WordSize_C),
+               LS_ReadActive => VLS_ReadActive(I),
+               LS_ReadIndex => VLS_ReadIndex(I),
+               LS_ReadData => VLS_ReadData((I+1)*WordSize_C-1 downto I*WordSize_C),
                LCI_Present => LCI_Present(I),
                LCI_Accept => LCI_Accept(I),
                LCI_Write => LCI_Write(I),
@@ -546,12 +569,18 @@ begin
                WA_Valid => VRF_WA_Valid(I),
                WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
-    
+
+               -- Load/Store read port
+
+               LS_ReadActive => VLS_ReadActive(I),
+               LS_ReadIndex => VLS_ReadIndex(I),
+               LS_ReadData => VLS_ReadData((I+1)*WordSize_C-1 downto I*WordSize_C),
+               
                -- Write B is used by the VLSU load results
                
-               WB_Active => VLS_R_Present(I),
-               WB_Index => VLS_R_Dest(I),
-               WB_Data => VLS_R_Data((I+1)*WordSize_C-1 downto I*WordSize_C));
+               LS_WriteActive => VLS_WriteActive(I),
+               LS_WriteIndex => VLS_WriteIndex(I),
+               LS_WriteData => VLS_WriteData((I+1)*WordSize_C-1 downto I*WordSize_C));
 
     --
     -- Integer ALU
@@ -656,8 +685,9 @@ begin
   -- Vector scoreboard control
   --
 
-  VRF_SB_Set <= '1' when LSOpIsLoad(ControlWord.VLS_Operation) or ControlWord.Ext_Active = '1' else '0';
-  VRF_SB_Index <= ControlWord.Ext_Dest when ControlWord.Ext_Active = '1' else ControlWord.VRF_RC_Index;
+  VRF_SB_Set <=
+    '1' when ControlWord.VLS_Operation /= LSOp_None_C or ControlWord.Ext_Active = '1' else '0';
+  VRF_SB_Index <= ControlWord.Ext_Dest when ControlWord.Ext_Active = '1' else ControlWord.VLS_Target;
   VRF_SB_Span <= ControlWord.VLS_Span;
 
   --

@@ -31,9 +31,13 @@ entity EIU is
        LoadsOutstanding : in std_logic;
        StoresOutstanding : in std_logic;
        ALU_Operation : in ALUOp_T;
-       LS_Operation : in LoadStoreOp_T;
+       LS_DecodeOperation : in LoadStoreOp_T;
+       LS_ExecuteOperation : in LoadStoreOp_T;
+       LS_Target : in  RegIndex_T;
        LS_Ready : in std_logic;
-       VLS_Operation : in LoadStoreOp_T;
+       VLS_DecodeOperation : in LoadStoreOp_T;
+       VLS_ExecuteOperation : in LoadStoreOp_T;
+       VLS_Target : in  RegIndex_T;
        VLS_Ready : in std_logic_vector(2**Log2VecSize_C-1 downto 0);
        ExtC_Accept : in std_logic;
        ExtC_Operation : in integer range 0 to 2**ExtOpSize_C-1;
@@ -84,7 +88,7 @@ begin
   
   RA_Stall <= RF_Scoreboard(RA_Index) and RA_Active;
   RB_Stall <= RF_Scoreboard(RB_Index) and RB_Active;
-  RC_Stall <= RF_Scoreboard(RC_Index) and RC_Active;
+  RC_Stall <= RF_ScoreBoard(LS_Target) when LS_DecodeOperation /= LSOp_None_C else '0';
   WA_Stall <= RF_Scoreboard(WA_Index) and WA_Active;
 
   --
@@ -105,14 +109,13 @@ begin
   
   VRA_Stall <= VRF_ScoreboardFolded(VRA_Index) and VRA_Active;
   VRB_Stall <= VRF_ScoreboardFolded(VRB_Index) and VRB_Active;
-  VRC_Stall <= VRF_ScoreboardFolded(VRC_Index) and VRC_Active;
+  VRC_Stall <= VRF_ScoreboardFolded(VLS_Target) when VLS_DecodeOperation /= LSOp_None_C else '0';
   VWA_Stall <= VRF_ScoreboardFolded(VWA_Index) and VWA_Active;
-
   --
   -- Scalar/vector LSU stall detection
   --
   
-  LS_Stall <= not LS_Ready when LS_Operation /= LSOp_None_C else '0';
+  LS_Stall <= not LS_Ready when LS_ExecuteOperation /= LSOp_None_C else '0';
 
   VLS_P : process(VLS_Ready)
   begin
@@ -125,7 +128,7 @@ begin
     end loop;
   end process;
     
-  VLS_Stall <= not VLS_Ready_All when VLS_Operation /= LSOp_None_C else '0';
+  VLS_Stall <= not VLS_Ready_All when VLS_ExecuteOperation /= LSOp_None_C else '0';
 
   --
   -- Fence decode

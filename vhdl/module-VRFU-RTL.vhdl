@@ -34,7 +34,7 @@ entity VRFU is
        Scoreboard : out std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
        
        --
-       -- Read ports A, B, C
+       -- ALU Read ports A, B, C
        --
 
        RA_Active : in std_logic;
@@ -50,18 +50,30 @@ entity VRFU is
        RC_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        --
-       -- Write ports A, B
+       -- ALU Write port A, B
        --
 
        WA_Active : in std_logic;
-       WA_Async : in std_logic;
+       WA_Async : in std_logic;  -- Tells if this write is coming from an AVU
        WA_Valid : in std_logic;
        WA_Index : in RegIndex_T;
        WA_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+
+       --
+       -- LSU read port
+       --
+
+       LS_ReadActive : in std_logic;
+       LS_ReadIndex : in RegIndex_T;
+       LS_ReadData : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
-       WB_Active : in std_logic;
-       WB_Index : in RegIndex_T;
-       WB_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));      
+       --
+       -- LSU write port
+       --
+       
+       LS_WriteActive : in std_logic;
+       LS_WriteIndex : in RegIndex_T;
+       LS_WriteData : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));      
 end VRFU;
 
 architecture RTL of VRFU is
@@ -91,21 +103,35 @@ begin
 
   Scoreboard <= State;
   
-  Clear_P : process(ExecuteStall, WA_Active, WA_Index, WB_Active, WB_Index)
+  Clear_P : process(ExecuteStall, WA_Index, WA_Active, WA_Async,
+                    LS_ReadActive, LS_ReadIndex, LS_WriteActive, LS_WriteIndex)
   begin
     Clear <= (others => '0');
-    Clear(WA_Index) <= WA_Active and (WA_Async or not ExecuteStall);
-    Clear(WB_Index) <= WB_Active;
+    if WA_Active = '1' and (WA_Async or not ExecuteStall) = '1' then
+      Clear(WA_Index) <= '1';
+    end if;
+
+    if LS_WriteActive = '1' then
+      Clear(LS_WriteIndex) <= '1';
+    end if;
+
+    if LS_ReadActive = '1' then
+      Clear(LS_ReadIndex) <= '1';
+    end if;
   end process;
 
   Set_P : process(DecodeStall, ExecuteStall, SB_Set, SB_Index, SB_Span)
     variable Last : std_logic_vector(Log2NumOfRegs_C-1 downto 0);
   begin
     Set <= (others => '0');
+
     Last := std_logic_vector(to_unsigned(SB_Index, Log2NumOfRegs_C))
           or std_logic_vector(to_unsigned(2**SB_Span-1, Log2NumOfRegs_C));
-    for I in SB_Index to to_integer(unsigned(Last)) loop
-      Set(I) <= SB_Set and not DecodeStall and not ExecuteStall;
+
+    for I in 0 to 2**Log2NumOfRegs_C-1 loop
+      if I >= SB_Index and I <= to_integer(unsigned(Last)) then
+        Set(I) <= SB_Set and not DecodeStall and not ExecuteStall;
+      end if;
     end loop; 
   end process;
 
@@ -120,8 +146,8 @@ begin
         Storage(WA_Index) <= WA_Data;
       end if;
       
-      if WB_Active = '1' then
-        Storage(WB_Index) <= WB_Data;
+      if LS_WriteActive = '1' then
+        Storage(LS_WriteIndex) <= LS_WriteData;
       end if;
     end if;
   end process;
@@ -182,6 +208,24 @@ begin
           else
             RC_Data <= Storage(RC_Index);
           end if;
+        end if;
+      end if;
+    end if;
+  end process;
+  
+
+  ReadPortLS_P : process(Clk)
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        LS_ReadData <= (others => '0');
+
+      elsif LS_ReadActive = '1' then
+        if ExecuteStall = '0' and WA_Active = '1' and WA_Index = LS_ReadIndex then
+          -- Feed-forward from port A
+          LS_ReadData <= WA_Data;
+        else
+          LS_ReadData <= Storage(LS_ReadIndex);
         end if;
       end if;
     end if;

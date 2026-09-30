@@ -62,7 +62,7 @@ clear_bss_loop:
 	add s1, s1, 32
 
 tests_start:	
-	// ba write_neg_bytes
+	ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal

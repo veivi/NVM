@@ -2,11 +2,11 @@
 
 export ISA=NVM101
 
-design/tool/as.py design/test/test.asm
-design/tool/as.py design/test/fft.asm
-design/tool/as.py design/test/fft_unroll4.asm
-design/tool/as.py design/test/fft_unroll2.asm
-design/tool/as.py design/test/common.asm
+design/tool/as.py -v $V design/test/test.asm
+design/tool/as.py -v $V design/test/fft.asm
+design/tool/as.py -v $V design/test/fft_unroll4.asm
+design/tool/as.py -v $V design/test/fft_unroll2.asm
+design/tool/as.py -v $V design/test/common.asm
 design/tool/ld.py test.obj fft.obj fft_unroll4.obj fft_unroll2.obj common.obj --map design/test/memory_map.yaml >ld.report
 
 design/tool/generate.py

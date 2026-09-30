@@ -223,6 +223,9 @@ def generate_opcode(op, variant, first):
     if "imm-signed" in category:
         (offset, length) = instruction_field(format, category["imm-signed"])
         decoder_lines.append(f"      Imm_Data <= std_logic_vector(resize(signed(I_Code({offset+length-1} downto {offset})), ByteSize_C*2**Log2BPW_C));")
+    if "target" in category:
+        (offset, length) = instruction_field(format, category["target"])
+        decoder_lines.append(f"      ControlWord.{category["unit"]}_Target <= RegIndex(I_Code({offset+length-1} downto {offset}));")
     if "register-read-a" in category:
         (offset, length) = instruction_field(format, category["register-read-a"])
         decoder_lines.append("      ControlWord.RF_RA_Active <= '1';")

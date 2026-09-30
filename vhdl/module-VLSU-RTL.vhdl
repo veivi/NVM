@@ -28,9 +28,15 @@ entity VLSU is
 
        -- Result (load data) interface
 
-       R_Present : out std_logic;
-       R_Dest : out RegIndex_T;
-       R_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       LS_WriteActive : out std_logic;
+       LS_WriteIndex : out RegIndex_T;
+       LS_WriteData : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+
+       -- Store data read interface
+
+       LS_ReadActive : out std_logic;
+       LS_ReadIndex : out RegIndex_T;
+       LS_ReadData : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        -- Status
 
@@ -68,11 +74,10 @@ architecture RTL of VLSU is
     Stride : std_logic_vector(AddrSize_C-1 downto 0);
     Count : integer range 0 to 2**Log2MaxSpan_C-1;
     Dest : RegIndex_T;
-    WriteData : std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
   end record;
 
   constant IdleBufferEntry_C : BufferEntry_T :=
-    ( LSOp_None_C, (others => '0'), 0, (others => '0'), 0, 0, (others => '0'));
+    ( LSOp_None_C, (others => '0'), 0, (others => '0'), 0, 0);
 
   type BufferArray_T is array(natural range <>) of BufferEntry_T;
 
@@ -126,11 +131,6 @@ begin
           BufferStore(IndexIn).Stride <= C_Stride;
           BufferStore(IndexIn).Dest <= C_Dest;
           BufferStore(IndexIn).Count <= 2**C_Span - 1;
-          BufferStore(IndexIn).WriteData <= (others => '0');
-
-          if C_Operation = LSOp_Store_C then
-            BufferStore(IndexIn).WriteData <= C_Data;
-          end if;
         end if;
 
         if not BufferEmpty and not WorkTableFull and LCI_Accept = '1' then
@@ -204,6 +204,19 @@ begin
       end case;
     end loop;
   end process;
+
+  --
+  -- Store data read
+  --
+
+  LS_ReadActive <=
+    '1' when C_Operation = LSOp_Store_C
+    else '1' when not BufferEmpty and BufferStore(IndexOut).State = LSOp_Store_C
+    and BufferStore(IndexOut).Count > 0 else '0';
+  
+  LS_ReadIndex <=
+    C_Dest when C_Operation = LSOp_Store_C
+    else ( BufferStore(IndexOut).Dest + 1 ) mod 2**Log2NumOfRegs_C;
   
   --
   -- Status output
@@ -282,12 +295,12 @@ begin
 
   LCI_Addr <= BufferStore(IndexOut).Addr(AddrSize_C-1 downto Log2BPW_C);
 
-  SubwordWriteHandler_P : process(BufferStore, IndexOut)
+  SubwordWriteHandler_P : process(BufferStore, IndexOut, LS_ReadData)
     variable TempData : std_logic_vector(WordSize_C-1 downto 0);
     variable TempSel : std_logic_vector(2**Log2BPW_C-1 downto 0);
     constant ZeroByte_C : std_logic_vector(ByteSize_C-1 downto 0) := (others => '0');
   begin
-    TempData := BufferStore(IndexOut).WriteData;
+    TempData := LS_ReadData; -- BufferStore(IndexOut).WriteData;
     TempSel := (others => '0');
 
     for I in 0 to 2**Log2BPW_C-1 loop
@@ -325,9 +338,9 @@ begin
       if Reset = '1' then
         -- Being reset
         
-        R_Present <= '0';
-        R_Dest <= 0;
-        R_Data <= (others => '0');
+        LS_WriteActive <= '0';
+        LS_WriteIndex <= 0;
+        LS_WriteData <= (others => '0');
         
       elsif SeeingValidResponse and WorkTable(ResponseIndex).State /= LSOp_Store_C then
         --
@@ -353,17 +366,17 @@ begin
           end if;
         end loop;
     
-        R_Present <= '1';
-        R_Dest <= WorkTable(ResponseIndex).Dest;
-        R_Data <= TempData;
+        LS_WriteActive <= '1';
+        LS_WriteIndex <= WorkTable(ResponseIndex).Dest;
+        LS_WriteData <= TempData;
       else
         --
         -- Not completing a read
         --
         
-        R_Present <= '0';        
-        R_Dest <= 0;
-        R_Data <= (others => '0');        
+        LS_WriteActive <= '0';        
+        LS_WriteIndex <= 0;
+        LS_WriteData <= (others => '0');        
       end if;
     end if;
   end process;

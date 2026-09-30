@@ -9,12 +9,26 @@ parser = argparse.ArgumentParser(description = "Assembler")
 parser.add_argument('filename')
 parser.add_argument('-o', '--output', nargs = '?')
 parser.add_argument('-i', '--isa', nargs = '?', default = os.environ["ISA"])
+parser.add_argument('-v', '--vector-size', nargs = '?')
 
 args = parser.parse_args()
 
 filename = args.filename
 out_file = args.output
 isa_name = args.isa
+vector_size = int(args.vector_size)
+
+print(f"AS: Vector size = {vector_size}")
+
+log2_vector_size = 0
+
+while vector_size > 1:
+    log2_vector_size += 1
+    vector_size >>= 1
+
+if (1<<log2_vector_size) != int(args.vector_size):
+    print(f"AS: Vector size not a power of 2!")
+    exit(1)
 
 filename_body, filename_ext = os.path.splitext(filename)
 
@@ -452,7 +466,7 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    os.system(f"cpp -Idesign/test -DV=16 -DLOG2V=4 {filename} >{filename_pp}")
+    os.system(f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} {filename} >{filename_pp}")
     file = open(filename_pp)
 
     print(f"Assembling {filename}...")
