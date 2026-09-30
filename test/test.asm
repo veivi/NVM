@@ -27,7 +27,7 @@ vektoridata_alku:
 vektoridata_loppu:
 
 fft_data:
-	.long 512
+	.long 1024
 
 	.align 32  // Force the section to be multiple of vector size
 	
@@ -41,10 +41,10 @@ merkkijono:
 	.section "const"
 
 w_table:
-	.long 512
+	.long 1024
 
 test_data:
-	.long 512
+	.long 1024
 	
 	.section "code"
 	
@@ -69,7 +69,7 @@ tests_start:
 
 	ldi s0, test_data
 	ldi s1, fft_data
-	ldi s2, 512
+	ldi s2, 1024
 	
 init_fft_loop:
 	sub s2, s2, 1
@@ -83,8 +83,9 @@ init_fft_loop:
 	
 	ldi s1, fft_data
 	// jmpal fft_decimation_in_time
-	jmpal fft_dit_unroll4
-	ldi s2, 9
+	jmpal fft_dit_unroll2
+	// jmpal fft_dit_unroll4
+	ldi s2, 10
 
 	// Read result
 
