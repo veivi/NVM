@@ -12,5 +12,13 @@ stop_loop:
 	ba stop_loop
 	nop
 
+fft_debug:	
+	lsl s50, s3, 16
+	lsl s51, s7, 8
+	or s50, s50, s51
+	or s50, s50, s9
+	ret
+	debugr s50
+	
 
 	

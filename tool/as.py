@@ -10,6 +10,8 @@ parser.add_argument('filename')
 parser.add_argument('-o', '--output', nargs = '?')
 parser.add_argument('-i', '--isa', nargs = '?', default = os.environ["ISA"])
 parser.add_argument('-v', '--vector-size', nargs = '?')
+parser.add_argument('-u', '--unroll', nargs = '?')
+parser.add_argument('-D', '--define', nargs = '?')
 
 args = parser.parse_args()
 
@@ -18,6 +20,17 @@ out_file = args.output
 isa_name = args.isa
 vector_size = int(args.vector_size)
 
+define_list = []
+
+if args.define is not None:
+    define_list = args.define.split(",")
+    print(f"AS: defining {define_list}")
+
+unroll_k = 1
+
+if args.unroll is not None:
+    unroll_k = int(args.unroll)
+    
 print(f"AS: Vector size = {vector_size}")
 
 log2_vector_size = 0
@@ -466,7 +479,17 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    os.system(f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} {filename} >{filename_pp}")
+    print(f"Preprocessing {filename}...")
+    
+    cmd = f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} -DV_BYTES={4<<log2_vector_size} -DEFF_V={unroll_k<<log2_vector_size}";
+
+    for d in define_list:
+        cmd += f" -D{d}"
+            
+    cmd += f" {filename} >{filename_pp}"
+
+    print(cmd)
+    os.system(cmd)
     file = open(filename_pp)
 
     print(f"Assembling {filename}...")

@@ -3,9 +3,8 @@
 #include <stdbool.h>
 #include <math.h>
 
-#define LOG2LEN     10
 #define FFT_LEN     (1<<LOG2LEN)
-#define LOG2V       3
+#define LOG2V       2
 #define V           (1<<LOG2V)
 #define PRECISION   12
 #define pi          ((float) M_PI)
@@ -160,7 +159,6 @@ void fft(complex_t A[])
 void fft_with_vectors(complex_t A[])
 {
   int s = 0, m = 0, half_m = 0, tab_step = 0;
-  int count = 0;
 
   for(s = 1; s <= LOG2V; s++) {
     //
@@ -177,9 +175,11 @@ void fft_with_vectors(complex_t A[])
       
     for(j = 0; j < half_m; j++) {
       int v = 0;
-      complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
+      complex_t omega = complex_array_ref(w, j * tab_step, 0x4000); printf("\n");
 
       for(v = 0; v < FFT_LEN; v += V*m) {
+	printf("---\ns = %d j = %d v = %d\n---\n", s, j, v);
+      
 	complex_t a[V], t[V], u[V], x[V], y[V];
 
 	complex_vector_read(u, A, j + v, m, 0x130);
@@ -189,12 +189,9 @@ void fft_with_vectors(complex_t A[])
 	complex_vector_sub(y, u, t);
 	complex_vector_write(x, A, j + v, m, 0x130);
 	complex_vector_write(y, A, j + v + half_m, m, 0x130);
-	printf("Early %d\n", count++);
       }
     }
   }
-
-  count = 0;
   
   for(s = LOG2V+1; s <= LOG2LEN; s++) {
     //
@@ -211,9 +208,11 @@ void fft_with_vectors(complex_t A[])
       int v = 0;
 	
       for(v = 0; v < half_m; v += V) {
+	printf("---\ns = %d k = %d v = %d\n---\n", s, k, v);
+      
 	complex_t omega[V], a[V], t[V], u[V], x[V];
 	  
-	complex_vector_read(omega, w, v * tab_step, tab_step, 0x1000);
+	complex_vector_read(omega, w, v * tab_step, tab_step, 0x4000);
 	complex_vector_read(u, A, k + v, 1, 0x130);
 	complex_vector_read(a, A, k + v + half_m, 1, 0x130);
 	complex_vector_mul(t, a, omega);
@@ -221,7 +220,6 @@ void fft_with_vectors(complex_t A[])
 	complex_vector_write(x, A, k + v, 1, 0x130);
 	complex_vector_sub(x, u, t);
 	complex_vector_write(x, A, k + v + half_m, 1, 0x130);
-	printf("Late %d\n", count++);
       }
     }
   }
@@ -250,7 +248,7 @@ void fft_vectors_unroll2(complex_t A[])
       
     for(j = 0; j < half_m; j++) {
       int v = 0;
-      complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
+      complex_t omega = complex_array_ref(w, j * tab_step, 0x4000); printf("\n");
 
       for(v = 0; v < FFT_LEN; v += EFF2_V*m) {
 	complex_t a[EFF2_V], t[EFF2_V], u[EFF2_V], x[EFF2_V], y[EFF2_V];
@@ -292,7 +290,7 @@ void fft_vectors_unroll2(complex_t A[])
       for(v = 0; v < half_m; v += EFF2_V) {
 	complex_t omega[EFF2_V], a[EFF2_V], t[EFF2_V], u[EFF2_V], x[EFF2_V];
 	  
-	complex_vector_read_mul(2, omega, w, v * tab_step, tab_step, 0x1000);
+	complex_vector_read_mul(2, omega, w, v * tab_step, tab_step, 0x4000);
 	complex_vector_read_mul(2, u, A, k + v, 1, 0x130);
 	complex_vector_read_mul(2, a, A, k + v + half_m, 1, 0x130);
 	complex_vector_mul(t, a, omega);
@@ -333,7 +331,7 @@ void fft_vectors_unroll4(complex_t A[])
       
     for(j = 0; j < half_m; j++) {
       int v = 0;
-      complex_t omega = complex_array_ref(w, j * tab_step, 0x1000); printf("\n");
+      complex_t omega = complex_array_ref(w, j * tab_step, 0x4000); printf("\n");
 
       for(v = 0; v < FFT_LEN; v += EFF4_V*m) {
 	complex_t a[EFF4_V], t[EFF4_V], u[EFF4_V], x[EFF4_V], y[EFF4_V];
@@ -381,7 +379,7 @@ void fft_vectors_unroll4(complex_t A[])
       for(v = 0; v < half_m; v += EFF4_V) {
 	complex_t omega[EFF4_V], a[EFF4_V], t[EFF4_V], u[EFF4_V], x[EFF4_V];
 	  
-	complex_vector_read_mul(4, omega, w, v * tab_step, tab_step, 0x1000);
+	complex_vector_read_mul(4, omega, w, v * tab_step, tab_step, 0x4000);
 	complex_vector_read_mul(4, u, A, k + v, 1, 0x130);
 	complex_vector_read_mul(4, a, A, k + v + half_m, 1, 0x130);
 	complex_vector_mul(t, a, omega);
@@ -469,9 +467,9 @@ int main()
     printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
   
   // fft(fft_data);
-  // fft_with_vectors(fft_data);
+  fft_with_vectors(fft_data);
   // fft_vectors_unroll2(fft_data);
-  fft_vectors_unroll4(fft_data);
+  // fft_vectors_unroll4(fft_data);
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,

@@ -46,6 +46,12 @@ for_j_loop:
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_early:
+	lsl s50, s3, 16
+	lsl s51, s7, 8
+	or s50, s50, s51
+	or s50, s50, s9
+	debugr s50
+	
 	// 	  complex_t a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(u, A, j + v, m);
 
@@ -114,13 +120,13 @@ end_for_j_loop:
 	sub s3, s3, 1    // s = s - 1
 	cmp c1, s3, LOG2V  
 	add s3, s3, 2    // s = s + 2
-	ble c1, for_s_loop_early   // while s-2 <= LOG2V
+	ble c1, for_s_loop_early   // while s <= LOG2V+2
 	drain  // Delay slot
 
 	//
 	// Late stage: our vectors will handle j directly, striding used only for w
 	//
-	// for(s = LOG2V+1; s <= LOG2LEN; s++) {
+	// for(s = LOG2V+2; s <= LOG2LEN; s++) {
 
 for_s_loop_late:
 	ldi s4, 1
@@ -130,8 +136,6 @@ for_s_loop_late:
 	
 	ldi s16, 1
 	lsl s16, s16, s6  // s16 = 1<<log2_tab_step = tab_step
-	ldi s17, V
-	lsl s17, s17, 2   // s17 = 4*V
 	
 	//     for(k = 0; k < FFT_LEN; k += m) {
 	
@@ -143,6 +147,12 @@ for_k_loop:
 	clear(s9)         // s9 = "v" = 0
 	
 for_v_loop_late:	
+	lsl s50, s3, 16
+	lsl s51, s7, 8
+	or s50, s50, s51
+	or s50, s50, s9
+	debugr s50
+	
 	// 	  complex_t omega[V], a[V], t[V], u[V], x[V];
 	// 	  complex_vector_read(omega, w, v * tab_step, tab_step);
 
@@ -166,7 +176,7 @@ for_v_loop_late:
 	
 	vld4 v8, s13, 1     // v8-11 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
-	add s9, s9, s17         // v += 4*V
+	add s9, s9, EFF_V         // v += 4*V
 	cmp c1, s9, s5
 	
 	cvmul v8, v8, v0   // v4-7 = "t" = complex_vector_mul(t, a, omega)
@@ -184,11 +194,11 @@ for_v_loop_late:
         // 	  complex_vector_write(x, A, k + v, 1)
 	
 	vst v12, s10, 1	
-	add s10, s10, s17   // s10 = &A[k + v + V]
+	add s10, s10, V_BYTES   // s10 = &A[k + v + V]
 	vst v13, s10, 1
-	add s10, s10, s17
+	add s10, s10, V_BYTES
 	vst v14, s10, 1
-	add s10, s10, s17
+	add s10, s10, V_BYTES
 	vst v15, s10, 1
 	
 	// 	  complex_vector_sub(x, u, t);
@@ -199,11 +209,11 @@ for_v_loop_late:
 	cvsub v15, v7, v11
 	
 	vst v12, s13, 1          // complex_vector_write(x, A, k + v + half_m, 1)
-	add s13, s13, s17       // s13 = &A[k + v + half_m + V]
+	add s13, s13, V_BYTES     // s13 = &A[k + v + half_m + V]
 	vst v13, s13, 1          // complex_vector_write(x, A, k + v + half_m + V, 1)
-	add s13, s13, s17       // s13 = &A[k + v + half_m + 2*V]
+	add s13, s13, V_BYTES     // s13 = &A[k + v + half_m + 2*V]
 	vst v14, s13, 1          // complex_vector_write(x, A, k + v + half_m + 2*V, 1)
-	add s13, s13, s17       // s13 = &A[k + v + half_m + 3*V]
+	add s13, s13, V_BYTES     // s13 = &A[k + v + half_m + 3*V]
 	blt c1, for_v_loop_late  // while v < half_m
 	vst v15, s13, 1          // complex_vector_write(x, A, k + v + half_m + 3*V, 1)
 	
