@@ -4,7 +4,7 @@
 # FAIL: large contention!!
 #
 
-# design/range.sh "6" "2" "2" 0.9
+design/range.sh "6" "2" "2" 0.9
 
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"

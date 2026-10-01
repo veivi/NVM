@@ -14,7 +14,7 @@ options="-v $vecsize -D FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
 echo "Options: $options"
 
 cc design/test/fft.c -DLOG2LEN=$log2len -DUNROLL=$unroll
-./a.out
+./a.out >fft_ref.txt 
 
 if [ $? -ne 0 ]; then
 echo "fft.c failed"
@@ -43,6 +43,8 @@ if [ $? -ne 0 ]; then
     exit 3
 fi
 
+echo "Elaborating the test bench..."
+
 nvc -e Testbench -g VecSize_C=$vecsize -gLog2RAMSize_C=13 -gContention_C=$contention
 
 if [ $? -ne 0 ]; then
@@ -52,6 +54,8 @@ fi
 
 rm log.txt
 rm artefact/sim_log.txt
+
+echo "Starting the simulation..."
 
 nvc >&artefact/sim_log.txt -r Testbench --stop-time=5ms --exit-severity=error --wave=wave.fst # --dump-arrays=10
 
