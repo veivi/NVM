@@ -27,15 +27,15 @@ entity VLSU is
 
        -- Result (load data) interface
 
-       LS_WriteActive : out std_logic;
-       LS_WriteIndex : out RegIndex_T;
-       LS_WriteData : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       RF_WriteActive : out std_logic;
+       RF_WriteIndex : out RegIndex_T;
+       RF_WriteData : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        -- Store data read interface
 
-       LS_ReadActive : out std_logic;
-       LS_ReadIndex : out RegIndex_T;
-       LS_ReadData : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       RF_ReadActive : out std_logic;
+       RF_ReadIndex : out RegIndex_T;
+       RF_ReadData : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        -- Status
 
@@ -207,20 +207,20 @@ begin
   end process;
 
   --
-  -- Store data read
+  -- Register file read port control for store data access
   --
 
   NextOutboundIndex <=
     IndexOut when BufferStore(IndexOut).Count > 0
     else (IndexOut + 1) mod 2**Log2BufferDepth_C;
     
-  LS_ReadActive <=
+  RF_ReadActive <=
     '1' when BufferEmpty and C_Operation = LSOp_Store_C
     else LCI_Accept when BufferFull and BufferStore(NextOutboundIndex).State = LSOp_Store_C
     else '1' when C_Operation = LSOp_Store_C
     else '0';
   
-  LS_ReadIndex <=
+  RF_ReadIndex <=
     C_Target when ( BufferEmpty or BufferStore(NextOutboundIndex).Count = 0 )
     and C_Operation = LSOp_Store_C
     else BufferStore(NextOutboundIndex).Dest;
@@ -302,12 +302,12 @@ begin
 
   LCI_Addr <= BufferStore(IndexOut).Addr(AddrSize_C-1 downto Log2BPW_C);
 
-  SubwordWriteHandler_P : process(BufferStore, IndexOut, LS_ReadData)
+  SubwordWriteHandler_P : process(BufferStore, IndexOut, RF_ReadData)
     variable TempData : std_logic_vector(WordSize_C-1 downto 0);
     variable TempSel : std_logic_vector(2**Log2BPW_C-1 downto 0);
     constant ZeroByte_C : std_logic_vector(ByteSize_C-1 downto 0) := (others => '0');
   begin
-    TempData := LS_ReadData; -- BufferStore(IndexOut).WriteData;
+    TempData := RF_ReadData; -- BufferStore(IndexOut).WriteData;
     TempSel := (others => '0');
 
     for I in 0 to 2**Log2BPW_C-1 loop
@@ -328,7 +328,7 @@ begin
   end process;
   
   --
-  -- Incoming response interpretation
+  -- Incoming response interpretation/register file write port control
   --
 
   SeeingValidResponse <=
@@ -345,9 +345,9 @@ begin
       if Reset = '1' then
         -- Being reset
         
-        LS_WriteActive <= '0';
-        LS_WriteIndex <= 0;
-        LS_WriteData <= (others => '0');
+        RF_WriteActive <= '0';
+        RF_WriteIndex <= 0;
+        RF_WriteData <= (others => '0');
         
       elsif SeeingValidResponse and WorkTable(ResponseIndex).State /= LSOp_Store_C then
         --
@@ -373,17 +373,17 @@ begin
           end if;
         end loop;
     
-        LS_WriteActive <= '1';
-        LS_WriteIndex <= WorkTable(ResponseIndex).Dest;
-        LS_WriteData <= TempData;
+        RF_WriteActive <= '1';
+        RF_WriteIndex <= WorkTable(ResponseIndex).Dest;
+        RF_WriteData <= TempData;
       else
         --
         -- Not completing a read
         --
         
-        LS_WriteActive <= '0';        
-        LS_WriteIndex <= 0;
-        LS_WriteData <= (others => '0');        
+        RF_WriteActive <= '0';        
+        RF_WriteIndex <= 0;
+        RF_WriteData <= (others => '0');        
       end if;
     end if;
   end process;
