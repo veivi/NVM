@@ -14,11 +14,11 @@ options="-v $vecsize -D FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
 echo "Options: $options"
 
 cc design/test/fft.c -DLOG2LEN=$log2len -DUNROLL=$unroll
-./a.out >fft_ref.txt 
+./a.out >artefact/fft_ref.txt 
 
 if [ $? -ne 0 ]; then
-echo "fft.c failed"
-exit 1
+    echo "fft.c failed"
+    exit 1
 fi
    
 source="test common fft fft_unroll2 fft_unroll4 fft_unroll8"
@@ -36,7 +36,7 @@ fi
 
 done
 
-echo "Linking:$mods"
+echo "Linking $mods"
 
 design/tool/ld.py $mods --map design/test/memory_map.yaml >ld.report
 
