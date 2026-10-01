@@ -14,16 +14,14 @@ entity EIU is
        RA_Index : in RegIndex_T;
        RB_Active : in std_logic;
        RB_Index : in  RegIndex_T;
-       RC_Active : in std_logic;
-       RC_Index : in  RegIndex_T;
        WA_Active : in std_logic;
        WA_Index : in  RegIndex_T;
        VRA_Active : in std_logic;
        VRA_Index : in RegIndex_T;
        VRB_Active : in std_logic;
        VRB_Index : in  RegIndex_T;
-       VRC_Active : in std_logic;
-       VRC_Index : in  RegIndex_T;
+       --VRC_Active : in std_logic;
+       --VRC_Index : in  RegIndex_T;
        VWA_Active : in std_logic;
        VWA_Index : in  RegIndex_T;
        DecodeFence : in FenceOp_T;

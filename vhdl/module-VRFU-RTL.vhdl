@@ -45,10 +45,6 @@ entity VRFU is
        RB_Index : in RegIndex_T;
        RB_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
-       RC_Active : in std_logic;
-       RC_Index : in RegIndex_T;
-       RC_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
-
        --
        -- ALU Write port A, B
        --
@@ -194,25 +190,6 @@ begin
     end if;
   end process;
 
-  ReadPortC_P : process(Clk)
-  begin
-    if rising_edge(Clk) then
-      if Reset = '1' then
-        RC_Data <= (others => '0');
-
-      elsif ExecuteStall = '0' then
-        if RC_Active = '1' then
-          if WA_Active = '1' and WA_Index = RC_Index then
-            -- Feed-forward from port A
-            RC_Data <= WA_Data;
-          else
-            RC_Data <= Storage(RC_Index);
-          end if;
-        end if;
-      end if;
-    end if;
-  end process;
-  
  ReadPortLS_P : process(Clk)
   begin
     if rising_edge(Clk) then

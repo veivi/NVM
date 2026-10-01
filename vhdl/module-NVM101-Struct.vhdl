@@ -95,7 +95,6 @@ architecture Struct of NVM101 is
   signal RF_ReadValid : std_logic;
   signal RF_RA_Data : std_logic_vector(WordSize_C-1 downto 0);    
   signal RF_RB_Data : std_logic_vector(WordSize_C-1 downto 0);
-  signal RF_RC_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Valid : std_logic;
   signal RF_WA_Async : std_logic;
@@ -137,7 +136,6 @@ architecture Struct of NVM101 is
 
   signal VRF_RA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_RB_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
-  signal VRF_RC_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_WA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_WA_Valid : std_logic_vector(VecSize_C-1 downto 0);
   signal VRF_WA_Async : std_logic;    
@@ -231,16 +229,12 @@ begin
              RA_Index => ControlWord.RF_RA_Index,
              RB_Active => ControlWord.RF_RB_Active,
              RB_Index => ControlWord.RF_RB_Index,
-             RC_Active => ControlWord.RF_RC_Active,
-             RC_Index => ControlWord.RF_RC_Index,
              WA_Active =>ControlWord.RF_W_Active,
              WA_Index => ControlWord.RF_W_Index,
              VRA_Active => ControlWord.VRF_RA_Active,
              VRA_Index => ControlWord.VRF_RA_Index,
              VRB_Active => ControlWord.VRF_RB_Active,
              VRB_Index => ControlWord.VRF_RB_Index,
-             VRC_Active => ControlWord.VRF_RC_Active,
-             VRC_Index => ControlWord.VRF_RC_Index,
              VWA_Active =>ControlWord.VRF_W_Active,
              VWA_Index => ControlWord.VRF_W_Index,
              DecodeFence => ControlWord.Fence_Operation,
@@ -324,7 +318,6 @@ begin
              C_Target => ExecuteWord.LS_Target,
              C_Addr => ALU_Result(AddrSize_C-1 downto 0),
              C_Stride => LS_C_Stride,
-             C_Data => RF_RC_Data,
              LS_WriteActive => LS_WriteActive,
              LS_WriteIndex => LS_WriteIndex,
              LS_WriteData => LS_WriteData,
@@ -381,12 +374,6 @@ begin
              RB_Active => ControlWord.RF_RB_Active,
              RB_Index => ControlWord.RF_RB_Index,
              RB_Data => RF_RB_Data,
-
-             -- Read C
-
-             RC_Active => ControlWord.RF_RC_Active,
-             RC_Index => ControlWord.RF_RC_Index,
-             RC_Data => RF_RC_Data,
 
              -- Write A, comes from either instruction decode (load immediate)
              -- or ALU
@@ -502,7 +489,6 @@ begin
                C_Target => ExecuteWord.VLS_Target,
                C_Addr => VALU_Result(I*WordSize_C+AddrSize_C-1 downto I*WordSize_C),
                C_Stride => VLS_C_Stride,
-               C_Data => VRF_RC_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
                LoadsOutstanding => VLS_LoadsOutstanding(I),
                StoresOutstanding => VLS_StoresOutstanding(I),
                LS_WriteActive => VLS_WriteActive(I),
@@ -555,12 +541,6 @@ begin
                RB_Active => ControlWord.VRF_RB_Active,
                RB_Index => ControlWord.VRF_RB_Index,
                RB_Data => VRF_RB_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
-
-               -- Read C
-
-               RC_Active => ControlWord.VRF_RC_Active,
-               RC_Index => ControlWord.VRF_RC_Index,
-               RC_Data => VRF_RC_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
 
                -- Write A
                
@@ -698,14 +678,13 @@ begin
   AVU_C_Operation <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Operation, ExtOpSize_C));
   AVU_C_Tag <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
 
-  AVUOperand_P : process(ExecuteWord, VRF_RA_Data, VRF_RB_Data, VRF_RC_Data, RF_RB_Data)
+  AVUOperand_P : process(ExecuteWord, VRF_RA_Data, VRF_RB_Data, RF_RB_Data)
   begin
     if ExecuteWord.Ext_Active = '1' then
       -- We're issuing an AVU instruction
       
       AVU_C_OperandA <= VRF_RA_Data;
       AVU_C_OperandB <= VRF_RB_Data;
-      AVU_C_OperandC <= VRF_RC_Data;
       
       if ExecuteWord.RF_RB_Active = '1' then
         -- Broadcast scalar read B data onto AVU_C_Operand lanes
@@ -719,8 +698,9 @@ begin
 
       AVU_C_OperandA <= (others => '0');
       AVU_C_OperandB <= (others => '0');
-      AVU_C_OperandC <= (others => '0');
     end if;
+
+    AVU_C_OperandC <= (others => '0');
   end process;
 end Struct;
 

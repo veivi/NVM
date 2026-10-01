@@ -24,7 +24,6 @@ entity VLSU is
        C_Target : in RegIndex_T;
        C_Addr : in std_logic_vector(AddrSize_C-1 downto 0);
        C_Stride : in std_logic_vector(AddrSize_C-1 downto 0);
-       C_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        -- Result (load data) interface
 
