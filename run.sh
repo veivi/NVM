@@ -34,7 +34,7 @@ fi
 
 done
 
-echo "Modules to link are $mods"
+echo "Linking:$mods"
 
 design/tool/ld.py $mods --map design/test/memory_map.yaml >ld.report
 

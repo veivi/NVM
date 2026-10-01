@@ -24,15 +24,12 @@ define_list = []
 
 if args.define is not None:
     define_list = args.define.split(",")
-    print(f"AS: defining {define_list}")
 
 unroll_k = 1
 
 if args.unroll is not None:
     unroll_k = int(args.unroll)
     
-print(f"AS: Vector size = {vector_size}")
-
 log2_vector_size = 0
 
 while vector_size > 1:
@@ -489,7 +486,7 @@ def assemble(mnemonic, params):
     return (iword_to_bytes(iword), ref)
 
 def main():
-    print(f"Preprocessing {filename}...")
+    # print(f"Preprocessing {filename}...")
     
     cmd = f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} -DV_BYTES={4<<log2_vector_size} -DEFF_V={1<<(log2_unroll_k+log2_vector_size)} -DEFF_LOG2V={log2_unroll_k+log2_vector_size} -DUNROLL_K={1<<log2_unroll_k}";
 
@@ -498,8 +495,10 @@ def main():
             
     cmd += f" {filename} >{filename_pp}"
 
-    print(cmd)
+    # print(cmd)
+    
     os.system(cmd)
+    
     file = open(filename_pp)
 
     print(f"Assembling {filename}...")
