@@ -8,13 +8,13 @@ use std.env.finish;
 
 entity Testbench is
   generic(VecSize_C : integer := 3;
-          Contention_C : real := 0.1);
+          Contention_C : real := 0.1;
+          Log2RAMSize_C : integer := 14);
 end Testbench;
 
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
   constant Log2IROMSize_C : integer := 10;
-  constant Log2RAMSize_C : integer := 13;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;

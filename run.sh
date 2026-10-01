@@ -2,6 +2,8 @@
 
 export ISA=NVM101
 
+contention=0.1
+
 log2len=$1
 vecsize=$2
 unroll=$3
@@ -42,7 +44,7 @@ if [ $? -ne 0 ]; then
     exit 3
 fi
 
-nvc -e Testbench -g VecSize_C=$vecsize
+nvc -e Testbench -g VecSize_C=$vecsize -gLog2RAMSize_C=13 -gContention_C=$contention
 
 if [ $? -ne 0 ]; then
     echo "NVC elaborate failed"
@@ -70,7 +72,7 @@ fi
 
 grep "duration =" artefact/sim_log.txt >artefact/result.txt
 
-echo "FFT[$len] V=$vecsize unroll=$unroll" >>result_table.txt
+echo "FFT[$len] V=$vecsize unroll=$unroll contention=$contention" >>result_table.txt
 cat artefact/result.txt >>result_table.txt 
 
 

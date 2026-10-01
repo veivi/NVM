@@ -40,6 +40,8 @@ end MPM;
 architecture Bhv of MPM is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   
+  constant ROMBase_C : integer := 2**(16 - Log2BPW_C);
+    
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
 
   type WordArray_T is array (natural range <>) of Word_T;
@@ -142,11 +144,10 @@ begin
           Something := true;
           
           if Addr(P) < 2**Log2MemSize_C then
-            hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
+            hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
             write(OutLine, string'(":="));
           else
-            write(DebugLine, string'("Debug "));
-            hwrite(DebugLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C  mod 2**Log2MemSize_C, AddrSize_C-Log2BPW_C)));
+            hwrite(DebugLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
             write(DebugLine, string'(":="));
           end if;
           
@@ -167,6 +168,13 @@ begin
 
           if Addr(P) >= 2**Log2MemSize_C then
             -- A write outside RAM, we log it separately
+            if P < NumOfPorts_C-1 then
+              write(DebugLine, string'(" (V"));
+              write(DebugLine, P);
+              write(DebugLine, string'(")"));
+            else
+              write(DebugLine, string'(" (S)"));
+            end if;
             writeline(log_file, DebugLine);
           else
             deallocate(DebugLine);
@@ -180,10 +188,12 @@ begin
           hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
           write(OutLine, string'(" ~"));
           
-          if Addr(P) < 2**Log2MemSize_C then
+          if Addr(P) < ROMBase_C then
             ReadData := RAM(Addr(P));
+          elsif Addr(P) < ROMBase_C + 2**Log2MemSize_C then
+            ReadData := ROM(Addr(P) - ROMBase_C);
           else
-            ReadData := ROM(Addr(P) mod 2**Log2MemSize_C);
+            ReadData := (others => 'X');
           end if;
           
           for I in 2**Log2BPW_C-1 downto 0 loop
@@ -225,10 +235,12 @@ begin
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => 'X');
 
           if State(P) = Read_C then
-            if Addr(P) < 2**Log2MemSize_C then
+            if Addr(P) < ROMBase_C then
               ReadData := RAM(Addr(P));
+            elsif Addr(P) < ROMBase_C + 2**Log2MemSize_C then
+              ReadData := ROM(Addr(P) - ROMBase_C);
             else
-              ReadData := ROM(Addr(P) mod 2**Log2MemSize_C);
+              ReadData := (others => 'X');
             end if;
           
             for I in 0 to 2**Log2BPW_C-1 loop
