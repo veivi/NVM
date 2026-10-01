@@ -231,8 +231,8 @@ begin
 --    else '0';
   
   RF_ReadActive <=
-    LCI_Accept when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
-    else '1' when C_Operation = LSOp_Store_C
+    '1' when (not BufferNotEmpty or BufferBecomingEmpty) and C_Operation = LSOp_Store_C
+    else LCI_Accept when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
     else '0';
   
   -- RF_ReadIndex <=
@@ -240,10 +240,15 @@ begin
   --   else BufferStore(NextOutboundIndex).Target when BufferNotEmpty
   --   else C_Target;
 
+  -- RF_ReadIndex <=
+  --   BufferStore(NextOutboundIndex).Target when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+  --   else C_Target;
+
   RF_ReadIndex <=
-    BufferStore(NextOutboundIndex).Target when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
-    else C_Target;
-  
+    C_Target when not BufferNotEmpty or BufferBecomingEmpty
+    else BufferStore(NextOutboundIndex).Target when BufferStore(IndexOut).Count = 0
+    else ( BufferStore(IndexOut).Target + 1 ) mod 2**Log2NumOfRegs_C;
+
   --
   -- Status output
   --

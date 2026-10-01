@@ -7,6 +7,10 @@
 #error Need to define LOG2LEN at compile time
 #endif
 
+#ifndef UNROLL
+#define UNROLL 1
+#endif
+
 #define FFT_LEN     (1<<LOG2LEN)
 #define LOG2V       1
 #define V           (1<<LOG2V)
@@ -469,11 +473,16 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
-  
+
   // fft(fft_data);
+  
+#if UNROLL < 2
   fft_with_vectors(fft_data);
-  // fft_vectors_unroll2(fft_data);
-  // fft_vectors_unroll4(fft_data);
+#elif UNROLL < 4
+  fft_vectors_unroll2(fft_data);
+#else
+  fft_vectors_unroll4(fft_data);
+#endif
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,
