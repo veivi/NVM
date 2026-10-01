@@ -20,8 +20,6 @@ entity EIU is
        VRA_Index : in RegIndex_T;
        VRB_Active : in std_logic;
        VRB_Index : in  RegIndex_T;
-       --VRC_Active : in std_logic;
-       --VRC_Index : in  RegIndex_T;
        VWA_Active : in std_logic;
        VWA_Index : in  RegIndex_T;
        DecodeFence : in FenceOp_T;

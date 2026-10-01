@@ -34,7 +34,7 @@ entity VRFU is
        Scoreboard : out std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
        
        --
-       -- ALU Read ports A, B, C
+       -- ALU Read ports A, B
        --
 
        RA_Active : in std_logic;
@@ -46,7 +46,7 @@ entity VRFU is
        RB_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
        --
-       -- ALU Write port A, B
+       -- ALU Write port A
        --
 
        WA_Active : in std_logic;

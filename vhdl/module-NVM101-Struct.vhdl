@@ -337,7 +337,11 @@ begin
              LCR_Tag => LCR_Tag((VecSize_C+1)*TagSize_C-1 downto VecSize_C*TagSize_C),
              LCR_Data => LCR_Data((VecSize_C+1)*WordSize_C-1 downto VecSize_C*WordSize_C));
 
-  LS_C_Stride <= (others => '0');
+  --
+  -- Scalar load/store multiple stride is always one
+  --
+  
+  LS_C_Stride <= std_logic_vector(to_unsigned(1, AddrSize_C));
   
   --
   -- Scalar Register File
