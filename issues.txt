@@ -1,0 +1,8 @@
+#
+# ISSUE 1 OPENED 2026/10/1
+#
+#   FAIL WITH LARGE CONTENTION VALUES. Probably LSU internal logic thing.
+#
+
+design/range.sh "6" "2" "2" 0.9
+
