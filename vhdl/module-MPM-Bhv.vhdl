@@ -80,8 +80,8 @@ architecture Bhv of MPM is
     return result;
   end function;
 
-  signal Storage : WordArray_T(0 to 2**Log2MemSize_C-1);
-  signal ReadOnlyMemory : WordArray_T(0 to 2**Log2MemSize_C-1) := InitReadOnlyStore("data_rom.txt");
+  signal RAM : WordArray_T(0 to 2**Log2MemSize_C-1);
+  signal ROM : WordArray_T(0 to 2**Log2MemSize_C-1) := InitReadOnlyStore("data_rom.txt");
   signal State : StateArray_T(0 to NumOfPorts_C-1);
   signal Addr : AddrArray_T(0 to NumOfPorts_C-1);
   
@@ -148,7 +148,7 @@ begin
               hwrite(OutLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
 
               if Addr(P) < 2**Log2MemSize_C then
-                Storage(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
+                RAM(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
                   <= WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C);
               end if; 
             else
@@ -165,9 +165,9 @@ begin
           write(OutLine, string'(" ~"));
           
           if Addr(P) < 2**Log2MemSize_C then
-            ReadData := Storage(Addr(P));
+            ReadData := RAM(Addr(P));
           else
-            ReadData := ReadOnlyMemory(Addr(P) mod 2**Log2MemSize_C);
+            ReadData := ROM(Addr(P) mod 2**Log2MemSize_C);
           end if;
           
           for I in 2**Log2BPW_C-1 downto 0 loop
@@ -210,9 +210,9 @@ begin
 
           if State(P) = Read_C then
             if Addr(P) < 2**Log2MemSize_C then
-              ReadData := Storage(Addr(P));
+              ReadData := RAM(Addr(P));
             else
-              ReadData := ReadOnlyMemory(Addr(P) mod 2**Log2MemSize_C);
+              ReadData := ROM(Addr(P) mod 2**Log2MemSize_C);
             end if;
           
             for I in 0 to 2**Log2BPW_C-1 loop

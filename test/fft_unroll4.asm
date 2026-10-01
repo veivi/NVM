@@ -13,7 +13,7 @@ fft_dit_unroll4:
 	// Params: s1 = data, s2 = log2(N)
 
 	// Unroll by 4:
-	// for(s = 1; s <= LOG2V+2; s++) {
+	// for(s = 1; s <= EFF_LOG2V; s++) {
 	//   m = 1<<s;
 	//   half_m = m/2;
 	//   tab_step = 1<<(LOG2LEN - s);
@@ -41,7 +41,7 @@ for_j_loop:
 	lsl s8, s7, s6    // s8 = j<<log2_tab_step = j * tab_step
 	ldx s8, s17, s8   // s8 = "omega" =  w[j * tab_step]
 	
-	// 	for(v = 0; v < FFT_LEN; v += 4*V*m) {
+	// 	for(v = 0; v < FFT_LEN; v += EFF_V*m) {
 	
 	clear(s9)         // s9 = "v" = 0
 	
@@ -70,10 +70,9 @@ for_v_loop_early:
 
 	// 	  complex_vector_mul_bc(t, a, &omega);
 
-	lsl s14, s4, LOG2V // s14 = m<<LOG2V = V*m
-	lsl s14, s14, 2    // s14 = 4*V*m
-	add s9, s9, s14     // v += 4*V*m
-	cmp c1, s9, s15     // c1 = compare(v, FFT_LEN)
+	lsl s14, s4, EFF_LOG2V // s14 = m<<EFF_LOG2V = EFF_V*m
+	add s9, s9, s14        // v += EFF_V*m
+	cmp c1, s9, s15        // c1 = compare(v, FFT_LEN)
 	
 	cvbmul v4, v4, s8  // v4-7 = "t" = complex_vector_mul_bc(a, &omega)
 	cvbmul v5, v5, s8
@@ -106,16 +105,15 @@ end_for_v_loop_early:
 	nop
 
 end_for_j_loop:
-	sub s3, s3, 1    // s = s - 1
-	cmp c1, s3, LOG2V  
-	add s3, s3, 2    // s = s + 2
-	ble c1, for_s_loop_early   // while s <= LOG2V+2
+	add s3, s3, 1    // s = s + 1
+	cmp c1, s3, EFF_LOG2V  
+	ble c1, for_s_loop_early   // while s <= EFF_LOG2V
 	drain  // Delay slot
-
+	
 	//
 	// Late stage: our vectors will handle j directly, striding used only for w
 	//
-	// for(s = LOG2V+2; s <= LOG2LEN; s++) {
+	// for(s = EFF_LOG2V+1; s <= LOG2LEN; s++) {
 
 for_s_loop_late:
 	ldi s4, 1
@@ -131,7 +129,7 @@ for_s_loop_late:
 	clear(s7)	  // s7 = "k" = 0
 	
 for_k_loop:		
-	// 	for(v = 0; v < half_m; v += 4*V) {
+	// 	for(v = 0; v < half_m; v += EFF_V) {
 
 	clear(s9)         // s9 = "v" = 0
 	
@@ -166,7 +164,7 @@ for_v_loop_late:
 	
 	vld4 v8, s13, 1     // v8-11 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
-	add s9, s9, EFF_V         // v += 4*V
+	add s9, s9, EFF_V         // v += EFF_V
 	cmp c1, s9, s5
 	
 	cvmul v8, v8, v0   // v4-7 = "t" = complex_vector_mul(t, a, omega)

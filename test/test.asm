@@ -1,5 +1,6 @@
 	.import "funktio"
 	.import "fft_decimation_in_time"
+	.import "fft_dit_unroll8"
 	.import "fft_dit_unroll4"
 	.import "fft_dit_unroll2"
 	.import "stop_simulation"
@@ -86,8 +87,10 @@ init_fft_loop:
 	jmpal fft_decimation_in_time
 #elif UNROLL_K < 4
 	jmpal fft_dit_unroll2
-#else
+#elif UNROLL_K < 8
 	jmpal fft_dit_unroll4
+#else
+	jmpal fft_dit_unroll8
 #endif
 	ldi s2, LOG2FFT_LEN
 

@@ -43,6 +43,16 @@ if (1<<log2_vector_size) != int(args.vector_size):
     print(f"AS: Vector size not a power of 2!")
     exit(1)
 
+log2_unroll_k = 0
+
+while unroll_k > 1:
+    log2_unroll_k += 1
+    unroll_k >>= 1
+
+if (1<<log2_unroll_k) != int(args.unroll):
+    print(f"AS: Unroll K not a power of 2!")
+    exit(1)
+
 filename_body, filename_ext = os.path.splitext(filename)
 
 if out_file == None:
@@ -481,7 +491,7 @@ def assemble(mnemonic, params):
 def main():
     print(f"Preprocessing {filename}...")
     
-    cmd = f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} -DV_BYTES={4<<log2_vector_size} -DEFF_V={unroll_k<<log2_vector_size} -DUNROLL_K={unroll_k}";
+    cmd = f"cpp -Idesign/test -DV={1<<log2_vector_size} -DLOG2V={log2_vector_size} -DV_BYTES={4<<log2_vector_size} -DEFF_V={1<<(log2_unroll_k+log2_vector_size)} -DEFF_LOG2V={log2_unroll_k+log2_vector_size} -DUNROLL_K={1<<log2_unroll_k}";
 
     for d in define_list:
         cmd += f" -D{d}"

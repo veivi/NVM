@@ -11,9 +11,9 @@ end Testbench;
 
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
-  constant Contention_C : real := 0.0;
+  constant Contention_C : real := 0.1;
   constant Log2IROMSize_C : integer := 10;
-  constant Log2RAMSize_C : integer := 12;
+  constant Log2RAMSize_C : integer := 13;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;
@@ -21,7 +21,7 @@ architecture Bhv of Testbench is
   constant WordSize_C : integer := ByteSize_C*BytesPerWord_C;
   constant TagSize_C : integer := 8;
   constant Log2NumOfRegs_C : integer := 6;
-  constant Log2VecSize_C : integer := 1;
+  constant Log2VecSize_C : integer := 5;
   constant VecSize_C : integer := 2**Log2VecSize_C;
   
   signal Clk : std_logic;
