@@ -101,12 +101,16 @@ init_fft_loop:
 	
 	ldi s3, 1
 	lsl s3, s3, s2
+	ldi s4, 0xff
+	lsl s4, s4, 16
 	
 read_loop:
-	sub s3, s3, 1
 	ld s2, s1, 0
-	bgt c0, read_loop
+	st s2, s4, 0     // Store to a non-writable address so reported in the log file
 	add s1, s1, 4
+	sub s3, s3, 1
+	bgt c0, read_loop
+	add s4, s4, 4
 	
 	// Done
 	

@@ -4,7 +4,7 @@ export ISA=NVM101
 
 # options="-v 2 -D DEBUG=1,FFT_LEN=32,LOG2FFT_LEN=5 --unroll 1"
 # options="-v 32 -D FFT_LEN=2048,LOG2FFT_LEN=11 --unroll $1"
-options="-v 32 -D FFT_LEN=4096,LOG2FFT_LEN=12 --unroll $1"
+options="-v 8 -D FFT_LEN=4096,LOG2FFT_LEN=12 --unroll $1"
 
 design/tool/as.py $options design/test/test.asm
 design/tool/as.py $options design/test/fft.asm

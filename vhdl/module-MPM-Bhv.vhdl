@@ -69,12 +69,12 @@ architecture Bhv of MPM is
     while not endfile(file_pointer) loop
       readline(file_pointer, line_v);
       bread(line_v, result(i));
-      write(line_v, name);
-      write(line_v, string'(" ROM["));
-      hwrite(line_v, to_unsigned(i*4, AddrSize_C));
-      write(line_v, string'("]:="));             
-      hwrite(line_v, result(i));
-      writeline(output, line_v);
+      --write(line_v, name);
+      --write(line_v, string'(" ROM["));
+      --hwrite(line_v, to_unsigned(i*4, AddrSize_C));
+      --write(line_v, string'("]:="));             
+      --hwrite(line_v, result(i));
+      --writeline(output, line_v)
       i := i + 1;
     end loop;
     return result;
@@ -114,7 +114,8 @@ begin
 
   Storage_P : process(Clk)
     file file_pointer : text open write_mode is "MPM_report.txt";
-    variable OutLine : line;
+    file log_file : text open write_mode is "log.txt";
+    variable OutLine, DebugLine : line;
     variable Something : boolean;
     variable DebugState : Word_T := (others => '0');
     variable ReadData : Word_T;
@@ -133,19 +134,26 @@ begin
         flush(file_pointer);
         DebugState := DebugOut;
       end if;
-        
+
       Something := false;
       
       for P in 0 to NumOfPorts_C-1 loop
         if State(P) = Write_C then
           Something := true;
           
-          hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
-          write(OutLine, string'(":="));
+          if Addr(P) < 2**Log2MemSize_C then
+            hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
+            write(OutLine, string'(":="));
+          else
+            write(DebugLine, string'("Debug "));
+            hwrite(DebugLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C  mod 2**Log2MemSize_C, AddrSize_C-Log2BPW_C)));
+            write(DebugLine, string'(":="));
+          end if;
           
           for I in 2**Log2BPW_C-1 downto 0 loop
             if ByteSel(P)(I) = '1' then
               hwrite(OutLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
+              hwrite(DebugLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
 
               if Addr(P) < 2**Log2MemSize_C then
                 RAM(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
@@ -153,9 +161,17 @@ begin
               end if; 
             else
               write(OutLine, string'("__"));
+              write(DebugLine, string'("__"));
             end if;
           end loop;
 
+          if Addr(P) >= 2**Log2MemSize_C then
+            -- A write outside RAM, we log it separately
+            writeline(log_file, DebugLine);
+          else
+            deallocate(DebugLine);
+          end if;
+          
           write(OutLine, string'("|"));
           
         elsif State(P) = Read_C then

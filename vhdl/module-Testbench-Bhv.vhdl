@@ -21,7 +21,7 @@ architecture Bhv of Testbench is
   constant WordSize_C : integer := ByteSize_C*BytesPerWord_C;
   constant TagSize_C : integer := 8;
   constant Log2NumOfRegs_C : integer := 6;
-  constant Log2VecSize_C : integer := 5;
+  constant Log2VecSize_C : integer := 3;
   constant VecSize_C : integer := 2**Log2VecSize_C;
   
   signal Clk : std_logic;
