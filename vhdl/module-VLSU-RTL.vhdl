@@ -72,7 +72,7 @@ architecture RTL of VLSU is
     Log2Size : integer range 0 to 2*Log2BPW_C-1;
     Stride : std_logic_vector(AddrSize_C-1 downto 0);
     Count : integer range 0 to 2**Log2MaxSpan_C-1;
-    Dest : RegIndex_T;
+    Target : RegIndex_T;
   end record;
 
   constant IdleBufferEntry_C : BufferEntry_T :=
@@ -85,7 +85,7 @@ architecture RTL of VLSU is
     Addr : integer range 0 to 2**Log2BPW_C-1;
     Log2Size : integer range 0 to 2*Log2BPW_C-1;
     Lifetime : Lifetime_T;
-    Dest : RegIndex_T;
+    Target : RegIndex_T;
   end record;
 
   constant EmptyWorkEntry_C : WorkEntry_T := ( LSOp_None_C, 0, 0, 0, 0 );
@@ -96,7 +96,7 @@ architecture RTL of VLSU is
 
   signal IndexIn, IndexOut, NextOutboundIndex
     : integer range 0 to 2**Log2BufferDepth_C-1;
-  signal BufferFull, BufferEmpty : boolean;
+  signal BufferFull, BufferNotEmpty, BufferBecomingEmpty : boolean;
   
   signal WorkTable : WorkArray_T(0 to 2**Log2TableSize_C-1);
 
@@ -129,11 +129,11 @@ begin
           BufferStore(IndexIn).Log2Size <= C_Log2Size;
           BufferStore(IndexIn).Addr <= C_Addr;
           BufferStore(IndexIn).Stride <= C_Stride;
-          BufferStore(IndexIn).Dest <= C_Target;
+          BufferStore(IndexIn).Target <= C_Target;
           BufferStore(IndexIn).Count <= 2**C_Span - 1;
         end if;
 
-        if not BufferEmpty and not WorkTableFull and LCI_Accept = '1' then
+        if BufferNotEmpty and not WorkTableFull and LCI_Accept = '1' then
           -- We can proceed
           
           if BufferStore(IndexOut).Count > 0 then
@@ -142,7 +142,7 @@ begin
             BufferStore(IndexOut).Addr <=
               std_logic_vector(unsigned(BufferStore(IndexOut).Addr) + unsigned(BufferStore(IndexOut).Stride));
             BufferStore(IndexOut).Count <= BufferStore(IndexOut).Count - 1;
-            BufferStore(IndexOut).Dest <= ( BufferStore(IndexOut).Dest + 1 ) mod 2**Log2NumOfRegs_C;
+            BufferStore(IndexOut).Target <= ( BufferStore(IndexOut).Target + 1 ) mod 2**Log2NumOfRegs_C;
           else
             -- Retire the entry
             
@@ -173,7 +173,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         IndexOut <= 0;
-      elsif not BufferEmpty and BufferStore(IndexOut).Count = 0
+      elsif BufferNotEmpty and BufferStore(IndexOut).Count = 0
         and not WorkTableFull and LCI_Accept = '1' then
         IndexOut <= ( IndexOut + 1 ) mod 2**Log2BufferDepth_C;
       end if;
@@ -184,8 +184,13 @@ begin
   -- Buffer state decode
   --
 
+  BufferNotEmpty <= IndexIn /= IndexOut;
+
+  BufferBecomingEmpty <= 
+    LCI_Accept = '1' and BufferNotEmpty and ( IndexOut + 1 ) mod 2**Log2BufferDepth_C = IndexIn
+    and BufferStore(IndexOut).Count = 0;
+    
   BufferFull <= ( IndexIn + 1 ) mod 2**Log2BufferDepth_C = IndexOut;
-  BufferEmpty <= IndexIn = IndexOut;
 
   BufferStatus_P : process(BufferStore)
   begin
@@ -211,20 +216,34 @@ begin
   --
 
   NextOutboundIndex <=
-    IndexOut when BufferStore(IndexOut).Count > 0
+    IndexOut when BufferStore(IndexOut).Count > 0 or LCI_Accept = '0'
     else (IndexOut + 1) mod 2**Log2BufferDepth_C;
     
+  -- RF_ReadActive <=
+  --   '1' when BufferEmpty and C_Operation = LSOp_Store_C
+  --   else LCI_Accept when BufferNotEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+  --   else '1' when C_Operation = LSOp_Store_C
+  --   else '0';
+  
+--    LCI_Accept when BufferNotEmpty and BufferStore(IndexOut).State = LSOp_Store_C and BufferStore(IndexOut).Count > 0
+--    else LCI_Accept when BufferNotEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C 
+--    else '1' when C_Operation = LSOp_Store_C
+--    else '0';
+  
   RF_ReadActive <=
-    '1' when BufferEmpty and C_Operation = LSOp_Store_C
-    else LCI_Accept when BufferFull and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+    LCI_Accept when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
     else '1' when C_Operation = LSOp_Store_C
     else '0';
   
-  RF_ReadIndex <=
-    C_Target when ( BufferEmpty or BufferStore(NextOutboundIndex).Count = 0 )
-    and C_Operation = LSOp_Store_C
-    else BufferStore(NextOutboundIndex).Dest;
+  -- RF_ReadIndex <=
+  --   BufferStore(IndexOut).Target when BufferNotEmpty and BufferStore(IndexOut).Count > 0
+  --   else BufferStore(NextOutboundIndex).Target when BufferNotEmpty
+  --   else C_Target;
 
+  RF_ReadIndex <=
+    BufferStore(NextOutboundIndex).Target when not BufferBecomingEmpty and BufferStore(NextOutboundIndex).State = LSOp_Store_C
+    else C_Target;
+  
   --
   -- Status output
   --
@@ -247,12 +266,12 @@ begin
           WorkTable(I) <= EmptyWorkEntry_C;
         end loop;
       else
-        if not BufferEmpty and not WorkTableFull and LCI_Accept = '1' then
+        if BufferNotEmpty and not WorkTableFull and LCI_Accept = '1' then
           -- Store an entry
           
           WorkTable(FreeIndex).State <= BufferStore(IndexOut).State;
           WorkTable(FreeIndex).Log2Size <= BufferStore(IndexOut).Log2Size;
-          WorkTable(FreeIndex).Dest <= BufferStore(IndexOut).Dest;
+          WorkTable(FreeIndex).Target <= BufferStore(IndexOut).Target;
           WorkTable(FreeIndex).Addr <= to_integer(unsigned(BufferStore(IndexOut).Addr(Log2BPW_C-1 downto 0)));
         end if;
 
@@ -294,7 +313,7 @@ begin
   -- Outgoing initiative
   --
 
-  LCI_Present <= '0' when BufferEmpty or WorkTableFull else '1';
+  LCI_Present <= '1' when BufferNotEmpty and not WorkTableFull else '0';
 
   LCI_Write <= '1' when BufferStore(IndexOut).State = LSOp_Store_C else '0';
 
@@ -374,7 +393,7 @@ begin
         end loop;
     
         RF_WriteActive <= '1';
-        RF_WriteIndex <= WorkTable(ResponseIndex).Dest;
+        RF_WriteIndex <= WorkTable(ResponseIndex).Target;
         RF_WriteData <= TempData;
       else
         --
