@@ -2,11 +2,10 @@
 
 export ISA=NVM101
 
-contention=0.1
-
 log2len=$1
 vecsize=$2
 unroll=$3
+contention=$4
 
 len=$((1<<log2len))
 
@@ -61,18 +60,20 @@ if [ $? -ne 0 ]; then
     exit 5
 fi
 
+id="FFT[$len] V=$vecsize unroll=$unroll contention=$contention"
+
 cmp log.txt reference/ref_$len.txt
 
 if [ $? -ne 0 ]; then
-    echo "*** Reference comparison FAILED ***"
+    echo "*** $id FAILED ***"
     exit 10
 else
-    echo "*** SUCCESS!! ***"
+    echo "*** $id IS GOOD ***"
 fi
 
 grep "duration =" artefact/sim_log.txt >artefact/result.txt
 
-echo "FFT[$len] V=$vecsize unroll=$unroll contention=$contention" >>result_table.txt
+echo "$id" >>result_table.txt
 cat artefact/result.txt >>result_table.txt 
 
 
