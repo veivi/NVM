@@ -20,7 +20,6 @@ entity VU102 is
        AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-       AVU_C_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
        -- Vector Unit Result
 
@@ -130,7 +129,6 @@ architecture RTL of VU102 is
   end function;
   
   signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
-  signal OperandC, DelayedOperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
   signal AdderResult, MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, MultiplyValid : std_logic;
@@ -182,7 +180,6 @@ begin
         PartialValid <= '1';
         PartialOperation <= AVU_C_Operation;        
         PartialTag <= AVU_C_Tag;
-        OperandC <= AVU_C_OperandC;
       else
         PartialValid <= '0';
         Operation <= (others => '0');
@@ -213,7 +210,6 @@ begin
           end if;
         end loop;
 
-        DelayedOperandC <= OperandC;
         MultiplyTag <= PartialTag;
         MultiplyOperation <= PartialOperation;        
         MultiplyValid <= '1';
@@ -239,12 +235,6 @@ begin
         for I in 0 to 2**Log2VecSize_C-1 loop
           case MultiplyOperation(3 downto 2) is
             when "01" =>
-              -- Add Operand C to the result
-            
-              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-                <= AddComplex(MultiplyResult(I), DelayedOperandC((I+1)*WordSize_C-1 downto I*WordSize_C));
-
-            when "10" =>
               -- Add the previous result to the result
             
               AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)

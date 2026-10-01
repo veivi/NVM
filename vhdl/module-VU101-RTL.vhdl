@@ -19,7 +19,6 @@ entity VU101 is
        AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-       AVU_C_OperandC : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
        -- Vector Unit Result
 
@@ -33,7 +32,6 @@ architecture RTL of VU101 is
   signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-  signal OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal Tag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal Busy, Complete : std_logic;  
 begin
@@ -74,7 +72,6 @@ begin
           Operation <= AVU_C_Operation;
           OperandA <= AVU_C_OperandA;
           OperandB <= AVU_C_OperandB;
-          OperandC <= AVU_C_OperandC;
           AVU_R_Result <= (others => '0');
           Count := 0;
         end if;

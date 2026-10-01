@@ -66,7 +66,6 @@ architecture Bhv of Testbench is
   signal AVU_C_Tag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal AVU_C_OperandA : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal AVU_C_OperandB : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
-  signal AVU_C_OperandC : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
   -- Vector Unit Result
 
@@ -132,7 +131,6 @@ begin
              AVU_C_Tag => AVU_C_Tag ,
              AVU_C_OperandA => AVU_C_OperandA ,
              AVU_C_OperandB => AVU_C_OperandB ,
-             AVU_C_OperandC => AVU_C_OperandC ,
              AVU_R_Present => AVU_R_Present ,
              AVU_R_Tag => AVU_R_Tag ,
              AVU_R_Result => AVU_R_Result);
@@ -155,7 +153,6 @@ begin
              AVU_C_Tag => AVU_C_Tag ,
              AVU_C_OperandA => AVU_C_OperandA ,
              AVU_C_OperandB => AVU_C_OperandB ,
-             AVU_C_OperandC => AVU_C_OperandC ,
              AVU_R_Present => AVU_R_Present ,
              AVU_R_Tag => AVU_R_Tag ,
              AVU_R_Result => AVU_R_Result);
