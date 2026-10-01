@@ -26,9 +26,11 @@ source="test common fft fft_unroll2 fft_unroll4 fft_unroll8"
 for i in $source
 do
     mods="$mods $i.obj"
-design/tool/as.py $options design/test/$i.asm
-if [ $? -ne 0 ]; then
-    echo "AS $i failed"
+    
+    design/tool/as.py $options design/test/$i.asm
+    
+    if [ $? -ne 0 ]; then
+	echo "AS $i failed"
     exit 2
 fi
 
