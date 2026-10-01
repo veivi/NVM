@@ -55,25 +55,27 @@ for_v_loop_early:
 #endif
 	
 	// 	  complex_t a[V], t[V], u[V], x[V];
-	// 	  complex_vector_read(u, A, j + v, m);
 
-	add s10, s7, s9    // s10 = j + v
-	lsl s10, s10, 2   // s10 = 4*(j + v)
-	add s10, s10, s1   // s10 = &A[j + v]
-	vld4 v0, s10, s4   // v0-3 = "u" = complex_vector_read(A, j + v, m)
+	add s10, s7, s9    // s10 = k + v
+	lsl s10, s10, 2   // s10 = 4*(k + v)
+	add s10, s10, s1   // s10 = &A[k + v]
+	lsl s12, s5, 2     // s12 = 4*half_m
+	add s13, s10, s12  // s13 =  &A[k + v + half_m]
 	
 	// 	  complex_vector_read(a, A, j + v + half_m, m);
-
-	lsl s12, s5, 2     // s12 = 4*half_m
-	add s13, s10, s12  // s13 =  &A[j + v + half_m]
+	
 	vld4 v4, s13, s4   // v4-7 = "a" = complex_vector_read(A, j + v + half_m, m)
 
-	// 	  complex_vector_mul_bc(t, a, &omega);
-
+	// 	  complex_vector_read(u, A, j + v, m);
+	
+	vld4 v0, s10, s4   // v0-3 = "u" = complex_vector_read(A, j + v, m)
+	
 	lsl s14, s4, EFF_LOG2V // s14 = m<<EFF_LOG2V = EFF_V*m
 	add s9, s9, s14        // v += EFF_V*m
 	cmp c1, s9, s15        // c1 = compare(v, FFT_LEN)
 	
+	// 	  complex_vector_mul_bc(t, a, &omega);
+
 	cvbmul v4, v4, s8  // v4-7 = "t" = complex_vector_mul_bc(a, &omega)
 	cvbmul v5, v5, s8
 	cvbmul v6, v6, s8

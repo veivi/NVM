@@ -7,11 +7,12 @@ use std.textio.all;
 use std.env.finish;
 
 entity Testbench is
+  generic(VecSize_C : integer := 3;
+          Contention_C : real := 0.1);
 end Testbench;
 
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
-  constant Contention_C : real := 0.1;
   constant Log2IROMSize_C : integer := 10;
   constant Log2RAMSize_C : integer := 13;
   constant AddrSize_C : integer := 20;
@@ -21,8 +22,21 @@ architecture Bhv of Testbench is
   constant WordSize_C : integer := ByteSize_C*BytesPerWord_C;
   constant TagSize_C : integer := 8;
   constant Log2NumOfRegs_C : integer := 6;
-  constant Log2VecSize_C : integer := 3;
-  constant VecSize_C : integer := 2**Log2VecSize_C;
+  -- constant VecSize_C : integer := 2**Log2VecSize_C;
+  
+  function Log2(X : integer) return integer is
+    variable T : integer := X;
+    variable I : integer := 0;
+  begin
+    while T > 1 loop
+      I := I + 1;
+      T := T / 2;
+    end loop;
+    
+    return I;
+  end function;
+
+  constant Log2VecSize_C : integer := Log2(VecSize_C);
   
   signal Clk : std_logic;
   signal Reset : std_logic;
@@ -90,7 +104,7 @@ begin
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
                 Log2NumOfRegs_C => Log2NumOfRegs_C,
-                Log2VecSIze_C => Log2VecSIze_C )
+                Log2VecSIze_C => Log2(VecSIze_C) )
 
     port map(Clk => Clk,
              Reset => Reset,

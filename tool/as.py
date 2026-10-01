@@ -368,7 +368,7 @@ def assemble(mnemonic, params):
             log2multiple = log2multiple + 1
             multiple /= 2
 
-        print(f"Multiple {multiple} (log2 {log2multiple})")
+        # print(f"Multiple {multiple} (log2 {log2multiple})")
     
     ispec = opcodes[mnemonic]
 
