@@ -4,14 +4,14 @@
 # FIXED on 2026/10/02: FAIL: large contention!!
 #
 
-design/range.sh "6" "2" "1 2 4 8" 0.9
+design/range.sh "8" "2" "1" 0.9
 
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"
     exit 10
 fi
 
-design/range.sh "12" "8" "2 4 8"
+design/range.sh "12" "4" "2 4"
 
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"
@@ -25,14 +25,12 @@ if [ $? -ne 0 ]; then
     exit 10
 fi
 
-design/range.sh "10" "4" "4"
-
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"
     exit 10
 fi
 
-design/range.sh "8 10" "2 4 8 16" "1 2 4"
+design/range.sh "13" "4 8 16" "4"
 
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"

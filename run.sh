@@ -53,7 +53,7 @@ rm artefact/sim_log.txt
 
 echo "Starting the simulation..."
 
-nvc >&artefact/sim_log.txt -r Testbench --stop-time=5ms --exit-severity=error --wave=wave.fst # --dump-arrays=10
+nvc >&artefact/sim_log.txt -r Testbench --stop-time=10ms --exit-severity=error --wave=wave.fst # --dump-arrays=10
 
 if [ $? -ne 0 ]; then
     echo "NVC run failed"
