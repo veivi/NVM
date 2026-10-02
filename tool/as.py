@@ -20,6 +20,19 @@ out_file = args.output
 isa_name = args.isa
 vector_size = int(args.vector_size)
 
+#  constant EncodedPred_A_C : integer := 0;
+#  constant EncodedPred_NE_C : integer := 1;
+#  constant EncodedPred_EQ_C : integer := 2;
+#  constant EncodedPred_LT_C : integer := 3;
+#  constant EncodedPred_LE_C : integer := 4;
+#  constant EncodedPred_GT_C : integer := 5;
+#  constant EncodedPred_GE_C : integer := 6;
+#  constant EncodedPred_CS_C : integer := 7;
+#  constant EncodedPred_CC_C : integer := 8;
+#  constant EncodedPred_OVF_C : integer := 9;  
+
+predicateCodes = { "a": 0, "ne": 1, "eq": 2, "lt": 3, "le": 4, "gt": 5, "ge": 6, "cs": 7, "cc": 8, "ovf": 9 }
+
 define_list = []
 
 if args.define is not None:
@@ -71,7 +84,10 @@ Token = namedtuple("Token", ["type", "value"])
 token_spec = [
     ("COMMENT",   r"[#/;].*"),
 #    ("COMMENT2",   r"#.*"),
-#     ("IF",          r"if"),
+     ("IF",          r"if"),
+#     ("CR",   r"\([a-zA-Z]\d\)"),
+#     ("CR",   r"\([^)]*\)"),
+     ("CR",   r"\(v?[cC]\d\)"),
     ("DIRECTIVE", r"\.\w+"),
     ("LABEL",     r"^\w+:"),
     ("STRING",    r'"[^"]*"'),
@@ -126,11 +142,32 @@ class Instruction:
     def __repr__(self):
         return f"Instruction({self.mnemonic}, {self.operands})"
 
+class PredicatedInstruction:
+    def __init__(self, predicate, mnemonic, operands):
+        self.predicate = predicate
+        self.mnemonic = mnemonic
+        self.operands = operands
+    def __repr__(self):
+        return f"PredInstruction({self.predicate}, {self.mnemonic}, {self.operands})"
+
 class Register:
     def __init__(self, num):
         self.index = num
     def __repr__(self):
         return f"S({self.index})"
+
+#class CRRef:
+#    def __init__(self, num):
+#        self.index = num
+#    def __repr__(self):
+#        return f"CRREF({self.index})"
+
+class Predicate:
+    def __init__(self, pred, cr):
+        self.pred = pred
+        self.cr = cr
+    def __repr__(self):
+        return f"PREDICATE({self.pred}, {self.cr})"
 
 class Address:
     def __init__(self, num, displacement):
@@ -246,6 +283,8 @@ class Parser:
 
         if self.check("DIRECTIVE"):
             stmt = self.parse_directive()
+        elif self.check("IF"):
+            stmt = self.parse_predicated_instruction()
         elif self.check("IDENT"):
             stmt = self.parse_instruction()
         elif self.check("NEWLINE", "EOF"):
@@ -266,6 +305,22 @@ class Parser:
             args = self.parse_operand_list()
         return Directive(tok.value[1:], args)
 
+    def parse_predicate(self):
+        """directive := IDENT CRREF"""
+        # tok = self.advance()  # DIRECTIVE
+        if not self.check("IDENT"):
+            raise ParseError(f"Predicate expected")
+        pred = self.advance()
+        args = self.parse_operand()
+        if type(args) not in (ConditionRegister, VectorConditionRegister):
+            print(f"Predicate must refer to a condition/vector condition register")
+            exit(10)
+            
+#        if not self.check("CR"):
+#            raise ParseError(f"Condition register reference expected")
+#        args = self.advance()
+        return Predicate(pred.value, args)
+
     def parse_instruction(self):
         """instruction := IDENT operand_list?"""
         tok = self.advance()  # IDENT (mnemonic)
@@ -273,6 +328,17 @@ class Parser:
         if not self.check("NEWLINE", "EOF"):
             operands = self.parse_operand_list()
         return Instruction(tok.value, operands)
+
+    def parse_predicated_instruction(self):
+        """instruction := IF PREDICATE IDENT operand_list?"""
+        tok = self.advance()  # IF
+        predicate = self.parse_predicate()
+        instr = self.parse_instruction()
+        operands = []
+        if not self.check("NEWLINE", "EOF"):
+            operands = self.parse_operand_list()
+        # print(f"Predicated instruction {predicate} {instr}")
+        return PredicatedInstruction(predicate, instr.mnemonic, instr.operands)
 
     def parse_operand_list(self):
         """operand_list := operand (COMMA operand)*"""
@@ -303,6 +369,12 @@ class Parser:
         elif tok.type == "UNIT":
             self.advance()
             return Unit(int(tok.value[1:]))
+        elif tok.type == "CR":
+            self.advance()
+            if tok.value[1] == 'v':
+                return VectorConditionRegister(int(tok.value[3:-1]))
+            else:
+                return ConditionRegister(int(tok.value[2:-1]))
         elif tok.type in ("DEC", "HEX"):
             self.advance()
             return Immediate(int(tok.value, 0))
@@ -348,11 +420,11 @@ def iword_to_bytes(iword):
 def bin(s):
     return str(s) if s<=1 else bin(s>>1) + str(s&1)
 
-def assemble(mnemonic, params):
+def assemble(predicate, mnemonic, params):
     if mnemonic == "NOP":
         return (iword_to_bytes(0), None)
 
-    # print(f"Mnemonic {mnemonic}")
+    # print(f"Mnemonic {mnemonic} predicate {predicate}")
 
     multiple = 1
     log2multiple = 0
@@ -396,6 +468,43 @@ def assemble(mnemonic, params):
         (span_offset, span_size) = instruction_field(format, "span")
         iword |= log2multiple<<span_offset;
         
+    if predicate.pred != "a":
+        print(f"Instruction {mnemonic} is predicated with {predicate.pred}({predicate.cr})")
+        
+        if "encoded-predicate" in category:
+            (pr_offset, pr_size) = instruction_field(format, category["encoded-predicate"])
+
+            if predicate.pred in predicateCodes:
+                predCode = predicateCodes[predicate.pred]
+                print(f"  Encoded predicate = {predCode}")
+                iword |= predCode<<pr_offset
+            else:
+                print(f"Predicate {predicate.pred} not recognized.")
+                exit(30)            
+                
+            if "condition-read" in category:
+                (cr_offset, cr_size) = instruction_field(format, category["condition-read"])
+                if type(predicate.cr) == ConditionRegister:
+                    iword |= predicate.cr.index<<cr_offset
+                else:
+                    print(f"Instruction {mnemonic} predicate must refer to a CR")
+                    exit(21)
+            elif "vector-condition-read" in category:
+                (cr_offset, cr_size) = instruction_field(format, category["vector-condition-read"])
+                if type(predicate.cr) == VectorConditionRegister:
+                    iword |= predicate.cr.index<<cr_offset
+                else:
+                    print(f"Instruction {mnemonic} predicate must refer to a VCR")
+                    exit(22)
+            else:
+                print(f"Instruction {mnemonic}({varName}) does not encode a condition register!")
+                exit(23)
+            
+        else:
+            print(f"Instruction {mnemonic}({varName}) does not support predication.")
+            exit(5)
+            
+        
     param_index = 0
 
     for arg in formal_args:
@@ -423,6 +532,8 @@ def assemble(mnemonic, params):
             
             if type(op) == ConditionRegister:
                 iword |= op.index << offset
+#            elif type(op) == CRRef:
+#                iword |= op.index << offset
             else:
                 raise ParseError(f"{mnemonic} cr expects a condition register")
             
@@ -548,8 +659,14 @@ def main():
         elif type(node) == LabelDef:
             labels[node.name] = { "section": sectionName, "offset": len(sections[sectionName]) }
             
-        elif type(node) == Instruction:
-            (iword, ref) = assemble(node.mnemonic.upper(), node.operands)
+        elif type(node) in (Instruction, PredicatedInstruction):
+            pred = Predicate("a", ConditionRegister(0))
+            
+            if type(node) == PredicatedInstruction:
+                # print(f"Predicated {node.mnemonic}")
+                pred = node.predicate
+
+            (iword, ref) = assemble(pred, node.mnemonic.upper(), node.operands)
             
             if ref != None:
                 ref["section"] = sectionName

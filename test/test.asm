@@ -59,7 +59,7 @@ init:
 clear_bss_loop:
 	vst v0, s1, 1
 	sub s2, s2, V_BYTES
-	bgt c0, clear_bss_loop
+	bgt (c0), clear_bss_loop
 	add s1, s1, V_BYTES
 
 tests_start:	
@@ -75,7 +75,7 @@ tests_start:
 init_fft_loop:
 	sub s2, s2, 1
 	ldx s3, s0, s2
-	bgt c0, init_fft_loop
+	bgt (c0), init_fft_loop
 	stx s3, s1, s2
 
 	// Invoke FFT
@@ -109,7 +109,7 @@ read_loop:
 	st s2, s4, 0     // Store to a non-writable address so reported in the log file
 	add s1, s1, 4
 	sub s3, s3, 1
-	bgt c0, read_loop
+	bgt (c0), read_loop
 	add s4, s4, 4
 	
 	// Done
@@ -126,7 +126,7 @@ neg_loop:
 	stb s3, s1 + 0
 	add s1, s1, 1
 	sub s2, s2, 1
-	bgt c0, neg_loop
+	bgt (c0), neg_loop
 	sub s3, s3, 1
 
 	debug 256
@@ -141,7 +141,7 @@ byte_read_loop:
 	ldb s5, s1 + 2
 	ldbu s6, s1 + 3
 	sub s2, s2, 4
-	bgt c0, byte_read_loop
+	bgt (c0), byte_read_loop
 	add s1, s1, 4
 
 	debug 257
@@ -156,8 +156,10 @@ clear_vektori_loop:
 	st s3, s1 + 0
 	add s1, s1, 4
 	sub s2, s2, 4
-	bgt c0, clear_vektori_loop
+	bgt (c0), clear_vektori_loop
 	add s3, s3, 2345
+
+	if lt(vc1) vadd v1, v1, v3
 	
 	// Testataan vector loadeja
 

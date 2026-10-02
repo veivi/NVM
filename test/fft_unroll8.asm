@@ -103,19 +103,19 @@ for_v_loop_early:
 	cvsub v30, v6, v14   
 	cvsub v31, v7, v15   
 
-	blt c1, for_v_loop_early  // Loop as long as v < FFT_LEN
+	blt (c1), for_v_loop_early  // Loop as long as v < FFT_LEN
 	vst8 v24, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
 
 end_for_v_loop_early:
 	add s7, s7, 1         // j++
 	cmp c0, s7, s5
-	blt c0, for_j_loop     // while j < half_m
+	blt (c0), for_j_loop     // while j < half_m
 	nop
 
 end_for_j_loop:
 	add s3, s3, 1    // s = s + 1
 	cmp c1, s3, EFF_LOG2V  
-	ble c1, for_s_loop_early   // while s <= EFF_LOG2V
+	ble (c1), for_s_loop_early   // while s <= EFF_LOG2V
 	drain  // Delay slot
 
 	//
@@ -209,19 +209,19 @@ for_v_loop_late:
 	cvsub v14, v14, v22
 	cvsub v15, v15, v23
 	
-	blt c1, for_v_loop_late  // while v < half_m
+	blt (c1), for_v_loop_late  // while v < half_m
 	vst8 v8, s13, 1          // complex_vector_write(y, A, k + v + half_m, 1)
 	
 end_for_v_loop_late:
 	add s7, s7, s4           // k += m
 	cmp c0, s7, s15
-	blt c0, for_k_loop       // while k < FFT_LEN
+	blt (c0), for_k_loop       // while k < FFT_LEN
 	nop
 
 end_for_k_loop:	
 	add s3, s3, 1    // s = s + 1
 	cmp c0, s3, s2   
-	ble c0, for_s_loop_late // while s <= LOG2LEN
+	ble (c0), for_s_loop_late // while s <= LOG2LEN
 	drain   // Delay slot
 
 	// Done

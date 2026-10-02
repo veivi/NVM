@@ -1,32 +1,36 @@
 library IEEE;
 use IEEE.numeric_std.all;
+use WORK.NVM101Interface.all;
 
 package body NVM101Types is
   function PredicateDecode(Pred : std_logic_vector) return Predicate_T is
   begin
     case to_integer(unsigned(Pred)) is
-      when 1 =>
+      when EncodedPred_NE_C =>
         return Pred_NE_C;
         
-      when 2 =>
+      when EncodedPred_EQ_C =>
         return Pred_EQ_C;
         
-      when 3 =>
+      when EncodedPred_LT_C =>
         return Pred_LT_C;
         
-      when 4 =>
+      when EncodedPred_LE_C =>
         return Pred_LE_C;
         
-      when 5 =>
+      when EncodedPred_GT_C  =>
         return Pred_GT_C;
         
-      when 6 =>
+      when EncodedPred_GE_C =>
         return Pred_GE_C;
         
-      when 7 =>
+      when EncodedPred_CS_C =>
         return Pred_CS_C;
         
-      when 8 =>
+      when EncodedPred_CC_C =>
+        return Pred_CC_C;
+        
+      when EncodedPred_OVF_C =>
         return Pred_OVF_C;        
 
       when others =>
