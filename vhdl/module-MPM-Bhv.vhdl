@@ -236,6 +236,10 @@ begin
 
           if State(P) = Read_C then
             if Addr(P) < ROMBase_C then
+              assert Addr(P) < 2**Log2MemSize_C
+                report "Illegal RAM read access attempted"
+                severity failure;
+              
               ReadData := RAM(Addr(P));
             elsif Addr(P) < ROMBase_C + 2**Log2MemSize_C then
               ReadData := ROM(Addr(P) - ROMBase_C);

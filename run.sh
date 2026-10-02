@@ -71,15 +71,15 @@ cmp log.txt reference/ref_$len.txt
 
 if [ $? -ne 0 ]; then
     echo
-    echo "##########################################################################"
+    echo "###########################################################################"
     echo "###                                                                      "
     echo "###  FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL"
     echo "###                                                                      "
     echo "###      $id COMPARISON FAILED"
     echo "###                                                                      "
-    echo "###   FAILURE NO GOOD. FAILURE BAD. THIS IS NOT HOW YOU DO FFT.          "
+    echo "###   FAILURE NO GOOD. FAILURE BAD. NO BUENO. THIS IS NOT HOW YOU DO FFT."
     echo "###                                                                      "
-    echo "##########################################################################"
+    echo "###########################################################################"
     echo
     
     exit 10
