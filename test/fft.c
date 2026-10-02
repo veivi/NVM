@@ -21,25 +21,68 @@
 #define PRECISION   12
 #define pi          ((float) M_PI)
 
+#ifdef USE_FLOATS
 typedef struct complex {
   float real, imag;
 } complex_t;
 
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
+#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = r, .imag = i }
 #define COMPLEX_ADD(a, b) (complex_t) { (a).real + (b).real, (a).imag + (b).imag }
 #define COMPLEX_SUB(a, b) (complex_t) { (a).real - (b).real, (a).imag - (b).imag }
 #define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
 #define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
+#define TO_DOUBLE(a) ((double) (a))
+
+#else
+
+typedef int16_t part_t;
+
+typedef struct complex {
+  part_t real, imag;
+} complex_t;
+
+const int integer_bits = 8*sizeof(part_t) - PRECISION;
+
+#define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
+#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = (part_t) ((r) * (float) (1<<PRECISION)), .imag = (part_t) ((i) * (float) (1<<PRECISION)) }
+
+int32_t saturate(int32_t a, int p)
+{
+  int32_t min_value = -1L<<(p + integer_bits - 1), max_value = (1L<<(p + integer_bits - 1)) - 1;
+  if(a < min_value)
+    a = min_value;
+  else if(a > max_value)
+    a = max_value;
+  return a;
+}
+
+#define SATURATE(a, p) (a) < -1L<<(p+(16-p)) ? 
+#define MUL(a, b) ((int32_t) a * (int32_t)b)
+#define NORM(a) (part_t) (saturate(a, 2*PRECISION)>>PRECISION)
+#define ADD(a, b) saturate((int32_t) a + (int32_t) b, PRECISION)
+#define SUB(a, b) saturate((int32_t) a - (int32_t) b, PRECISION)
+#define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
+#define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
+#define COMPLEX_MUL(a, b) (complex_t) { NORM(MUL((a).real, (b).real)-MUL((a).imag, (b).imag)), \
+      NORM(MUL((a).real, (b).imag)+MUL((a).imag, (b).real)) }
+#define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
+#define TO_DOUBLE(a) ((a)/(double) (1<<PRECISION))
+#endif
 
 complex_t fft_data[FFT_LEN];
 complex_t w[FFT_LEN];
 
 uint32_t to_fixed_point(complex_t *a)
 {
+#if USE_FLOATS
   int32_t result = (int32_t) (a->real * (float) (1<<PRECISION));
   result = result<<16;
   result |= ((int32_t) (a->imag * (float) (1<<PRECISION))) & 0xFFFF;
   return result;
+#else
+  return ((uint32_t) a->real)<<8*sizeof(part_t) | (uint16_t) a->imag;
+#endif
 }
 
 int bit_reverse(int I)
@@ -88,7 +131,7 @@ void complex_vector_print(complex_t value[])
 {
   int i = 0;
   for(i = 0; i < V; i++)
-    printf("%.8x (%.3f +i%.3f), ", to_fixed_point(&value[i]), value[i].real, value[i].imag);
+    printf("%.8x (%.3f +i%.3f), ", to_fixed_point(&value[i]), TO_DOUBLE(value[i].real), TO_DOUBLE(value[i].imag));
   printf("\n");
 }
 
@@ -571,6 +614,23 @@ void store_complex_bin(const char *name, const char *mode, complex_t A[], int le
     printf("File %s could not be opened for writing.", name);
 }
 
+void store_reference(const char *name, complex_t A[], int len)
+{
+  FILE *file = fopen(name, "w");
+
+  if(file) {
+    int i = 0;
+    
+    for(i = 0; i < len; i++) {
+      complex_t a = A[i];
+      fprintf(file, "%.4X:=%.8X (S)\n", 0xF0000 + i*4, to_fixed_point(&a));
+    }
+    
+    fclose(file);
+  } else
+    printf("File %s could not be opened for writing.", name);
+}
+
 int main()
 {
   int i = 0;
@@ -578,7 +638,7 @@ int main()
   printf("Blob.\n");
   
   for(i = 0; i < FFT_LEN; i++)
-    w[i] = COMPLEX(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
+    w[i] = COMPLEX_FROM_FLOAT(cosf(i*2*pi/FFT_LEN), -sinf(i*2*pi/FFT_LEN));
 
   store_complex_bin("data_rom.txt", "w", w, FFT_LEN, false);
 
@@ -588,7 +648,7 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX(0.005f + 0.015f*cosf(i*2*pi/8) + 0.015f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.02f*cosf(i*2*pi/8) + 0.015f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
   
@@ -597,7 +657,7 @@ int main()
   store_complex_bin("data_rom.txt", "a+", fft_data, FFT_LEN, false);
   
   for(i = 0; i < FFT_LEN; i++)
-    printf("Input[%d] = %.3f + i%.3f\n", i, fft_data[i].real, fft_data[i].imag);
+    printf("Input[%d] = %.3f + i%.3f\n", i, TO_DOUBLE(fft_data[i].real), TO_DOUBLE(fft_data[i].imag));
   
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
@@ -615,6 +675,16 @@ int main()
 #endif
   
   for(i = 0; i < FFT_LEN; i++)
-    printf("Output[%d] = %.3f + i%.3f (%.3f)\n", i,
-	   fft_data[i].real, fft_data[i].imag, COMPLEX_ABS(fft_data[i]));
+    printf("Output[%d] = %.3f + i%.3f\n", i,
+	   TO_DOUBLE(fft_data[i].real), TO_DOUBLE(fft_data[i].imag));
+
+  complex_t a = COMPLEX_FROM_FLOAT(1.3, -1.1), b = COMPLEX_FROM_FLOAT(0, 0);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    b = COMPLEX_ADD(b, a);
+    
+    printf("a = %.3f + i%.3f\n", TO_DOUBLE(b.real), TO_DOUBLE(b.imag));
+  }
+  
+  store_reference("reference.txt", fft_data, FFT_LEN);
 }

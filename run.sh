@@ -62,7 +62,7 @@ fi
 
 id="FFT[$len] V=$vecsize unroll=$unroll contention=$contention"
 
-cmp log.txt reference/ref_$len.txt
+cmp log.txt reference.txt    # reference/ref_$len.txt
 
 if [ $? -ne 0 ]; then
     echo
