@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export ISA=NVM101
-
 log2len=$1
 vecsize=$2
 unroll=$3
@@ -9,39 +7,29 @@ contention=$4
 
 len=$((1<<log2len))
 
-options="-v $vecsize -D FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
-
-echo "Options: $options"
+echo "Compiling and running the C reference..."
 
 cc design/test/fft.c -DLOG2LEN=$log2len -DUNROLL=$unroll
+
+if [ $? -ne 0 ]; then
+    echo "Compiling fft.c failed"
+    exit 1
+fi
+
 ./a.out >artefact/fft_ref.txt 
 
 if [ $? -ne 0 ]; then
-    echo "fft.c failed"
+    echo "Running fft.c failed"
     exit 1
 fi
-   
-source="test common fft fft_unroll2 fft_unroll4 fft_unroll8"
 
-for i in $source
-do
-    mods="$mods $i.obj"
-    
-    design/tool/as.py $options design/test/$i.asm
-    
-    if [ $? -ne 0 ]; then
-	echo "AS $i failed"
-	exit 2
-    fi
-done
+echo "Building the software..."
 
-echo "Linking $mods"
-
-design/tool/ld.py $mods --map design/test/memory_map.yaml >ld.report
+design/build.sh $log2len $vecsize $unroll $contention
 
 if [ $? -ne 0 ]; then
-    echo "Link failed"
-    exit 3
+    echo "Build failed"
+    exit 1
 fi
 
 echo "Elaborating the test bench..."

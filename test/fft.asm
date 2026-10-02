@@ -1,5 +1,4 @@
 	.export "fft_decimation_in_time"
-	.import "stop_simulation"
 	.import "w_table"
 
 #include <VU102.h>

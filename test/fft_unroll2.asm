@@ -1,5 +1,4 @@
 	.export "fft_dit_unroll2"
-	.import "stop_simulation"
 	.import "w_table"
 
 #include <VU102.h>

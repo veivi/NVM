@@ -71,7 +71,7 @@ Token = namedtuple("Token", ["type", "value"])
 token_spec = [
     ("COMMENT",   r"[#/;].*"),
 #    ("COMMENT2",   r"#.*"),
-#    ("COMMENT3",   r"#.*"),
+#     ("IF",          r"if"),
     ("DIRECTIVE", r"\.\w+"),
     ("LABEL",     r"^\w+:"),
     ("STRING",    r'"[^"]*"'),
