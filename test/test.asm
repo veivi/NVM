@@ -63,7 +63,7 @@ clear_bss_loop:
 	add s1, s1, V_BYTES
 
 tests_start:	
-	ba write_neg_bytes
+	// ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal
@@ -78,6 +78,10 @@ init_fft_loop:
 	bgt (c0), init_fft_loop
 	stx s3, s1, s2
 
+	// Drain!!
+
+	drain
+	
 	// Invoke FFT
 
 	debug 0x57A7     // Stopwatch start
@@ -192,7 +196,7 @@ clear_vektori_loop:
 	vand v0, v0, 255
 	vst v0, s1, 1
 	
-	vcmp vc3, v0, 0x20
+	vcmp vc3, v0, 50
 	if gt(vc3) vsub v0, v0, v0
 	vst v0, s1, 1
 
