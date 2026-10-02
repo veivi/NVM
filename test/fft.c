@@ -4,15 +4,14 @@
 #include <math.h>
 #include <assert.h>
 
-#define USE_FLOATS  1
+// #define USE_FLOATS  1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
 #endif
 
-#define LOG4LEN (LOG2LEN/2)
-
 #ifdef RADIX4
+#define LOG4LEN (LOG2LEN/2)
 #if 2*LOG4LEN != LOG2LEN
 #error FFT length is not compatible with radix-4
 #endif
@@ -240,13 +239,6 @@ void complex_vector_sub(complex_t result[], complex_t a[], complex_t b[])
   int i = 0;
   for(i = 0; i < V; i++)
     result[i] = COMPLEX_SUB(a[i], b[i]);
-}
-
-void complex_vector_assign(complex_t result[], complex_t a[])
-{
-  int i = 0;
-  for(i = 0; i < V; i++)
-    result[i] = a[i];
 }
 
 void fft(complex_t A[])
@@ -641,6 +633,8 @@ void fft_vectors_unroll8(complex_t A[])
   }
 }
 
+#ifdef RADIX4
+
 void fft_radix4(complex_t A[])
 {
   int s = 0, k = 0, j = 0, span = 0, quarter = 0, index_mult = 0;
@@ -823,6 +817,7 @@ void fft_radix4(complex_t A[])
     //STORE_FENCE   // required once per radix-4 stage, same cross-stage RAW hazard as before
   }
 }
+#endif
 
 void print_bin(FILE *file, uint32_t a)
 {
