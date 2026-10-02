@@ -577,7 +577,6 @@ begin
                B => VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C),
                Result => VALU_Result((I+1)*WordSize_C-1 downto I*WordSize_C),
                Datum => VALU_Datum(I));
-    
   end generate;
 
   --
@@ -588,7 +587,7 @@ begin
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Async <= AVU_R_Present;
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
-  VRF_WA_Valid <=  (others => AVU_R_Present) when unsigned(not VRF_ReadValid) /= 0 else VALU_Mask;
+  VRF_WA_Valid <= (others => '1') when AVU_R_Present = '1' else VALU_Mask;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
   --

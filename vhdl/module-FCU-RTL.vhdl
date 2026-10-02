@@ -217,5 +217,7 @@ begin
     end if;
   end process;
 
-  VCR_Read_Datum <= VectorCR(VCR_Read_Index);
+  VCR_Read_Datum <=
+    VCR_Write_Datum when VCR_Write_Active = '1' and VCR_Write_Index = VCR_Read_Index
+    else VectorCR(VCR_Read_Index);
 end RTL;

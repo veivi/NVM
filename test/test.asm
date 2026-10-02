@@ -63,7 +63,7 @@ clear_bss_loop:
 	add s1, s1, V_BYTES
 
 tests_start:	
-	// ba write_neg_bytes
+	ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal
@@ -117,9 +117,11 @@ read_loop:
 	jmpa stop_simulation
 	nop
 	
-write_neg_bytes:	
+write_neg_bytes:
+	// Test scalar instruction predication
+
 	ldi s1, bss_start
-	ldi s2, 100
+	ldi s2, 300
 	ldi s3, -1
 
 neg_loop:
@@ -133,7 +135,7 @@ neg_loop:
 	
 read_neg_bytes:	
 	ldi s1, bss_start
-	ldi s2, 100
+	ldi s2, 300
 	
 byte_read_loop:
 	ldb s3, s1 + 0
@@ -145,6 +147,24 @@ byte_read_loop:
 	add s1, s1, 4
 
 	debug 257
+
+	// Test scalar predication: clear all negative values
+	
+read_neg_bytes2:	
+	ldi s1, bss_start
+	ldi s2, 300
+	
+byte_read_loop2:
+	ldb s3, s1 + 0
+	cmp c1, s3, 0
+	if lt(c1) sub s3, s3, s3
+	stb s3, s1 + 0
+	sub s2, s2, 1
+	bgt (c0), byte_read_loop2
+	add s1, s1, 1
+
+	debug 258
+
 	
 nollataan_vektoridata:	
 	ldi s1, vektoridata_alku
@@ -159,7 +179,6 @@ clear_vektori_loop:
 	bgt (c0), clear_vektori_loop
 	add s3, s3, 2345
 
-	if lt(vc1) vadd v1, v1, v3
 	
 	// Testataan vector loadeja
 
@@ -171,7 +190,14 @@ clear_vektori_loop:
 	vst v0, s1, 1
 
 	vand v0, v0, 255
-	vcmp vc3, v0, 50
+	vst v0, s1, 1
+	
+	vcmp vc3, v0, 0x20
+	if gt(vc3) vsub v0, v0, v0
+	vst v0, s1, 1
+
+	drain
+	debug 2
 	
 	vand v1, v1, 0  // Clear v1
 	vor v1, v1, 3   
