@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 
-#define USE_FLOATS  1
+// #define USE_FLOATS  1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -891,7 +891,7 @@ int main()
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.02f*cosf(i*2*pi/8) + 0.015f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
-    fft_data[i] = COMPLEX(1.0, 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
   
 #ifdef RADIX4
   radix4_digit_reversal_permutation(fft_data);
