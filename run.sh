@@ -5,11 +5,13 @@ vecsize=$2
 unroll=$3
 contention=$4
 
+precision=12
+
 len=$((1<<log2len))
 
 echo "Compiling and running the C reference..."
 
-cc design/test/fft.c -DLOG2LEN=$log2len -DUNROLL=$unroll
+cc design/test/fft.c -DV=$2 -DLOG2LEN=$log2len -DUNROLL=$unroll -DPRECISION=$precision
 
 if [ $? -ne 0 ]; then
     echo "Compiling fft.c failed"
@@ -41,7 +43,7 @@ echo "  bss_end = $bss_end"
 
 echo "Elaborating the test bench..."
 
-nvc -e Testbench -g VecSize_C=$vecsize -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention
+nvc -e Testbench -g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention
 
 if [ $? -ne 0 ]; then
     echo "NVC elaborate failed"

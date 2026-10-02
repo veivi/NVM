@@ -10,7 +10,8 @@ entity Testbench is
   generic(VecSize_C : integer := 3;
           Contention_C : real := 0.1;
           Log2RAMSize_C : integer := 14;
-          RAMSize_C : integer);
+          RAMSize_C : integer;
+          Precision_C : integer := 12);
 end Testbench;
 
 architecture Bhv of Testbench is
@@ -143,7 +144,7 @@ begin
   VU102_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C,
-                Precision_C => 12)
+                Precision_C => Precision_C)
 
     port map(Clk => Clk,
              Reset => Reset,
