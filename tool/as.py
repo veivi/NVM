@@ -442,6 +442,8 @@ def assemble(predicate, mnemonic, params):
     ispec = opcodes[mnemonic]
 
     catName = ispec["category"]
+
+    varName = ""
     delta = 0
     
     if "variant-name" in ispec:
