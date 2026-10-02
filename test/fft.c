@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 
-// #define USE_FLOATS  1
+#define USE_FLOATS  1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -51,7 +51,7 @@ typedef struct complex {
 } complex_t;
 
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
-#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = r, .imag = i }
+#define COMPLEX_FROM_FLOAT(r, i) COMPLEX(r, i)
 #define COMPLEX_ADD(a, b) (complex_t) { (a).real + (b).real, (a).imag + (b).imag }
 #define COMPLEX_SUB(a, b) (complex_t) { (a).real - (b).real, (a).imag - (b).imag }
 #define COMPLEX_MUL(a, b) (complex_t) { (a).real*(b).real-(a).imag*(b).imag, (a).real*(b).imag+(a).imag*(b).real }
@@ -644,7 +644,7 @@ void fft_vectors_unroll8(complex_t A[])
 void fft_radix4(complex_t A[])
 {
   int s = 0, k = 0, j = 0, span = 0, quarter = 0, index_mult = 0;
-  complex_t plus_i = COMPLEX(0, 1), minus_i = COMPLEX(0, -1);
+  complex_t plus_i = COMPLEX_FROM_FLOAT(0.0f, 1.0f), minus_i = COMPLEX_FROM_FLOAT(0.0f, -1.0f);
   complex_t a0[V], a1[V], a2[V], a3[V], w1[V], w2[V], w3[V];
   complex_t t1[V], t2[V], t3[V], s0[V], s1[V], s2[V], s3[V];
   complex_t y0[V], y1[V], y2[V], y3[V];
