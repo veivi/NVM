@@ -171,7 +171,7 @@ begin
              VCR_Write_Active => ExecuteWord.VCR_Write_Active,
              VCR_Write_Index => ExecuteWord.VCR_Write_Index,
              VCR_Write_Datum => VALU_Datum,
-             VCR_Read_Index => ExecuteWord.VCR_Read_Index,
+             VCR_Read_Index => ControlWord.VCR_Read_Index,
              VCR_Read_Datum => VCR_Read_Datum,
              
              Imm_Data => Imm_Data,
@@ -587,7 +587,7 @@ begin
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Async <= AVU_R_Present;
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
-  VRF_WA_Valid <= (others => '1') when AVU_R_Present = '1' else VALU_Mask;
+  VRF_WA_Valid <= (others => '1') when AVU_R_Present = '1' else VALU_Mask and VRF_ReadValid;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
   --

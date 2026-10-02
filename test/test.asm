@@ -121,8 +121,8 @@ write_neg_bytes:
 	// Test scalar instruction predication
 
 	ldi s1, bss_start
-	ldi s2, 300
-	ldi s3, -1
+	ldi s2, 100
+	ldi s3, 30
 
 neg_loop:
 	stb s3, s1 + 0
@@ -135,7 +135,7 @@ neg_loop:
 	
 read_neg_bytes:	
 	ldi s1, bss_start
-	ldi s2, 300
+	ldi s2, 100
 	
 byte_read_loop:
 	ldb s3, s1 + 0
@@ -148,15 +148,15 @@ byte_read_loop:
 
 	debug 257
 
-	// Test scalar predication: clear all negative values
+	// Test scalar predication: clear values below < -30
 	
 read_neg_bytes2:	
 	ldi s1, bss_start
-	ldi s2, 300
+	ldi s2, 100
 	
 byte_read_loop2:
 	ldb s3, s1 + 0
-	cmp c1, s3, 0
+	cmp c1, s3, -30
 	if lt(c1) sub s3, s3, s3
 	stb s3, s1 + 0
 	sub s2, s2, 1
