@@ -32,9 +32,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "Extracting bss_end from the linker report..."
+
+report=$(grep "test.obj:bss_end" ld.report)
+report=($report)
+bss_end=${report[3]}
+echo "  bss_end = $bss_end"
+
 echo "Elaborating the test bench..."
 
-nvc -e Testbench -g VecSize_C=$vecsize -gLog2RAMSize_C=13 -gContention_C=$contention
+nvc -e Testbench -g VecSize_C=$vecsize -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention
 
 if [ $? -ne 0 ]; then
     echo "NVC elaborate failed"

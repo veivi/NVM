@@ -3,6 +3,8 @@
 #
 #   FAIL WITH LARGE CONTENTION VALUES. Probably LSU internal logic thing.
 #
+#     CAUSE: Missing drain in test sw after test data write
+#     CLOSED: 2026/10/2
 
 design/range.sh "6" "2" "2" 0.9
 

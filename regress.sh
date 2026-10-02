@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #
-# FAIL: large contention!!
+# FIXED on 2026/10/02: FAIL: large contention!!
 #
 
-design/range.sh "6" "2" "2" 0.9
+design/range.sh "6" "2" "1 2 4 8" 0.9
 
 if [ $? -ne 0 ]; then
     echo "Configuration range failed!"
@@ -39,3 +39,4 @@ if [ $? -ne 0 ]; then
     exit 10
 fi
 
+echo "It would seem all tests have PASSED. Huh."

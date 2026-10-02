@@ -9,7 +9,8 @@ use std.env.finish;
 entity Testbench is
   generic(VecSize_C : integer := 3;
           Contention_C : real := 0.1;
-          Log2RAMSize_C : integer := 14);
+          Log2RAMSize_C : integer := 14;
+          RAMSize_C : integer);
 end Testbench;
 
 architecture Bhv of Testbench is
@@ -167,7 +168,8 @@ begin
                 TagSize_C => TagSize_C,
                 NumOfPorts_C => 2**Log2VecSize_C + 1,
                 Contention_C => Contention_C,
-                Log2MemSize_C => Log2RAMSize_C )
+                Log2MemSize_C => Log2RAMSize_C,
+                Barrier_C => RAMSize_C)
 
     port map(Clk => Clk,
              Reset => Reset,

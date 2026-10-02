@@ -471,14 +471,14 @@ def assemble(predicate, mnemonic, params):
         iword |= log2multiple<<span_offset;
         
     if predicate.pred != "a":
-        print(f"Instruction {mnemonic} is predicated with {predicate.pred}({predicate.cr})")
+        # print(f"Instruction {mnemonic} is predicated with {predicate.pred}({predicate.cr})")
         
         if "encoded-predicate" in category:
             (pr_offset, pr_size) = instruction_field(format, category["encoded-predicate"])
 
             if predicate.pred in predicateCodes:
                 predCode = predicateCodes[predicate.pred]
-                print(f"  Encoded predicate = {predCode}")
+                # print(f"  Encoded predicate = {predCode}")
                 iword |= predCode<<pr_offset
             else:
                 print(f"Predicate {predicate.pred} not recognized.")

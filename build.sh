@@ -11,7 +11,7 @@ contention=$4
 
 len=$((1<<log2len))
 
-options="-v $vecsize -D FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
+options="-v $vecsize -D DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
 
 echo "Software build options: $options"
 

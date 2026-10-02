@@ -11,7 +11,8 @@ entity MPM is
           TagSize_C : integer;
           NumOfPorts_C : integer;
           Contention_C : real;
-          Log2MemSize_C : integer);
+          Log2MemSize_C : integer;
+          Barrier_C : integer);
   
   port(Clk : in std_logic;
        Reset : in std_logic;
@@ -37,7 +38,7 @@ entity MPM is
        LCR_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C*NumOfPorts_C-1 downto 0));
 end MPM;
 
-architecture Bhv of MPM is
+architecture Bhv of MPM is  
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   
   constant ROMBase_C : integer := 2**(16 - Log2BPW_C);
@@ -141,6 +142,10 @@ begin
       
       for P in 0 to NumOfPorts_C-1 loop
         if State(P) = Write_C then
+          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+            report "RAM barrier violated (WRITE)"
+            severity warning;
+              
           Something := true;
           
           if Addr(P) < 2**Log2MemSize_C then
@@ -183,6 +188,10 @@ begin
           write(OutLine, string'("|"));
           
         elsif State(P) = Read_C then
+          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+            report "RAM barrier violated"
+            severity warning;
+          
           Something := true;
           
           hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
@@ -230,6 +239,10 @@ begin
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => '0');
         
         else
+          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+            report "RAM barrier violated"
+            severity failure;
+          
           LCR_Present(P) <= '1';
           LCR_Tag((P+1)*TagSize_C-1 downto P*TagSize_C) <= Tag(P);
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => 'X');
