@@ -31,9 +31,8 @@ do
     
     if [ $? -ne 0 ]; then
 	echo "AS $i failed"
-    exit 2
-fi
-
+	exit 2
+    fi
 done
 
 echo "Linking $mods"
@@ -71,7 +70,18 @@ id="FFT[$len] V=$vecsize unroll=$unroll contention=$contention"
 cmp log.txt reference/ref_$len.txt
 
 if [ $? -ne 0 ]; then
-    echo "*** $id FAILED ***"
+    echo
+    echo "##########################################################################"
+    echo "###                                                                      "
+    echo "###  FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL    FAIL"
+    echo "###                                                                      "
+    echo "###      $id COMPARISON FAILED"
+    echo "###                                                                      "
+    echo "###   FAILURE NO GOOD. FAILURE BAD. THIS IS NOT HOW YOU DO FFT.          "
+    echo "###                                                                      "
+    echo "##########################################################################"
+    echo
+    
     exit 10
 else
     echo "*** $id IS GOOD ***"
