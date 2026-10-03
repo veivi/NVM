@@ -423,7 +423,7 @@ for_k_loop_late:
 	vrotc reg_r3, reg_s3, -1
 	cvadd reg_y1, reg_s1, reg_r3
 	vrotc reg_r3, reg_s3, 1
-	cvsub reg_y3, reg_s1, reg_r3
+	cvadd reg_y3, reg_s1, reg_r3
 	
 	/*
                 VST [a + k+j],           y0
