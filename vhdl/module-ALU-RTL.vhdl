@@ -58,11 +58,11 @@ begin
                                               to_integer(unsigned(B(Log2ByteSize_C+Log2BPW_C-1 downto 0)))));
 
       when ALUOp_ROTC_C =>
-        if signed(B) > 0 then
+        if signed(B(1 downto 0)) > 0 then
           -- Rotate counter-clockwise
           ALUResult <=
             std_logic_vector(-signed(A(WordSize_C/2-1 downto 0))) & A(WordSize_C-1 downto WordSize_C/2);
-        elsif signed(B) < 0 then
+        elsif signed(B(1 downto 0)) < 0 then
           -- Rotate clockwise
           ALUResult <=
             A(WordSize_C/2-1 downto 0) & std_logic_vector(-signed(A(WordSize_C-1 downto WordSize_C/2)));
