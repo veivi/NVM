@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 
-#define USE_FLOATS  1
+// #define USE_FLOATS  1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -887,9 +887,9 @@ int main()
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/8), 0.2f*sinf(i*2*pi/8));
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
-    fft_data[i] = COMPLEX(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.1f + 0.2f*cosf(i*2*pi/8) + 0.2f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
