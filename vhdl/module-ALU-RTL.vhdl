@@ -17,6 +17,18 @@ end ALU;
 
 architecture RTL of ALU is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
+
+  function Negate(A : std_logic_vector) return std_logic_vector is
+    variable Tmp : signed(A'range'high downto A'range'low);
+  begin
+    Tmp := -signed(A);
+    if Tmp = signed(A) then
+      -- Overflow
+      Tmp := -(signed(A) + 1);
+    end if;
+    return std_logic_vector(Tmp);
+  end function;
+  
   signal ALUResult, CompareA, CompareB : std_logic_vector(WordSize_C-1 downto 0);
 begin
   --
@@ -60,12 +72,10 @@ begin
       when ALUOp_ROTC_C =>
         if signed(B(1 downto 0)) > 0 then
           -- Rotate counter-clockwise
-          ALUResult <=
-            std_logic_vector(-signed(A(WordSize_C/2-1 downto 0))) & A(WordSize_C-1 downto WordSize_C/2);
+          ALUResult <= Negate(A(WordSize_C/2-1 downto 0)) & A(WordSize_C-1 downto WordSize_C/2);
         elsif signed(B(1 downto 0)) < 0 then
           -- Rotate clockwise
-          ALUResult <=
-            A(WordSize_C/2-1 downto 0) & std_logic_vector(-signed(A(WordSize_C-1 downto WordSize_C/2)));
+          ALUResult <= A(WordSize_C/2-1 downto 0) & Negate(A(WordSize_C-1 downto WordSize_C/2));
         else
           -- Do nothing
           ALUResult <= A;
