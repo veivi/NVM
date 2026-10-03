@@ -11,7 +11,8 @@
 #elif V == 16
 #define LOG4V  2
 #endif
-	
+
+#ifdef LOG4V
 fft_dit_radix4:
 	debug 48
 	
@@ -472,3 +473,4 @@ for_k_loop_late:
 
 	ret
 	nop
+#endif
