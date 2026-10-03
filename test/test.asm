@@ -129,8 +129,80 @@ read_loop:
 	
 	jmpa stop_simulation
 	nop
-	
+
 write_neg_bytes:
+	// Test ROTC instruction
+
+	ldi s2, 0
+	
+	debug 30
+	
+	ldi s1, 1
+	lsl s1, s1, 16
+	lsl s1, s1, PRECISION
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	
+	drain
+	debug 31
+
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+
+	drain
+	debug 30
+	
+	ldi s1, 1
+	lsl s1, s1, 31
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	rotc s1, s1, 1
+	st s1, s2, 0
+	
+	drain
+	debug 31
+
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+	rotc s1, s1, -1
+	st s1, s2, 0
+
+	drain
+	
 	// Test scalar instruction predication
 
 	ldi s1, bss_start

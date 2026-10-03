@@ -27,7 +27,7 @@ fi
 
 echo "Building the software..."
 
-design/build.sh $log2len $vecsize $unroll $contention
+design/build.sh $log2len $vecsize $unroll $precision
 
 if [ $? -ne 0 ]; then
     echo "Build failed"

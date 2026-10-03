@@ -22,10 +22,12 @@ architecture RTL of ALU is
     variable Tmp : signed(A'range'high downto A'range'low);
   begin
     Tmp := -signed(A);
-    if Tmp = signed(A) then
+    
+    if signed(A) /= 0 and Tmp = signed(A) then
       -- Overflow
       Tmp := -(signed(A) + 1);
     end if;
+    
     return std_logic_vector(Tmp);
   end function;
   

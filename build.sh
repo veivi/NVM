@@ -7,11 +7,11 @@ export ISA=NVM101
 log2len=$1
 vecsize=$2
 unroll=$3
-contention=$4
+precision=$4
 
 len=$((1<<log2len))
 
-options="-v $vecsize -D RADIX4=1,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
+options="-v $vecsize -D PRECISION=$precision,RADIX4=1,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
 
 echo "Software build options: $options"
 
