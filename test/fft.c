@@ -4,7 +4,7 @@
 #include <math.h>
 #include <assert.h>
 
-// #define USE_FLOATS  1
+#define USE_FLOATS  1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -685,9 +685,9 @@ void fft_radix4(complex_t A[])
 	  complex_vector_read(a2, A, k + j + 2*quarter, 1, 0x130);
 	  complex_vector_read(a3, A, k + j + 3*quarter, 1, 0x130);
 	  
-	  complex_vector_read(w1, w, 0, j * index_mult, 0x10000);
-	  complex_vector_read(w2, w, 0, j * 2*index_mult, 0x10000);
-	  complex_vector_read(w3, w, 0, j * 3*index_mult, 0x10000);
+	  complex_vector_read(w1, w, j * index_mult, index_mult, 0x10000);
+	  complex_vector_read(w2, w, j * 2*index_mult, 2*index_mult, 0x10000);
+	  complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult, 0x10000);
 
 	  /*
                 t0 = a0
@@ -746,71 +746,74 @@ void fft_radix4(complex_t A[])
 
       for(j = 0; j < quarter; j++) {
 	    
-	printf("---\ns = %d j = %d\n---\n", s, j);
-	
 	// w1j, w2j, w3j = twid1[j], twid2[j], twid3[j]   // scalars
 
 	complex_t w1j = w[j * index_mult], w2j = w[j * 2*index_mult], w3j = w[j * 3*index_mult];
+	int kb = 0;
+	
+	for(kb = 0; kb < FFT_LEN; kb += V*span) {
+	  printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
+	
+	  /*
+	    VLD    a0, [a + j],            stride=span
+	    VLD    a1, [a + j+quarter],    stride=span
+	    VLD    a2, [a + j+2*quarter],  stride=span
+	    VLD    a3, [a + j+3*quarter],  stride=span
+	  */
 
-	/*
-	  VLD    a0, [a + j],            stride=span
-	  VLD    a1, [a + j+quarter],    stride=span
-	  VLD    a2, [a + j+2*quarter],  stride=span
-	  VLD    a3, [a + j+3*quarter],  stride=span
-	*/
+	  complex_vector_read(a0, A, kb + j, span, 0x130);
+	  complex_vector_read(a1, A, kb + j + quarter, span, 0x130);
+	  complex_vector_read(a2, A, kb + j + 2*quarter, span, 0x130);
+	  complex_vector_read(a3, A, kb + j + 3*quarter, span, 0x130);
 
-	complex_vector_read(a0, A, j, span, 0x130);
-	complex_vector_read(a1, A, j + quarter, span, 0x130);
-	complex_vector_read(a2, A, j + 2*quarter, span, 0x130);
-	complex_vector_read(a3, A, j + 3*quarter, span, 0x130);
-
-	/*
+	  /*
             t0 = a0
             VBCMUL t1, w1j, a1
             VBCMUL t2, w2j, a2
             VBCMUL t3, w3j, a3
-	*/
+	  */
 	
-	complex_vector_mul_bc(t1, a1, &w1j);
-	complex_vector_mul_bc(t2, a2, &w2j);
-	complex_vector_mul_bc(t3, a3, &w3j);
+	  complex_vector_mul_bc(t1, a1, &w1j);
+	  complex_vector_mul_bc(t2, a2, &w2j);
+	  complex_vector_mul_bc(t3, a3, &w3j);
 
-	/*
+	  /*
             VCADD s0, t0, t2    VCSUB s1, t0, t2
             VCADD s2, t1, t3    VCSUB s3, t1, t3
-	*/
+	  */
 
-	complex_vector_add(s0, a0, t2);
-	complex_vector_sub(s1, a0, t2);
-	complex_vector_add(s2, t1, t3);
-	complex_vector_sub(s3, t1, t3);
+	  complex_vector_add(s0, a0, t2);
+	  complex_vector_sub(s1, a0, t2);
+	  complex_vector_add(s2, t1, t3);
+	  complex_vector_sub(s3, t1, t3);
 
-	/*
+	  /*
             VCADD y0, s0, s2
             VCSUB y2, s0, s2
             VROTNJ r3n, s3      VROTJ r3p, s3
             VCADD y1, s1, r3n
             VCADD y3, s1, r3p
-	*/
+	  */
 
-	complex_vector_add(y0, s0, s2);
-	complex_vector_sub(y2, s0, s2);
-	complex_vector_mul_bc(r3n, s3, &minus_i);
-	complex_vector_mul_bc(r3p, s3, &plus_i);
-	complex_vector_add(y1, s1, r3n);
-	complex_vector_add(y3, s1, r3p);
+	  complex_vector_add(y0, s0, s2);
+	  complex_vector_sub(y2, s0, s2);
+	  complex_vector_mul_bc(r3n, s3, &minus_i);
+	  complex_vector_mul_bc(r3p, s3, &plus_i);
+	  complex_vector_add(y1, s1, r3n);
+	  complex_vector_add(y3, s1, r3p);
 
-	/*
+	  /*
             VST [a + j],            y0, stride=span
             VST [a + j+quarter],    y1, stride=span
             VST [a + j+2*quarter],  y2, stride=span
             VST [a + j+3*quarter],  y3, stride=span
-	*/
+	  */
 
-	complex_vector_write(y0, A, j, span, 0x130);
-	complex_vector_write(y1, A, j + quarter, span, 0x130);
-	complex_vector_write(y2, A, j + 2*quarter, span, 0x130);
-	complex_vector_write(y3, A, j + 3*quarter, span, 0x130);
+	  complex_vector_write(y0, A, kb + j, span, 0x130);
+	  complex_vector_write(y1, A, kb + j + quarter, span, 0x130);
+	  complex_vector_write(y2, A, kb + j + 2*quarter, span, 0x130);
+	  complex_vector_write(y3, A, kb + j + 3*quarter, span, 0x130);
+	}
       }
     }
     
@@ -880,13 +883,17 @@ int main()
   for(i = 0; i < FFT_LEN; i++)
     printf("W[%d] = %.8x\n", i, to_fixed_point(&w[i]));
   
-  for(i = 0; i < FFT_LEN; i++)
-    // fft_data[i] = COMPLEX(0.02f*cosf(i*2*pi/8), 0.02f*sinf(i*2*pi/8));
+  for(i = 0; i < FFT_LEN; i++) {
+    // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/8), 0.2f*sinf(i*2*pi/8));
+    // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
+    // fft_data[i] = COMPLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
+    fft_data[i] = COMPLEX(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.2f*cosf(i*2*pi/16), 0.0f);
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.02f*cosf(i*2*pi/8) + 0.015f*cosf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.1f + 0.2f*cosf(i*2*pi/8) + 0.2f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX(0.02f, 0.0f);
     // fft_data[i] = COMPLEX(i & 1 ? 1.0f : -1.0f, 0.0f);
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
+  }
   
 #ifdef RADIX4
   radix4_digit_reversal_permutation(fft_data);
