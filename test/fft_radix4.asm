@@ -126,6 +126,7 @@ for_kb_loop:
 	lsl s50, reg_s, 16
 	or s50, s50, reg_j
 	debugr s50
+	debug 0
 	debugr reg_kb
 #endif
 	/* 
@@ -266,7 +267,8 @@ for_s_loop_late:
 	// quarter = span / 4
 
 	lsl reg_span, reg_s, 1          // span = 2*s
-	lsl reg_span, reg_s, reg_span   // span = 1<<(2*s) = 4^s
+	ldi reg_quarter, 1
+	lsl reg_span, reg_quarter, reg_span   // span = 1<<(2*s) = 4^s
 	lsr reg_quarter, reg_span, 2    // quarter = span/4
 	lsl reg_index_mult, reg_s, 1    // index_mult = 2*s
 	lsr reg_index_mult, reg_fft_len, reg_index_mult  // index_mult = FFT_LEN/4^s = FFT_LEN/span
@@ -338,6 +340,7 @@ for_k_loop_late:
 	lsl s50, reg_s, 16
 	or s50, s50, reg_j
 	debugr s50
+	debug 0xFFFF
 	debugr reg_kb
 #endif
 	/*
