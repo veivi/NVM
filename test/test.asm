@@ -3,6 +3,7 @@
 	.import "fft_dit_unroll8"
 	.import "fft_dit_unroll4"
 	.import "fft_dit_unroll2"
+	.import "fft_dit_radix4"
 	.import "stop_simulation"
 	.export "init"
 	.export "w_table"
@@ -71,12 +72,15 @@ tests_start:
 	ldi s0, test_data
 	ldi s1, fft_data
 	ldi s2, FFT_LEN
+	lsr s2, s2, LOG2V
 	
 init_fft_loop:
+	vld v0, s0, 1
+	add s0, s0, V_BYTES
 	sub s2, s2, 1
-	ldx s3, s0, s2
+	vst v0, s1, 1
 	bgt (c0), init_fft_loop
-	stx s3, s1, s2
+	add s1, s1, V_BYTES
 
 	// Drain!!
 
@@ -87,7 +91,12 @@ init_fft_loop:
 	debug 0x57A7     // Stopwatch start
 	
 	ldi s1, fft_data
-#if UNROLL_K < 2
+
+#ifdef RADIX4
+	ldi s2, LOG2FFT_LEN
+	jmpal fft_dit_radix4
+	lsr s2, s2, 1
+#elif UNROLL_K < 2
 	jmpal fft_decimation_in_time
 #elif UNROLL_K < 4
 	jmpal fft_dit_unroll2

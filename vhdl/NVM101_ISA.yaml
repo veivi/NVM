@@ -414,6 +414,14 @@ instruction_set:
     operation: "ALUOp_ASR_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
+  ROTC:
+    category: "logic"
+    opcode: 18
+    variant-name: "imm"
+    variant-delta: 1
+    operation: "ALUOp_ROTC_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
 #
 # Compare Scalar/Vector
 #
@@ -913,6 +921,14 @@ instruction_set:
     variant-name: "imm"
     variant-delta: 1
     operation: "ALUOp_ASR_C"
+    behaviour: "R[rd] = R[rs] OR zero_extend(value)"
+
+  VROTC:
+    category: "logic_vec"
+    opcode: 16
+    variant-name: "imm"
+    variant-delta: 1
+    operation: "ALUOp_ROTC_C"
     behaviour: "R[rd] = R[rs] OR zero_extend(value)"
 
 #

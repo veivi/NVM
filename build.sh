@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source="test common fft fft_unroll2 fft_unroll4 fft_unroll8"
+source="test common fft fft_unroll2 fft_unroll4 fft_unroll8 fft_radix4"
 
 export ISA=NVM101
 
@@ -11,12 +11,14 @@ contention=$4
 
 len=$((1<<log2len))
 
-options="-v $vecsize -D DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
+options="-v $vecsize -D RADIX4=1,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
 
 echo "Software build options: $options"
 
 for i in $source
 do
+    # echo "Compiling module $i"
+    
     mods="$mods $i.obj"
     
     design/tool/as.py $options design/test/$i.asm

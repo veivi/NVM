@@ -660,15 +660,19 @@ void fft_radix4(complex_t A[])
     if(quarter >= V) {
       // late stage: contiguous within a block, twiddle vectors
 
-      // for k = 0, span, 2*span, ... N-span:
+      // for j = 0, V, 2V, ... quarter-V:
 
-      for(k = 0; k < FFT_LEN; k += span) {
-	
-	// for j = 0, V, 2V, ... quarter-V:
-
-	for(j = 0; j < quarter; j += V) {
+      for(j = 0; j < quarter; j += V) {
 	  
-	  printf("---\ns = %d k = %d j = %d\n---\n", s, k, j);
+	complex_vector_read(w1, w, j * index_mult, index_mult, 0x10000);
+	complex_vector_read(w2, w, j * 2*index_mult, 2*index_mult, 0x10000);
+	complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult, 0x10000);
+
+	// for k = 0, span, 2*span, ... N-span:
+
+	for(k = 0; k < FFT_LEN; k += span) {
+	
+	  printf("---\ns = %d j = %d k = %x\n---\n", s, j, k);
 	
 	  /*
                 VLD   a0, [a + k+j]
@@ -685,10 +689,6 @@ void fft_radix4(complex_t A[])
 	  complex_vector_read(a2, A, k + j + 2*quarter, 1, 0x130);
 	  complex_vector_read(a3, A, k + j + 3*quarter, 1, 0x130);
 	  
-	  complex_vector_read(w1, w, j * index_mult, index_mult, 0x10000);
-	  complex_vector_read(w2, w, j * 2*index_mult, 2*index_mult, 0x10000);
-	  complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult, 0x10000);
-
 	  /*
                 t0 = a0
                 VCMUL t1, w1, a1
@@ -752,7 +752,7 @@ void fft_radix4(complex_t A[])
 	int kb = 0;
 	
 	for(kb = 0; kb < FFT_LEN; kb += V*span) {
-	  printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
+	  printf("---\ns = %d j = %d, kb = %x\n---\n", s, j, kb);
 	
 	  /*
 	    VLD    a0, [a + j],            stride=span

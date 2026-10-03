@@ -424,7 +424,7 @@ def assemble(predicate, mnemonic, params):
     if mnemonic == "NOP":
         return (iword_to_bytes(0), None)
 
-    # print(f"Mnemonic {mnemonic} predicate {predicate}")
+    # print(f"Mnemonic {mnemonic}, params {params} predicate {predicate}")
 
     multiple = 1
     log2multiple = 0
@@ -510,7 +510,7 @@ def assemble(predicate, mnemonic, params):
     param_index = 0
 
     for arg in formal_args:
-#        print(f"Formal operand {arg}")
+        # print(f"Formal operand {arg}")
         (offset, size) = instruction_field(format, arg)
         
         if arg in ("rd", "rs", "rs1", "rs2"):
