@@ -11,6 +11,7 @@ package NVM101Types is
                     ALUOp_OR_C,
                     ALUOp_AND_C,
                     ALUOp_XOR_C,
+                    ALUOp_NOR_C,
                     ALUOp_ADD_C,
                     ALUOp_SUB_C,
                     ALUOp_LSR_C,
@@ -18,7 +19,9 @@ package NVM101Types is
                     ALUOp_ASR_C,
                     ALUOp_CMP_C,
                     ALUOp_CMPU_C,
-                    ALUOp_ROTC_C);
+                    ALUOp_ROTC_C,
+                    ALUOp_NEG_C,
+                    ALUOp_NEGC_C );
 
   type ALUMode_T is ( ALU_RegReg_C, ALU_RegImm_C );
 

@@ -19,16 +19,17 @@ architecture RTL of ALU is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
 
   function Negate(A : std_logic_vector) return std_logic_vector is
-    variable Tmp : signed(A'range'high downto A'range'low);
   begin
-    Tmp := -signed(A);
-    
-    if signed(A) /= 0 and Tmp = signed(A) then
-      -- Overflow
-      Tmp := -(signed(A) + 1);
+    if signed(A) = 0 then
+      -- Zero stays zero
+      return A;
+    elsif -signed(A) /= signed(A) then
+      -- No overflow, return straight negation
+      return std_logic_vector(-signed(A));
+    else
+      -- Straight negation would overflow, clamp
+      return std_logic_vector(-(signed(A) + 1));
     end if;
-    
-    return std_logic_vector(Tmp);
   end function;
   
   signal ALUResult, CompareA, CompareB : std_logic_vector(WordSize_C-1 downto 0);
@@ -53,8 +54,14 @@ begin
       when ALUOp_XOR_C =>
         ALUResult <= A xor B;
 
+      when ALUOp_NOR_C =>
+        ALUResult <= NOT(A or B);
+
       when ALUOp_ADD_C =>
         ALUResult <= std_logic_vector(unsigned(A) + unsigned(B));
+
+      when ALUOp_NEG_C =>
+        ALUResult <= Negate(std_logic_vector(signed(A) + signed(B)));
 
       when ALUOp_SUB_C =>
         ALUResult <= std_logic_vector(unsigned(A) - unsigned(B));
@@ -83,6 +90,13 @@ begin
           ALUResult <= A;
         end if;
         
+      when ALUOp_NEGC_C =>
+        ALUResult <=
+          Negate(std_logic_vector(signed(A(WordSize_C-1 downto WordSize_C/2))
+                                  + signed(B(WordSize_C-1 downto WordSize_C/2))))
+          & Negate(std_logic_vector(signed(A(WordSize_C/2-1 downto 0))
+                                    + signed(B(WordSize_C/2-1 downto 0)))); 
+
       when others =>
         null;
     end case; 
