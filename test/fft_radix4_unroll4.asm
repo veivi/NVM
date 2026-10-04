@@ -7,9 +7,9 @@
 	.section "code"
 
 #if EFF_V == 16
-#define EFF_LOG4V  4
+#define EFF_LOG4V  2
 #elif EFF_V == 64
-#define EFF_LOG4V  6
+#define EFF_LOG4V  3
 #endif
 
 #ifdef EFF_LOG4V
