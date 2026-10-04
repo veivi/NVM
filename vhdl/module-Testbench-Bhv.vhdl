@@ -16,7 +16,7 @@ end Testbench;
 
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
-  constant Log2IROMSize_C : integer := 10;
+  constant Log2IROMSize_C : integer := 12;
   constant AddrSize_C : integer := 20;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;

@@ -27,6 +27,7 @@ entity EIU is
        LoadsOutstanding : in std_logic;
        StoresOutstanding : in std_logic;
        ALU_Operation : in ALUOp_T;
+       VALU_Operation : in ALUOp_T;
        LS_DecodeOperation : in LoadStoreOp_T;
        LS_ExecuteOperation : in LoadStoreOp_T;
        LS_Target : in  RegIndex_T;
@@ -143,7 +144,7 @@ begin
     not ExtC_Accept when ExtC_Operation /= 0
     
     -- Ext result write conflicts with ALUOp?
-    else ExtR_Present when ALU_Operation /= ALUOp_None_C else '0';
+    else ExtR_Present when VALU_Operation /= ALUOp_None_C else '0';
 
   --
   -- Decode stall detection

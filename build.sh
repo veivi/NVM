@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source="test common fft fft_unroll2 fft_unroll4 fft_unroll8 fft_radix4"
+source="test common fft fft_unroll2 fft_unroll4 fft_unroll8 fft_radix4 fft_radix4_unroll2"
 
 export ISA=NVM101
 
@@ -31,6 +31,7 @@ len=$((1<<log2len))
 
 echo "--"
 echo "-- BUILD"
+echo "--"
 echo "--    FFT[$len] radix-$radix V = $vecsize unroll-by-$unroll"
 echo "--"
 

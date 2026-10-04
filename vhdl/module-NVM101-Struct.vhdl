@@ -246,6 +246,7 @@ begin
              LoadsOutstanding => LoadsOutstanding,
              StoresOutstanding => StoresOutstanding,
              ALU_Operation => ExecuteWord.ALU_Operation,
+             VALU_Operation => ExecuteWord.VALU_Operation,
              LS_DecodeOperation => ControlWord.LS_Operation,
              LS_ExecuteOperation => ExecuteWord.LS_Operation,
              LS_Target => ControlWord.LS_Target,

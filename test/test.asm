@@ -4,6 +4,7 @@
 	.import "fft_dit_unroll4"
 	.import "fft_dit_unroll2"
 	.import "fft_dit_radix4"
+	.import "fft_dit_radix4_unroll2"
 	.import "stop_simulation"
 	.export "init"
 	.export "w_table"
@@ -94,7 +95,11 @@ init_fft_loop:
 
 #ifdef RADIX4
 	ldi s2, LOG2FFT_LEN
+#if UNROLL_K < 2
 	jmpal fft_dit_radix4
+#elif UNROLL_K < 4
+	jmpal fft_dit_radix4_unroll2
+#endif
 	lsr s2, s2, 1
 #elif UNROLL_K < 2
 	jmpal fft_decimation_in_time

@@ -75,10 +75,10 @@ for_j_loop_early:
 	//    int kb = 0;
 
 #define _w1j       s10
-#define _w2j       s10
-#define _w3j       s10
-#define _delta     s11
-#define _temp      s12	
+#define _w2j       s11
+#define _w3j       s12
+#define _delta     s13
+#define _temp      s14	
 
 	// j * index_mult = j * FFT_LEN/4^s = j<<(2*log4(N))>>(2*s) = j<<(2*(log4(N) - s))
 
@@ -95,9 +95,9 @@ for_j_loop_early:
 	// for(kb = 0; kb < FFT_LEN; kb += V*span) {
 	//      printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
 	
-#define _kb        s13	
-#define _4kbj      s14	
-#define _V_x_span  s15	
+#define _kb        s15	
+#define _4kbj      s16	
+#define _V_x_span  s17	
 #define _a0        v0
 #define _a1        v1
 #define _a2        v2
@@ -274,11 +274,11 @@ for_s_loop_late:
 	lsl _index_mult, _s, 1    // index_mult = 2*s
 	lsr _index_mult, _fft_len, _index_mult  // index_mult = FFT_LEN/4^s = FFT_LEN/span
 		
-#define _k              s13
-#define _4kj            s14
-#define _delta_j        s16
-#define _delta_delta_j  s17
-#define _w_stride       s18
+#define _k              s15
+#define _4kj            s16
+#define _delta_j        s17
+#define _delta_delta_j  s18
+#define _w_stride       s19
 	
 	// Pseudo: for j = 0, V, 2V, ... quarter-V:
 	//
