@@ -31,7 +31,7 @@ vektoridata_loppu:
 fft_data:
 	.long FFT_LEN
 
-	.align 32  // Force the section to be multiple of vector size
+	.align V_BYTES  // Force the section to be multiple of vector size
 	
 bss_end:	
 	
@@ -64,7 +64,7 @@ clear_bss_loop:
 	add s1, s1, V_BYTES
 
 tests_start:	
-	ba write_neg_bytes
+	// ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal

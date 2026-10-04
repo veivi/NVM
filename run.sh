@@ -5,13 +5,27 @@ vecsize=$2
 unroll=$3
 contention=$4
 
+radix=4
+
 precision=12
+
+if [ $radix -eq "" ]; then
+    radix=2
+fi
 
 len=$((1<<log2len))
 
 echo "Compiling and running the C reference..."
 
-cc design/test/fft.c -DV=$2 -DLOG2LEN=$log2len -DUNROLL=$unroll -DPRECISION=$precision
+opts="-DV=$2 -DLOG2LEN=$log2len -DUNROLL=$unroll -DPRECISION=$precision"
+
+if [ $radix -gt 2 ]; then
+    opts="$opts -DRADIX4=1"
+fi
+
+echo "  Compiler options: $opts"
+
+cc design/test/fft.c $opts
 
 if [ $? -ne 0 ]; then
     echo "Compiling fft.c failed"
@@ -27,7 +41,7 @@ fi
 
 echo "Building the software..."
 
-design/build.sh $log2len $vecsize $unroll $precision
+design/build.sh $log2len $vecsize $unroll $precision $radix
 
 if [ $? -ne 0 ]; then
     echo "Build failed"

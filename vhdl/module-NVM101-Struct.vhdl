@@ -23,6 +23,7 @@ entity NVM101 is
 
        -- Debug output
 
+       DebugActive : out std_logic;
        DebugOut : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
        -- LCM initiative
@@ -186,17 +187,21 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         DebugOut <= (others => '0');
+        DebugActive <= '0';
         
       elsif ExecuteStall = '0' then
         case ExecuteWord.Debug_Operation is
           when DebugOp_DEBUGI_C =>
+            DebugActive <= '1';
             DebugOut <= Execute_Imm_Data;
         
           when DebugOp_DEBUG_C =>
+            DebugActive <= '1';
             DebugOut <= RF_RA_Data;
 
           when others =>
-            null;
+            DebugActive <= '0';
+            DebugOut <= (others => '0');
         end case;
       end if;
     end if;

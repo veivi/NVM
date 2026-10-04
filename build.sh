@@ -8,11 +8,17 @@ log2len=$1
 vecsize=$2
 unroll=$3
 precision=$4
+radix=$5
 
 len=$((1<<log2len))
 
-options="-v $vecsize -D PRECISION=$precision,RADIX4=1,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
-# options="-v $vecsize -D PRECISION=$precision,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len --unroll $unroll"
+defs="PRECISION=$precision,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len"
+
+if [ $radix -gt 2 ]; then
+    defs="$defs,RADIX4=1"
+fi
+
+options="-v $vecsize -D $defs --unroll $unroll"
 
 echo "Software build options: $options"
 

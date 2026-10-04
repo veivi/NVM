@@ -60,6 +60,7 @@ architecture Bhv of Testbench is
   signal LCR_Tag : std_logic_vector(TagSize_C*(VecSize_C+1)-1 downto 0);
   signal LCR_Data : std_logic_vector(ByteSize_C*2**Log2BPW_C*(VecSize_C+1)-1 downto 0);
 
+  signal DebugActive : std_logic;
   signal DebugOut : std_logic_vector(WordSize_C-1 downto 0);
   
   signal AVU_C_Present : std_logic;
@@ -114,6 +115,7 @@ begin
              I_Addr => I_Addr,
              I_Code => I_Code,
 
+             DebugActive => DebugActive,
              DebugOut => DebugOut,
              
              LCI_Present => LCI_Present,
@@ -174,6 +176,7 @@ begin
 
     port map(Clk => Clk,
              Reset => Reset,
+             DebugActive => DebugActive,
              DebugOut => DebugOut,
              LCI_Present => LCI_Present,
              LCI_Accept => LCI_Accept,

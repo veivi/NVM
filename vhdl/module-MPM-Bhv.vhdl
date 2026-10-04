@@ -19,6 +19,7 @@ entity MPM is
 
        --
 
+       DebugActive : in std_logic;
        DebugOut : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
        -- LCM initiative
@@ -67,18 +68,20 @@ architecture Bhv of MPM is
     file file_pointer : text open read_mode is name;
     variable line_v : line;
     variable result : WordArray_T(0 to 2**Log2MemSize_C-1);
+    variable addr : Word_T;
     variable i : integer := 0;
   begin
     while not endfile(file_pointer) loop
       readline(file_pointer, line_v);
-      bread(line_v, result(i));
-      --write(line_v, name);
-      --write(line_v, string'(" ROM["));
-      --hwrite(line_v, to_unsigned(i*4, AddrSize_C));
-      --write(line_v, string'("]:="));             
-      --hwrite(line_v, result(i));
-      --writeline(output, line_v)
-      i := i + 1;
+      hread(line_v, addr);
+      i := to_integer(unsigned(addr(WordSize_C-1 downto Log2BPW_C)));
+      hread(line_v, result(i));
+      -- write(line_v, name);
+      -- write(line_v, string'(" ROM["));
+      -- hwrite(line_v, to_unsigned(i*4, AddrSize_C));
+      -- write(line_v, string'("]:="));             
+      -- hwrite(line_v, result(i));
+      -- writeline(output, line_v);
     end loop;
     return result;
   end function;
@@ -120,11 +123,10 @@ begin
     file log_file : text open write_mode is "log.txt";
     variable OutLine, DebugLine : line;
     variable Something : boolean;
-    variable DebugState : Word_T := (others => '0');
     variable ReadData : Word_T;
   begin
     if rising_edge(Clk) then
-      if DebugOut /= DebugState then
+      if DebugActive = '1' then
         write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
         writeline(file_pointer, Outline);
         write(OutLine, string'("-- DEBUG "));
@@ -135,7 +137,6 @@ begin
         write(OutLine, string'("------------------------------------------------------------------------------------------------------------------------------------------------"));
         writeline(file_pointer, Outline);
         flush(file_pointer);
-        DebugState := DebugOut;
       end if;
 
       Something := false;
