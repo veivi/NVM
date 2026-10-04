@@ -32,6 +32,16 @@ if [ $? -ne 0 ]; then
     exit 10
 fi
 
+design/range.sh "12" "4 16" 4 4 
+
+if [ $? -ne 0 ]; then
+    exit 10
+fi
+
+#
+# Radix-2
+#
+
 design/range.sh "12" "2" 2 "2 4 8" 0.3
 
 if [ $? -ne 0 ]; then
