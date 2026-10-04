@@ -23,6 +23,11 @@ fi
 
 len=$((1<<log2len))
 
+echo "--"
+echo "--"RUN
+echo "--     FFT[$len] radix-$radix V=$vecsize unroll-by-$unroll"
+echo "--"
+
 echo "Compiling and running the C reference..."
 
 opts="-DV=$2 -DLOG2LEN=$log2len -DUNROLL=$unroll -DPRECISION=$precision"
@@ -66,11 +71,14 @@ echo "  bss_end = $bss_end"
 echo "Elaborating the test bench..."
 
 if [ "$contention" = "" ]; then
-    contention=0.1
+    contention="0.1"
 fi
 
+generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention"
 
-nvc -e Testbench -g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention
+echo "-- Test bench configuration: $generics"
+
+nvc -e Testbench $generics
 
 if [ $? -ne 0 ]; then
     echo "NVC elaborate failed"

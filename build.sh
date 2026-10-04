@@ -29,6 +29,11 @@ fi
 
 len=$((1<<log2len))
 
+echo "--"
+echo "--"BUILD
+echo "--    FFT[$len] radix-$radix V = $vecsize unroll-by-$unroll"
+echo "--"
+
 defs="PRECISION=$precision,FFT_LEN=$len,LOG2FFT_LEN=$log2len"
 
 if [ $debug -gt 0 ]; then

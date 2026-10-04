@@ -2,13 +2,16 @@
 
 log2len=$1
 vecsize=$2
-unroll=$3
+radix=$3
+unroll=$4
 
-if [[ $# -lt 4 ]]; then
+debug=0
+
+if [[ $# -lt 5 ]]; then
     contention=0.1
     echo "Using default contention value $contention"
 else
-    contention=$4
+    contention=$5
 fi
 
 for i in $log2len; do
@@ -17,7 +20,7 @@ for i in $log2len; do
 	    len=$((1<<$i))
 
 	    echo "Testing FFT[$len] V=$j unrolled by $k"
-	    design/run.sh $i $j 2 $k 0 $contention
+	    design/run.sh $i $j $radix $k $debug $contention
 	    
 	    if [ $? -ne 0 ]; then
 		echo "Configuration failed!"
