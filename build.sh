@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source="test common fft fft_unroll2 fft_unroll4 fft_unroll8 fft_radix4 fft_radix4_unroll2"
+source="test common fft fft_unroll2 fft_unroll4 fft_unroll8 fft_radix4 fft_radix4_unroll2 fft_radix4_unroll4"
 
 export ISA=NVM101
 

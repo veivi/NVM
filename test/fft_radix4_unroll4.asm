@@ -101,7 +101,7 @@ for_j_loop_early:
 #define _w1        v0
 #define _w1_2      v1
 #define _w1_3      v2
-#define _w1_3      v3
+#define _w1_4      v3
 #define _w2        v4
 #define _w2_2      v5
 #define _w2_3      v6
@@ -496,8 +496,8 @@ for_k_loop_late:
 	cvmul _t1_4, _w1_4, _a1_4
 	cvmul _t2, _w2, _a2
 	cvmul _t2_2, _w2_2, _a2_2
-	cvmul _t3_2, _w3_2, _a3_2
-	cvmul _t4_2, _w4_2, _a4_2
+	cvmul _t2_3, _w2_3, _a2_3
+	cvmul _t2_4, _w2_4, _a2_4
 	cvmul _t3, _w3, _a3
 	cvmul _t3_2, _w3_2, _a3_2
 	cvmul _t3_3, _w3_3, _a3_3

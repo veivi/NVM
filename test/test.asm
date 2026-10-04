@@ -5,6 +5,7 @@
 	.import "fft_dit_unroll2"
 	.import "fft_dit_radix4"
 	.import "fft_dit_radix4_unroll2"
+	.import "fft_dit_radix4_unroll4"
 	.import "stop_simulation"
 	.export "init"
 	.export "w_table"
@@ -99,6 +100,8 @@ init_fft_loop:
 	jmpal fft_dit_radix4
 #elif UNROLL_K < 4
 	jmpal fft_dit_radix4_unroll2
+#elif UNROLL_K < 8
+	jmpal fft_dit_radix4_unroll4
 #endif
 	lsr s2, s2, 1
 #elif UNROLL_K < 2
