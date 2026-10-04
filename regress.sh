@@ -14,7 +14,19 @@ fi
 # Radix-4
 #
 
-# design/range.sh "12" "4" 4 "1 2" 
+design/range.sh "12" "4" 4 "1" 
+
+if [ $? -ne 0 ]; then
+    exit 10
+fi
+
+design/range.sh "12" "8" 4 "2" 
+
+if [ $? -ne 0 ]; then
+    exit 10
+fi
+
+design/range.sh "12" "32" 4 "2" 
 
 if [ $? -ne 0 ]; then
     exit 10
