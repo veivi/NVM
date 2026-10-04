@@ -30,7 +30,7 @@ fi
 len=$((1<<log2len))
 
 echo "--"
-echo "--"BUILD
+echo "-- BUILD"
 echo "--    FFT[$len] radix-$radix V = $vecsize unroll-by-$unroll"
 echo "--"
 

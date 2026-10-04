@@ -24,7 +24,7 @@ fi
 len=$((1<<log2len))
 
 echo "--"
-echo "--"RUN
+echo "-- RUN"
 echo "--     FFT[$len] radix-$radix V=$vecsize unroll-by-$unroll"
 echo "--"
 

@@ -4,13 +4,17 @@
 # FIXED on 2026/10/02: FAIL: large contention!!
 #
 
-design/range.sh "12" "4" 4 "1 2" 
+design/range.sh "8" "2" 2 "1" 0.9
 
 if [ $? -ne 0 ]; then
     exit 10
 fi
 
-design/range.sh "8" "2" 2 "1" 0.9
+#
+# Radix-4
+#
+
+design/range.sh "12" "4" 4 "1 2" 
 
 if [ $? -ne 0 ]; then
     exit 10
