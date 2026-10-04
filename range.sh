@@ -17,7 +17,7 @@ for i in $log2len; do
 	    len=$((1<<$i))
 
 	    echo "Testing FFT[$len] V=$j unrolled by $k"
-	    design/run.sh $i $j $k $contention
+	    design/run.sh $i $j 2 $k 0 $contention
 	    
 	    if [ $? -ne 0 ]; then
 		echo "Configuration failed!"

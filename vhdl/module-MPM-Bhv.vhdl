@@ -147,9 +147,8 @@ begin
             report "RAM barrier violated (WRITE)"
             severity warning;
               
-          Something := true;
-          
           if Addr(P) < 2**Log2MemSize_C then
+            Something := true;
             hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
             write(OutLine, string'(":="));
           else

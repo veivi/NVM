@@ -6,13 +6,34 @@ export ISA=NVM101
 
 log2len=$1
 vecsize=$2
-unroll=$3
-precision=$4
-radix=$5
+radix=$3
+unroll=$4
+debug=$5
+precision=$6
+
+if [ "$unroll" = "" ]; then
+    unroll=1
+fi
+
+if [ "$radix" = "" ]; then
+    radix=2
+fi
+
+if [ "$debug" = "" ]; then
+    debug=0
+fi
+
+if [ "$precision" = "" ]; then
+    precision=12
+fi
 
 len=$((1<<log2len))
 
-defs="PRECISION=$precision,DEBUG=1,FFT_LEN=$len,LOG2FFT_LEN=$log2len"
+defs="PRECISION=$precision,FFT_LEN=$len,LOG2FFT_LEN=$log2len"
+
+if [ $debug -gt 0 ]; then
+    defs="$defs,DEBUG=1"
+fi
 
 if [ $radix -gt 2 ]; then
     defs="$defs,RADIX4=1"

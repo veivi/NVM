@@ -2,15 +2,23 @@
 
 log2len=$1
 vecsize=$2
-unroll=$3
-contention=$4
-
-radix=4
+radix=$3
+unroll=$4
+debug=$5
+contention=$6
 
 precision=12
 
-if [ $radix -eq "" ]; then
+if [ "$unroll" = "" ]; then
+    unroll=1
+fi
+
+if [ "$radix" = "" ]; then
     radix=2
+fi
+
+if [ "$debug" = "" ]; then
+    debug=0
 fi
 
 len=$((1<<log2len))
@@ -41,7 +49,7 @@ fi
 
 echo "Building the software..."
 
-design/build.sh $log2len $vecsize $unroll $precision $radix
+design/build.sh $log2len $vecsize $radix $unroll $debug
 
 if [ $? -ne 0 ]; then
     echo "Build failed"
@@ -56,6 +64,11 @@ bss_end=${report[3]}
 echo "  bss_end = $bss_end"
 
 echo "Elaborating the test bench..."
+
+if [ "$contention" = "" ]; then
+    contention=0.1
+fi
+
 
 nvc -e Testbench -g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention
 
