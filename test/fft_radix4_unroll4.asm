@@ -356,7 +356,7 @@ for_kb_loop:
 	add _s, _s, 1
 	cmp c0, _s, EFF_LOG4V
 	ble c0, for_s_loop_early
-	nop
+	drain      // Store fence
 	
 	// for(s = LOG4V + 1; s <= log4(N); s++) {
 
