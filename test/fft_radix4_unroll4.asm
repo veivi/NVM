@@ -548,8 +548,8 @@ for_k_loop_late:
 	cvsub _y2, _s0, _s2
 	cvsub _y2_2, _s0_2, _s2_2
 	cvsub _y2_3, _s0_3, _s2_3
-	cvsub _y2_4, _s0_4, _s2_4
-	
+	cvsub _y2_4, _s0_4, _s2_4	
+
 	add _temp, _A, _4kj
 	vst4 _y0, _temp, 1
 	
@@ -566,8 +566,11 @@ for_k_loop_late:
 	cvaddri _y3_3, _s1_3, _s3_3
 	cvaddri _y3_4, _s1_4, _s3_4
 	
+	sub _temp, _temp, _delta
+	vst4 _y1, _temp, 1
+	
 	/*
-                VST [a + k+j],           y0
+                Vst + k+j],           y0
                 VST [a + k+j+quarter],   y1
                 VST [a + k+j+2*quarter], y2
                 VST [a + k+j+3*quarter], y3
@@ -577,9 +580,6 @@ for_k_loop_late:
 	  complex_vector_write(y2, A, k + j + 2*quarter, 1, 0x130);
 	  complex_vector_write(y3, A, k + j + 3*quarter, 1, 0x130);
 	*/
-
-	sub _temp, _temp, _delta
-	vst4 _y1, _temp, 1
 	
 	add _temp, _temp, _2delta
 
