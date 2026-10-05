@@ -322,7 +322,7 @@ for_kb_loop:
 	*/
 
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
-	vst4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j + quarter, span)
+	vst4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j, span)
 	
 	add _temp, _temp, _delta // temp = &A[kb + j + quarter]
 	vst4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
@@ -370,6 +370,7 @@ for_s_loop_late:
 	ldi _quarter, 1
 	lsl _span, _quarter, _span   // span = 1<<(2*s) = 4^s
 	lsr _quarter, _span, 2    // quarter = span/4
+	lsl _delta, _quarter, 2     // delta = 4 * quarter
 	lsl _index_mult, _s, 1    // index_mult = 2*s
 	lsr _index_mult, _fft_len, _index_mult  // index_mult = FFT_LEN/4^s = FFT_LEN/span
 		
@@ -468,7 +469,6 @@ for_k_loop_late:
 	add _temp, _A, _4kj  // temp = &A[k + j]
 	vld4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
 
-	lsl _delta, _quarter, 2     // delta = 4 * quarter
 	add _temp, _temp, _delta // temp = &A[k + j + quarter]
 	vld4 _a1, _temp, 1 // complex_vector_read(a1, A, k + j + quarter, 1)
 
