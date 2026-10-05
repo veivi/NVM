@@ -10,6 +10,12 @@ if [ $? -ne 0 ]; then
     exit 10
 fi
 
+design/range.sh "8" "2" 2 "1" 0.9 10  # Large latency
+
+if [ $? -ne 0 ]; then
+    exit 10
+fi
+
 #
 # Radix-4
 #
@@ -33,6 +39,14 @@ if [ $? -ne 0 ]; then
 fi
 
 design/range.sh "12" "4 16" 4 4 
+
+if [ $? -ne 0 ]; then
+    exit 10
+fi
+
+# Variable latency
+
+design/range.sh "12" "4 16" 4 4 0 "1 2 4 6"
 
 if [ $? -ne 0 ]; then
     exit 10

@@ -11,7 +11,8 @@ entity Testbench is
           Contention_C : real := 0.1;
           Log2RAMSize_C : integer := 14;
           RAMSize_C : integer;
-          Precision_C : integer := 12);
+          Precision_C : integer := 12;
+          Latency_C : integer := 3);
 end Testbench;
 
 architecture Bhv of Testbench is
@@ -171,6 +172,7 @@ begin
                 TagSize_C => TagSize_C,
                 NumOfPorts_C => 2**Log2VecSize_C + 1,
                 Contention_C => Contention_C,
+                Latency_C => Latency_C,
                 Log2MemSize_C => Log2RAMSize_C,
                 Barrier_C => RAMSize_C)
 

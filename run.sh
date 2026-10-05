@@ -6,6 +6,7 @@ radix=$3
 unroll=$4
 debug=$5
 contention=$6
+latency=$7
 
 precision=12
 
@@ -21,12 +22,16 @@ if [ "$debug" = "" ]; then
     debug=0
 fi
 
+if [ "$latency" = "" ]; then
+    latency=3
+fi
+
 len=$((1<<log2len))
 
 echo "--"
 echo "-- RUN"
 echo "--"
-echo "--     FFT[$len] radix-$radix V=$vecsize unroll-by-$unroll"
+echo "--     FFT[$len] radix-$radix V=$vecsize unroll-by-$unroll latency=$latency"
 echo "--"
 
 echo "Compiling and running the C reference..."
@@ -75,7 +80,7 @@ if [ "$contention" = "" ]; then
     contention="0.1"
 fi
 
-generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention"
+generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention -gLatency_C=$latency"
 
 echo "-- Test bench configuration: $generics"
 
@@ -98,7 +103,7 @@ if [ $? -ne 0 ]; then
     exit 5
 fi
 
-id="FFT[$len] V=$vecsize unroll=$unroll contention=$contention"
+id="FFT[$len] V=$vecsize unroll=$unroll contention=$contention latency=$latency"
 
 cmp log.txt reference.txt    # reference/ref_$len.txt
 

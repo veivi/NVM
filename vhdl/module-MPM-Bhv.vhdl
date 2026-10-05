@@ -11,6 +11,7 @@ entity MPM is
           TagSize_C : integer;
           NumOfPorts_C : integer;
           Contention_C : real;
+          Latency_C : integer;
           Log2MemSize_C : integer;
           Barrier_C : integer);
   
@@ -48,9 +49,7 @@ architecture Bhv of MPM is
 
   type WordArray_T is array (natural range <>) of Word_T;
 
-  type State_T is ( Idle_C, Read_C, Write_C );
-
-  type StateArray_T is array (natural range <>) of State_T;
+  type Transfer_T is ( Idle_C, Read_C, Write_C );
 
   subtype Addr_T is integer;
 
@@ -63,6 +62,18 @@ architecture Bhv of MPM is
   subtype Tag_T is std_logic_vector(TagSize_C-1 downto 0);
 
   type TagArray_T is array (natural range <>) of Tag_T;
+
+  type State_T is record
+    Transfer : Transfer_T;
+    Tag : Tag_T;
+    Addr : Addr_T;
+    ByteSel : Select_T;
+    WriteData : Word_T;
+  end record;
+
+  type StateVector_T is array (0 to NumOfPorts_C-1) of State_T;
+
+  type StateArray_T is array (natural range <>) of StateVector_T;
   
   impure function InitReadOnlyStore(name : in string) return WordArray_T is
     file file_pointer : text open read_mode is name;
@@ -88,9 +99,10 @@ architecture Bhv of MPM is
 
   signal RAM : WordArray_T(0 to 2**Log2MemSize_C-1);
   signal ROM : WordArray_T(0 to 2**Log2MemSize_C-1) := InitReadOnlyStore("data_rom.txt");
-  signal State : StateArray_T(0 to NumOfPorts_C-1);
+
+  signal State : StateArray_T(0 to Latency_C);
+
   signal Addr : AddrArray_T(0 to NumOfPorts_C-1);
-  
   signal ByteSel : SelectArray_T(0 to NumOfPorts_C-1);
   signal Tag : TagArray_T(0 to NumOfPorts_C-1);
   signal WriteData : WordArray_T(0 to NumOfPorts_C-1);
@@ -100,19 +112,31 @@ begin
   begin
     if rising_edge(Clk) then
       for I in 0 to NumOfPorts_C-1 loop
+        --
+        -- Advance the delay line
+        --
+
+        for J in Latency_C downto 1 loop
+          State(J) <= State(J-1);
+        end loop;
+
+        --
+        -- Handle new initiatives
+        --
+        
         if LCI_Present(I) = '1' and PortReady(I) = '1' then
           if LCI_Write(I) = '1' then
-            State(I) <= Write_C;
-            WriteData(I) <= LCI_Data((I+1)*WordSize_C-1 downto I*WordSize_C);
+            State(0)(I).Transfer <= Write_C;
+            State(0)(I).WriteData <= LCI_Data((I+1)*WordSize_C-1 downto I*WordSize_C);
           else
-            State(I) <= Read_C;
+            State(0)(I).Transfer <= Read_C;
           end if;
 
-          Tag(I) <= LCI_Tag((I+1)*TagSize_C-1 downto I*TagSize_C);
-          Addr(I) <= to_integer(unsigned(LCI_Addr((I+1)*AddrSize_C-1 downto I*AddrSize_C)));
-          ByteSel(I) <= LCI_ByteSel((I+1)*2**Log2BPW_C-1 downto I*2**Log2BPW_C);
+          State(0)(I).Tag <= LCI_Tag((I+1)*TagSize_C-1 downto I*TagSize_C);
+          State(0)(I).Addr <= to_integer(unsigned(LCI_Addr((I+1)*AddrSize_C-1 downto I*AddrSize_C)));
+          State(0)(I).ByteSel <= LCI_ByteSel((I+1)*2**Log2BPW_C-1 downto I*2**Log2BPW_C);
         else
-          State(I) <= Idle_C;
+          State(0)(I).Transfer <= Idle_C;
         end if;
       end loop;       
     end if;
@@ -142,28 +166,29 @@ begin
       Something := false;
       
       for P in 0 to NumOfPorts_C-1 loop
-        if State(P) = Write_C then
-          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+        if State(Latency_C)(P).Transfer = Write_C then
+          assert State(Latency_C)(P).Addr < Barrier_C/2**Log2BPW_C
+            or State(Latency_C)(P).Addr >= ROMBase_C
             report "RAM barrier violated (WRITE)"
             severity warning;
               
-          if Addr(P) < 2**Log2MemSize_C then
+          if State(Latency_C)(P).Addr < 2**Log2MemSize_C then
             Something := true;
-            hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
+            hwrite(OutLine, std_logic_vector(to_unsigned(State(Latency_C)(P).Addr*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
             write(OutLine, string'(":="));
           else
-            hwrite(DebugLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
+            hwrite(DebugLine, std_logic_vector(to_unsigned(State(Latency_C)(P).Addr*2**Log2BPW_C, AddrSize_C+Log2BPW_C)));
             write(DebugLine, string'(":="));
           end if;
           
           for I in 2**Log2BPW_C-1 downto 0 loop
-            if ByteSel(P)(I) = '1' then
-              hwrite(OutLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
-              hwrite(DebugLine, WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C));
+            if State(Latency_C)(P).ByteSel(I) = '1' then
+              hwrite(OutLine, State(Latency_C)(P).WriteData((I+1)*ByteSize_C-1 downto I*ByteSize_C));
+              hwrite(DebugLine, State(Latency_C)(P).WriteData((I+1)*ByteSize_C-1 downto I*ByteSize_C));
 
-              if Addr(P) < 2**Log2MemSize_C then
-                RAM(Addr(P))((I+1)*ByteSize_C-1 downto I*ByteSize_C)
-                  <= WriteData(P)((I+1)*ByteSize_C-1 downto I*ByteSize_C);
+              if State(Latency_C)(P).Addr < 2**Log2MemSize_C then
+                RAM(State(Latency_C)(P).Addr)((I+1)*ByteSize_C-1 downto I*ByteSize_C)
+                  <= State(Latency_C)(P).WriteData((I+1)*ByteSize_C-1 downto I*ByteSize_C);
               end if; 
             else
               write(OutLine, string'("__"));
@@ -171,7 +196,7 @@ begin
             end if;
           end loop;
 
-          if Addr(P) >= 2**Log2MemSize_C then
+          if State(Latency_C)(P).Addr >= 2**Log2MemSize_C then
             -- A write outside RAM, we log it separately
             if P < NumOfPorts_C-1 then
               write(DebugLine, string'(" (V"));
@@ -187,26 +212,26 @@ begin
           
           write(OutLine, string'("|"));
           
-        elsif State(P) = Read_C then
-          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+        elsif State(Latency_C)(P).Transfer = Read_C then
+          assert State(Latency_C)(P).Addr < Barrier_C/2**Log2BPW_C or State(Latency_C)(P).Addr >= ROMBase_C
             report "RAM barrier violated"
             severity warning;
           
           Something := true;
           
-          hwrite(OutLine, std_logic_vector(to_unsigned(Addr(P)*2**Log2BPW_C, AddrSize_C)));
+          hwrite(OutLine, std_logic_vector(to_unsigned(State(Latency_C)(P).Addr*2**Log2BPW_C, AddrSize_C)));
           write(OutLine, string'(" ~"));
           
-          if Addr(P) < ROMBase_C then
-            ReadData := RAM(Addr(P));
-          elsif Addr(P) < ROMBase_C + 2**Log2MemSize_C then
-            ReadData := ROM(Addr(P) - ROMBase_C);
+          if State(Latency_C)(P).Addr < ROMBase_C then
+            ReadData := RAM(State(Latency_C)(P).Addr);
+          elsif State(Latency_C)(P).Addr < ROMBase_C + 2**Log2MemSize_C then
+            ReadData := ROM(State(Latency_C)(P).Addr - ROMBase_C);
           else
             ReadData := (others => 'X');
           end if;
           
           for I in 2**Log2BPW_C-1 downto 0 loop
-            if ByteSel(P)(I) = '1' then
+            if State(Latency_C)(P).ByteSel(I) = '1' then
               hwrite(OutLine, ReadData((I+1)*ByteSize_C-1 downto I*ByteSize_C));
             else
               write(OutLine, string'("__"));
@@ -233,35 +258,35 @@ begin
   begin
     if rising_edge(Clk) then
       for P in 0 to NumOfPorts_C-1 loop
-        if Reset = '1' or State(P) = Idle_C then
+        if Reset = '1' or State(Latency_C)(P).Transfer = Idle_C then
           LCR_Present(P) <= '0';
           LCR_Tag((P+1)*TagSize_C-1 downto P*TagSize_C) <= (others => '0');
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => '0');
         
         else
-          assert Addr(P) < Barrier_C/2**Log2BPW_C or Addr(P) >= ROMBase_C
+          assert State(Latency_C)(P).Addr < Barrier_C/2**Log2BPW_C or State(Latency_C)(P).Addr >= ROMBase_C
             report "RAM barrier violated"
             severity failure;
           
           LCR_Present(P) <= '1';
-          LCR_Tag((P+1)*TagSize_C-1 downto P*TagSize_C) <= Tag(P);
+          LCR_Tag((P+1)*TagSize_C-1 downto P*TagSize_C) <= State(Latency_C)(P).Tag;
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => 'X');
 
-          if State(P) = Read_C then
-            if Addr(P) < ROMBase_C then
-              assert Addr(P) < 2**Log2MemSize_C
+          if State(Latency_C)(P).Transfer = Read_C then
+            if State(Latency_C)(P).Addr < ROMBase_C then
+              assert State(Latency_C)(P).Addr < 2**Log2MemSize_C
                 report "Illegal RAM read access attempted"
                 severity failure;
               
-              ReadData := RAM(Addr(P));
-            elsif Addr(P) < ROMBase_C + 2**Log2MemSize_C then
-              ReadData := ROM(Addr(P) - ROMBase_C);
+              ReadData := RAM(State(Latency_C)(P).Addr);
+            elsif State(Latency_C)(P).Addr < ROMBase_C + 2**Log2MemSize_C then
+              ReadData := ROM(State(Latency_C)(P).Addr - ROMBase_C);
             else
               ReadData := (others => 'X');
             end if;
           
             for I in 0 to 2**Log2BPW_C-1 loop
-              if ByteSel(P)(I) = '1' then
+              if State(Latency_C)(P).ByteSel(I) = '1' then
                 LCR_Data((P*2**Log2BPW_C+I+1)*ByteSize_C-1 downto (P*2**Log2BPW_C+I)*ByteSize_C)
                   <= ReadData((I+1)*ByteSize_C-1 downto I*ByteSize_C);
               end if;
