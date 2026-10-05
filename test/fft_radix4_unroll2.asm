@@ -138,8 +138,6 @@ for_j_loop_early:
 #define _y2_2      v11
 #define _y3        v12
 #define _y3_2      v13
-// #define _r3        v16
-// #define _r3_2      v17
 	
 	clear(_kb)
 	lsl _V_x_span, _span, EFF_LOG2V  // Vspan = span<<LOG2V = V * span
