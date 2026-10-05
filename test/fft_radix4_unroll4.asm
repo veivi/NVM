@@ -203,8 +203,6 @@ for_kb_loop:
 	add _4kbj, _kb, _j    // 4kbj = kb + j
 	lsl _4kbj, _4kbj, 2      // 4kbj = 4*(kb + j)
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
-	vld4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
-
 	add _temp, _temp, _delta // temp = &A[kb + j + quarter]
 	vld4 _a1, _temp, _span    // complex_vector_read(a1, A, kb + j + quarter, span)
 	
@@ -229,6 +227,10 @@ for_kb_loop:
 	cvbmul _t1_2, _a1_2, _w1j
 	cvbmul _t1_3, _a1_3, _w1j
 	cvbmul _t1_4, _a1_4, _w1j
+
+	add _temp, _A, _4kbj  // temp = &A[kb + j]
+	vld4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
+	
 	cvbmul _t2, _a2, _w2j
 	cvbmul _t2_2, _a2_2, _w2j
 	cvbmul _t2_3, _a2_3, _w2j
@@ -455,8 +457,6 @@ for_k_loop_late:
 	lsl _4kj, _4kj, 2      // 4kj = 4*(k + j)
 	
 	add _temp, _A, _4kj  // temp = &A[k + j]
-	vld4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
-
 	add _temp, _temp, _delta // temp = &A[k + j + quarter]
 	vld4 _a1, _temp, 1 // complex_vector_read(a1, A, k + j + quarter, 1)
 
@@ -475,13 +475,16 @@ for_k_loop_late:
 	complex_vector_mul(t1, w1, a1);
 	complex_vector_mul(t2, w2, a2);
 	complex_vector_mul(t3, w3, a3);
-
 	*/
 
 	cvmul _t1, _w1, _a1
 	cvmul _t1_2, _w1_2, _a1_2
 	cvmul _t1_3, _w1_3, _a1_3
 	cvmul _t1_4, _w1_4, _a1_4
+
+	add _temp, _A, _4kj  // temp = &A[k + j]
+	vld4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
+	
 	cvmul _t2, _w2, _a2
 	cvmul _t2_2, _w2_2, _a2_2
 	cvmul _t2_3, _w2_3, _a2_3
