@@ -78,7 +78,8 @@ for_j_loop_early:
 #define _w2j       s11
 #define _w3j       s12
 #define _delta     s13
-#define _temp      s14	
+#define _2delta    s14
+#define _temp      s15	
 
 	// j * index_mult = j * FFT_LEN/4^s = j<<(2*log4(N))>>(2*s) = j<<(2*(log4(N) - s))
 
@@ -93,13 +94,14 @@ for_j_loop_early:
 	ldx _w3j, _w_table, _temp   // w3j = w_table[3 * j * mult]
 
 	lsl _delta, _quarter, 2     // delta = 4 * quarter
+	lsl _2delta, _delta, 1      // 2delta = 8 * quarter
 	
 	// for(kb = 0; kb < FFT_LEN; kb += V*span) {
 	//      printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
 	
-#define _kb        s15	
-#define _4kbj      s16	
-#define _V_x_span  s17	
+#define _kb        s16	
+#define _4kbj      s17	
+#define _V_x_span  s18	
 #define _w1        v0
 #define _w1_2      v1
 #define _w1_3      v2
@@ -299,6 +301,9 @@ for_kb_loop:
 	cvaddrni _y1_3, _s1_3, _s3_3
 	cvaddrni _y1_4, _s1_4, _s3_4
 	
+	add _temp, _temp, _2delta // temp = &A[kb + j + 2*quarter]
+	vst4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
+	
 	cvaddri _y3, _s1, _s3
 	cvaddri _y3_2, _s1_2, _s3_2
 	cvaddri _y3_3, _s1_3, _s3_3
@@ -316,13 +321,10 @@ for_kb_loop:
 	  complex_vector_write(y3, A, kb + j + 3*quarter, span, 0x130);
 	*/
 
-	add _temp, _temp, _delta // temp = &A[kb + j + quarter]
+	sub _temp, _temp, _delta // temp = &A[kb + j + quarter]
 	vst4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
 	
-	add _temp, _temp, _delta // temp = &A[kb + j + 2*quarter]
-	vst4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
-	
-	add _temp, _temp, _delta // temp = &A[kb + j + 3*quarter]
+	add _temp, _temp, _2delta // temp = &A[kb + j + 3*quarter]
 
 	// end for(kb = 0; kb < FFT_LEN; kb += V*span)
 	
@@ -363,14 +365,15 @@ for_s_loop_late:
 	lsl _span, _quarter, _span   // span = 1<<(2*s) = 4^s
 	lsr _quarter, _span, 2    // quarter = span/4
 	lsl _delta, _quarter, 2     // delta = 4 * quarter
+	lsl _2delta, _delta, 1     // 2delta = 8 * quarter
 	lsl _index_mult, _s, 1    // index_mult = 2*s
 	lsr _index_mult, _fft_len, _index_mult  // index_mult = FFT_LEN/4^s = FFT_LEN/span
 		
-#define _k              s15
-#define _4kj            s16
-#define _delta_j        s17
-#define _delta_delta_j  s18
-#define _w_stride       s19
+#define _k              s16
+#define _4kj            s17
+#define _delta_j        s18
+#define _delta_delta_j  s19
+#define _w_stride       s20
 	
 	// Pseudo: for j = 0, V, 2V, ... quarter-V:
 	//
@@ -555,6 +558,9 @@ for_k_loop_late:
 	cvaddrni _y1_3, _s1_3, _s3_3
 	cvaddrni _y1_4, _s1_4, _s3_4
 
+	add _temp, _temp, _2delta
+	vst4 _y2, _temp, 1
+	
 	cvaddri _y3, _s1, _s3
 	cvaddri _y3_2, _s1_2, _s3_2
 	cvaddri _y3_3, _s1_3, _s3_3
@@ -572,13 +578,10 @@ for_k_loop_late:
 	  complex_vector_write(y3, A, k + j + 3*quarter, 1, 0x130);
 	*/
 
-	add _temp, _temp, _delta
+	sub _temp, _temp, _delta
 	vst4 _y1, _temp, 1
 	
-	add _temp, _temp, _delta
-	vst4 _y2, _temp, 1
-	
-	add _temp, _temp, _delta
+	add _temp, _temp, _2delta
 
 	// end for(k = 0; k < FFT_LEN; k += span)
 
