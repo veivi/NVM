@@ -22,6 +22,8 @@ package NVM101Types is
                     ALUOp_CMP8_C,
                     ALUOp_CMP16_C,
                     ALUOp_ROTC_C,
+                    ALUOp_ADDRI_C,
+                    ALUOp_ADDRNI_C,
                     ALUOp_ABS_C,
                     ALUOp_ADD8_C,
                     ALUOp_SUB8_C,
