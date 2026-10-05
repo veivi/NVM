@@ -213,7 +213,10 @@ for_kb_loop:
 	
 	add _temp, _temp, _delta // temp = &A[kb + j + 3*quarter]
 	vld4 _a3, _temp, _span    // complex_vector_read(a3, A, kb + j + 3*quarter, span)
-	
+
+	add _temp, _A, _4kbj  // temp = &A[kb + j]
+	vld4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
+		
 	/*
             t0 = a0
             VBCMUL t1, w1j, a1
@@ -229,10 +232,6 @@ for_kb_loop:
 	cvbmul _t1_2, _a1_2, _w1j
 	cvbmul _t1_3, _a1_3, _w1j
 	cvbmul _t1_4, _a1_4, _w1j
-
-	add _temp, _A, _4kbj  // temp = &A[kb + j]
-	vld4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
-	
 	cvbmul _t2, _a2, _w2j
 	cvbmul _t2_2, _a2_2, _w2j
 	cvbmul _t2_3, _a2_3, _w2j
