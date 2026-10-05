@@ -471,6 +471,9 @@ for_k_loop_late:
 	add _temp, _temp, _delta // temp = &A[k + j + 3*quarter]
 	vld4 _a3, _temp, 1 // complex_vector_read(a3, A, k + j + 3*quarter, 1)
 
+	add _temp, _A, _4kj  // temp = &A[k + j]
+	vld4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
+	
 	/*
                 t0 = a0
                 VCMUL t1, w1, a1
@@ -485,11 +488,7 @@ for_k_loop_late:
 	cvmul _t1, _w1, _a1
 	cvmul _t1_2, _w1_2, _a1_2
 	cvmul _t1_3, _w1_3, _a1_3
-	cvmul _t1_4, _w1_4, _a1_4
-
-	add _temp, _A, _4kj  // temp = &A[k + j]
-	vld4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
-	
+	cvmul _t1_4, _w1_4, _a1_4	
 	cvmul _t2, _w2, _a2
 	cvmul _t2_2, _w2_2, _a2_2
 	cvmul _t2_3, _w2_3, _a2_3
