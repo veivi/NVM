@@ -138,8 +138,8 @@ for_j_loop_early:
 #define _y2_2      v11
 #define _y3        v12
 #define _y3_2      v13
-#define _r3        v16
-#define _r3_2      v17
+// #define _r3        v16
+// #define _r3_2      v17
 	
 	clear(_kb)
 	lsl _V_x_span, _span, EFF_LOG2V  // Vspan = span<<LOG2V = V * span
@@ -236,15 +236,11 @@ for_kb_loop:
 	cvadd _y0_2, _s0_2, _s2_2
 	cvsub _y2, _s0, _s2
 	cvsub _y2_2, _s0_2, _s2_2
-	vrotc _r3, _s3, -1
-	vrotc _r3_2, _s3_2, -1
-	cvadd _y1, _s1, _r3
-	cvadd _y1_2, _s1_2, _r3_2
-	vrotc _r3, _s3, 1
-	vrotc _r3_2, _s3_2, 1
-	cvadd _y3, _s1, _r3
-	cvadd _y3_2, _s1_2, _r3_2
-
+	cvaddrni _y1, _s1, _s3
+	cvaddrni _y1_2, _s1_2, _s3_2
+	cvaddri _y3, _s1, _s3
+	cvaddri _y3_2, _s1_2, _s3_2
+	
 	/*
             VST [a + kb + j],            y0, stride=span
             VST [a + kb + j + quarter],    y1, stride=span
@@ -471,15 +467,11 @@ for_k_loop_late:
 	cvadd _y0_2, _s0_2, _s2_2
 	cvsub _y2, _s0, _s2
 	cvsub _y2_2, _s0_2, _s2_2
-	vrotc _r3, _s3, -1
-	vrotc _r3_2, _s3_2, -1
-	cvadd _y1, _s1, _r3
-	cvadd _y1_2, _s1_2, _r3_2
-	vrotc _r3, _s3, 1
-	vrotc _r3_2, _s3_2, 1
-	cvadd _y3, _s1, _r3
-	cvadd _y3_2, _s1_2, _r3_2
-	
+	cvaddrni _y1, _s1, _s3
+	cvaddrni _y1_2, _s1_2, _s3_2
+	cvaddri _y3, _s1, _s3
+	cvaddri _y3_2, _s1_2, _s3_2
+
 	/*
                 VST [a + k+j],           y0
                 VST [a + k+j+quarter],   y1

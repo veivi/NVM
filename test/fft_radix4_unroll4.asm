@@ -92,6 +92,8 @@ for_j_loop_early:
 	add _temp, _temp, _delta    // temp = 3 * j * mul
 	ldx _w3j, _w_table, _temp   // w3j = w_table[3 * j * mult]
 
+	lsl _delta, _quarter, 2     // delta = 4 * quarter
+	
 	// for(kb = 0; kb < FFT_LEN; kb += V*span) {
 	//      printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
 	
@@ -207,8 +209,6 @@ for_kb_loop:
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
 	vld4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
 
-	lsl _delta, _quarter, 2     // delta = 4 * quarter
-	
 	add _temp, _temp, _delta // temp = &A[kb + j + quarter]
 	vld4 _a1, _temp, _span    // complex_vector_read(a1, A, kb + j + quarter, span)
 	
@@ -292,22 +292,14 @@ for_kb_loop:
 	cvsub _y2_2, _s0_2, _s2_2
 	cvsub _y2_3, _s0_3, _s2_3
 	cvsub _y2_4, _s0_4, _s2_4
-	vrotc _r3, _s3, -1
-	vrotc _r3_2, _s3_2, -1
-	vrotc _r3_3, _s3_3, -1
-	vrotc _r3_4, _s3_4, -1
-	cvadd _y1, _s1, _r3
-	cvadd _y1_2, _s1_2, _r3_2
-	cvadd _y1_3, _s1_3, _r3_3
-	cvadd _y1_4, _s1_4, _r3_4
-	vrotc _r3, _s3, 1
-	vrotc _r3_2, _s3_2, 1
-	vrotc _r3_3, _s3_3, 1
-	vrotc _r3_4, _s3_4, 1
-	cvadd _y3, _s1, _r3
-	cvadd _y3_2, _s1_2, _r3_2
-	cvadd _y3_3, _s1_3, _r3_3
-	cvadd _y3_4, _s1_4, _r3_4
+	cvaddrni _y1, _s1, _s3
+	cvaddrni _y1_2, _s1_2, _s3_2
+	cvaddrni _y1_3, _s1_3, _s3_3
+	cvaddrni _y1_4, _s1_4, _s3_4
+	cvaddri _y3, _s1, _s3
+	cvaddri _y3_2, _s1_2, _s3_2
+	cvaddri _y3_3, _s1_3, _s3_3
+	cvaddri _y3_4, _s1_4, _s3_4
 
 	/*
             VST [a + kb + j],            y0, stride=span
@@ -553,22 +545,14 @@ for_k_loop_late:
 	cvsub _y2_2, _s0_2, _s2_2
 	cvsub _y2_3, _s0_3, _s2_3
 	cvsub _y2_4, _s0_4, _s2_4
-	vrotc _r3, _s3, -1
-	vrotc _r3_2, _s3_2, -1
-	vrotc _r3_3, _s3_3, -1
-	vrotc _r3_4, _s3_4, -1
-	cvadd _y1, _s1, _r3
-	cvadd _y1_2, _s1_2, _r3_2
-	cvadd _y1_3, _s1_3, _r3_3
-	cvadd _y1_4, _s1_4, _r3_4
-	vrotc _r3, _s3, 1
-	vrotc _r3_2, _s3_2, 1
-	vrotc _r3_3, _s3_3, 1
-	vrotc _r3_4, _s3_4, 1
-	cvadd _y3, _s1, _r3
-	cvadd _y3_2, _s1_2, _r3_2
-	cvadd _y3_3, _s1_3, _r3_3
-	cvadd _y3_4, _s1_4, _r3_4
+	cvaddrni _y1, _s1, _s3
+	cvaddrni _y1_2, _s1_2, _s3_2
+	cvaddrni _y1_3, _s1_3, _s3_3
+	cvaddrni _y1_4, _s1_4, _s3_4
+	cvaddri _y3, _s1, _s3
+	cvaddri _y3_2, _s1_2, _s3_2
+	cvaddri _y3_3, _s1_3, _s3_3
+	cvaddri _y3_4, _s1_4, _s3_4
 	
 	/*
                 VST [a + k+j],           y0

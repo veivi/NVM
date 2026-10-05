@@ -152,25 +152,37 @@ begin
           A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          case AVU_C_Operation(1 downto 0) is
-            when "00" =>
-              -- We're doing multiplication
+          case to_integer(unsigned(AVU_C_Operation(2 downto 0))) is
+            when 0 =>
+              -- A * B
             
               PartialResult(I) <= (Multiply(RealPart(A), RealPart(B)), Multiply(ImagPart(A), ImagPart(B)),
                                    Multiply(RealPart(A), ImagPart(B)), Multiply(ImagPart(A), RealPart(B)));
 
-            when "01" =>      
-              -- We're doing addition
+            when 1 =>      
+              -- A + B
             
               AdderResult(I) <= Complex(Add(RealPart(A), RealPart(B)),
                                         Add(ImagPart(A), ImagPart(B)));
               
-            when "10" =>      
-              -- We're doing subtraction
+            when 2 =>      
+              -- A - B
             
               AdderResult(I) <= Complex(Add(RealPart(A), Negate(RealPart(B))),
                                         Add(ImagPart(A), Negate(ImagPart(B))));
 
+            when 3 =>      
+              -- A + iB
+            
+              AdderResult(I) <= Complex(Add(RealPart(A), Negate(ImagPart(B))),
+                                        Add(ImagPart(A), RealPart(B)));
+              
+            when 4 =>      
+              -- A - iB
+            
+              AdderResult(I) <= Complex(Add(RealPart(A), ImagPart(B)),
+                                        Add(ImagPart(A), Negate(RealPart(B))));
+              
             when others =>
               -- Invalid operation
               null;
@@ -200,7 +212,7 @@ begin
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if PartialOperation(1 downto 0) = "00" then
+          if PartialOperation(2 downto 0) = "000" then
             MultiplyResult(I) <= Complex(Normalize(Add(PartialResult(I).RealARealB,
                                                        Negate(PartialResult(I).ImagAImagB))),
                                          Normalize(Add(PartialResult(I).RealAImagB,
@@ -233,18 +245,16 @@ begin
 
       elsif MultiplyValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          case MultiplyOperation(3 downto 2) is
-            when "01" =>
-              -- Add the previous result to the result
+          if MultiplyOperation(3) = '1' then
+            -- Add the previous result to the result
             
-              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-                <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
-
-            when others =>  
-              -- Just output result of operation between A and B
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
+          else
+            -- Just output result of operation between A and B
             
-              AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
-          end case;
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+          end if;
           AVU_R_Present <= '1';
           AVU_R_Tag <= MultiplyTag;
         end loop;
