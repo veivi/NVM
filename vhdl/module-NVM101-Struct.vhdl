@@ -72,7 +72,7 @@ architecture Struct of NVM101 is
   signal Stall : std_logic;
   
   signal CR_Read_Datum : Datum_T;
-  signal VCR_Read_Datum : DatumVector_T(0 to 2**Log2VecSize_C-1);
+  signal VCR_Read_Datum : SubwordDatumVector_T(0 to 2**Log2VecSize_C*2-1);
 
   signal ExecuteDatum : Datum_T;
   

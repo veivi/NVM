@@ -12,6 +12,7 @@ entity ALU is
        A : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        B : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        Result : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       SubDatum : out SubwordDatum_T(2**Log2BPW_C-1 downto 0);
        Datum : out Datum_T);
 end ALU;
 
@@ -217,7 +218,7 @@ begin
   end process;
 
   --
-  -- Comparator
+  -- Full word comparator
   --
   
   Compare_P : process(Operation, CompareA, CompareB)
@@ -228,21 +229,84 @@ begin
       -- Explicit compare unsigned
       
       if unsigned(CompareA) > unsigned(CompareB) then
-        Datum.GreaterThan <= '1';
+        Datum.Compare.GreaterThan <= '1';
       elsif unsigned(CompareA) < unsigned(CompareB) then
-        Datum.LessThan <= '1';
+        Datum.Compare.LessThan <= '1';
       end if;
     else 
       -- Explicit or implicit compare signed
       
       if signed(CompareA) > signed(CompareB) then
-        Datum.GreaterThan <= '1';
+        Datum.Compare.GreaterThan <= '1';
       elsif signed(CompareA) < signed(CompareB) then
-        Datum.LessThan <= '1';
+        Datum.Compare.LessThan <= '1';
       end if;
     end if;
   end process;
 
+  --
+  -- Sub-word comparator
+  --
+  
+  SubwordCompare_P : process(Operation, CompareA, CompareB)
+  begin
+    SubDatum <= (others => DefaultSimpleDatum_C);
+
+    case Operation is
+      when ALUOp_CMP8U_C =>
+      -- Compare unsigned, 8-bit subword
+
+        for I in 0 to 2**Log2BPW_C-1 loop
+          if unsigned(CompareA((I+1)*ByteSize_C-1 downto I*ByteSize_C))
+            > unsigned(CompareB((I+1)*ByteSize_C-1 downto I*ByteSize_C)) then
+            SubDatum(I).GreaterThan <= '1';
+          elsif unsigned(CompareA((I+1)*ByteSize_C-1 downto I*ByteSize_C))
+            < unsigned(CompareB((I+1)*ByteSize_C-1 downto I*ByteSize_C)) then
+            SubDatum(I).LessThan <= '1';
+          end if;
+        end loop;
+
+      when ALUOp_CMP8_C =>
+      -- Compare signed, 8-bit subword
+
+        for I in 0 to 2**Log2BPW_C-1 loop
+          if signed(CompareA((I+1)*ByteSize_C-1 downto I*ByteSize_C))
+            > signed(CompareB((I+1)*ByteSize_C-1 downto I*ByteSize_C)) then
+            SubDatum(I).GreaterThan <= '1';
+          elsif signed(CompareA((I+1)*ByteSize_C-1 downto I*ByteSize_C))
+            < signed(CompareB((I+1)*ByteSize_C-1 downto I*ByteSize_C)) then
+            SubDatum(I).LessThan <= '1';
+          end if;
+        end loop;
+
+      when ALUOp_CMP16U_C =>
+      -- Compare unsigned, 16-bit subword
+
+        for I in 0 to 2**Log2BPW_C/2-1 loop
+          if unsigned(CompareA((I+1)*Word16Size_C-1 downto I*Word16Size_C))
+            > unsigned(CompareB((I+1)*Word16Size_C-1 downto I*Word16Size_C)) then
+            SubDatum(I*2).GreaterThan <= '1';
+          elsif unsigned(CompareA((I+1)*Word16Size_C-1 downto I*Word16Size_C))
+            < unsigned(CompareB((I+1)*Word16Size_C-1 downto I*Word16Size_C)) then
+            SubDatum(I*2).LessThan <= '1';
+          end if;
+        end loop;
+
+      when others =>
+      -- Compare signed, 16-bit subword
+
+        for I in 0 to 2**Log2BPW_C/2-1 loop
+          if signed(CompareA((I+1)*Word16Size_C-1 downto I*Word16Size_C))
+            > signed(CompareB((I+1)*Word16Size_C-1 downto I*Word16Size_C)) then
+            SubDatum(I*2).GreaterThan <= '1';
+          elsif signed(CompareA((I+1)*Word16Size_C-1 downto I*Word16Size_C))
+            < signed(CompareB((I+1)*Word16Size_C-1 downto I*Word16Size_C)) then
+            SubDatum(I*2).LessThan <= '1';
+          end if;
+        end loop;
+    end case;
+  end process;
+  
   Result <= ALUResult;
 end RTL;
 

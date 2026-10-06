@@ -21,6 +21,8 @@ package NVM101Types is
                     ALUOp_CMPU_C,
                     ALUOp_CMP8_C,
                     ALUOp_CMP16_C,
+                    ALUOp_CMP8U_C,
+                    ALUOp_CMP16U_C,
                     ALUOp_ROTC_C,
                     ALUOp_ADDRI_C,
                     ALUOp_ADDRNI_C,
@@ -42,23 +44,30 @@ package NVM101Types is
                         Pred_LE_C,
                         Pred_GT_C,
                         Pred_GE_C,
-                        Pred_A_C,
-                        Pred_CS_C,
-                        Pred_CC_C,
-                        Pred_OVF_C );
+                        Pred_A_C );
 
   function PredicateDecode(Pred : std_logic_vector) return Predicate_T;
   
-  type Datum_T is record
+  type SimpleDatum_T is record
     LessThan : std_logic;
     GreaterThan : std_logic;
+  end record;
+
+  type Datum_T is record
+    Compare : SimpleDatum_T;
     Carry : std_logic;
     Overflow : std_logic;
   end record;
 
-  constant DefaultDatum_C : Datum_T := (others => '0');
+  constant DefaultSimpleDatum_C : SimpleDatum_T := (others => '0');
+  
+  constant DefaultDatum_C : Datum_T := (Compare => DefaultSimpleDatum_C, others => '0');
+  
+  type SubwordDatum_T is array (natural range <>) of SimpleDatum_T;
   
   type DatumVector_T is array (natural range <>) of Datum_T;
+  
+  function DatumEvaluate(Datum : SimpleDatum_T; Pred : Predicate_T) return std_logic;
   
   function DatumEvaluate(Datum : Datum_T; Pred : Predicate_T) return std_logic;
   
