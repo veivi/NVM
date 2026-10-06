@@ -52,6 +52,7 @@ entity VRFU is
        WA_Active : in std_logic;
        WA_Async : in std_logic;  -- Tells if this write is coming from an AVU
        WA_Valid : in std_logic;
+       WA_Mask : in std_logic_vector(2**Log2BPW_C-1 downto 0);
        WA_Index : in RegIndex_T;
        WA_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
 
@@ -139,7 +140,12 @@ begin
   begin
     if rising_edge(Clk) then
       if WA_Active = '1' and WA_Valid = '1' then
-        Storage(WA_Index) <= WA_Data;
+        for I in 2**Log2BPW_C-1 downto 0 loop
+          if WA_Mask(I) = '1' then
+            Storage(WA_Index)((I+1)*ByteSize_C-1 downto I*ByteSize_C)
+              <= WA_Data((I+1)*ByteSize_C-1 downto I*ByteSize_C);
+          end if;
+        end loop;
       end if;
       
       if LS_WriteActive = '1' then

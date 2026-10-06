@@ -42,10 +42,10 @@ entity FCU is
        CR_Write_Datum : in Datum_T;
 
        VCR_Read_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
-       VCR_Read_Datum : out SubwordDatumVector_T(0 to 2**Log2VecSize_C-1);
+       VCR_Read_Datum : out SimpleDatumVector_T(2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        VCR_Write_Active : in std_logic;
        VCR_Write_Index : in integer range 0 to 2**Log2NumOfCondRegs_C-1;
-       VCR_Write_Datum : in SubwordDatumVector_T(0 to 2**Log2VecSize_C-1);
+       VCR_Write_Datum : in SimpleDatumVector_T(2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        
        Imm_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        Reg_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));
@@ -54,7 +54,7 @@ end FCU;
 architecture RTL of FCU is
   signal NIP, FIP, DIP, LR : std_logic_vector(AddrSize_C-1 downto 0);
 
-  subtype VectorDatum_T is SubwordDatum_T(0 to 2**Log2VecSize_C-1);
+  subtype VectorDatum_T is SimpleDatumVector_T(0 to 2**Log2BPW_C*2**Log2VecSize_C-1);
   
   type VectorDatumArray_T is array (natural range <>) of VectorDatum_T;
 
@@ -210,7 +210,7 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        VectorCR <= (others => (others => (others => DefaultSimpleDatum_C)));
+        VectorCR <= (others => (others => DefaultSimpleDatum_C));
       elsif IL_ExecuteStall = '0' and VCR_Write_Active = '1' then
         VectorCR(VCR_Write_Index) <= VCR_Write_Datum;
       end if;

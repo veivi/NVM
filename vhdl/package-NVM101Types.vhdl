@@ -63,7 +63,7 @@ package NVM101Types is
   
   constant DefaultDatum_C : Datum_T := (Compare => DefaultSimpleDatum_C, others => '0');
   
-  type SubwordDatum_T is array (natural range <>) of SimpleDatum_T;
+  type SimpleDatumVector_T is array (natural range <>) of SimpleDatum_T;
   
   type DatumVector_T is array (natural range <>) of Datum_T;
   

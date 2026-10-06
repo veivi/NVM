@@ -72,7 +72,7 @@ architecture Struct of NVM101 is
   signal Stall : std_logic;
   
   signal CR_Read_Datum : Datum_T;
-  signal VCR_Read_Datum : SubwordDatumVector_T(0 to 2**Log2VecSize_C*2-1);
+  signal VCR_Read_Datum : SimpleDatumVector_T(2**Log2BPW_C*VecSize_C-1 downto 0);
 
   signal ExecuteDatum : Datum_T;
   
@@ -97,6 +97,7 @@ architecture Struct of NVM101 is
   signal RF_RB_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Data : std_logic_vector(WordSize_C-1 downto 0);
   signal RF_WA_Valid : std_logic;
+  signal RF_WA_Mask : std_logic_vector(2**Log2BPW_C-1 downto 0);
   signal RF_WA_Async : std_logic;
 
   signal ALU_Operation : ALUOp_T;
@@ -111,9 +112,8 @@ architecture Struct of NVM101 is
   signal VALU_Operation : ALUOp_T;
   signal VALU_OperandA : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
   signal VALU_OperandB : std_logic_vector(VecSize_C*WordSize_C-1 downto 0);
-  signal VALU_Datum : DatumVector_T(0 to VecSize_C-1);
+  signal VALU_Datum : SimpleDatumVector_T(2**Log2BPW_C*VecSize_C-1 downto 0);
   signal VALU_Result : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
-  signal VALU_Mask : std_logic_vector(VecSize_C-1 downto 0);
   
   signal VLS_Ready : std_logic_vector(VecSize_C-1 downto 0);
   signal VLS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
@@ -133,6 +133,7 @@ architecture Struct of NVM101 is
   signal VRF_ReadValid : std_logic_vector(VecSize_C-1 downto 0);
   signal VRF_WA_Active : std_logic;
   signal VRF_WA_Index : RegIndex_T;
+  signal VRF_WA_Mask : std_logic_vector(2**Log2BPW_C*VecSize_C-1 downto 0);
 
   signal VRF_RA_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
   signal VRF_RB_Data : std_logic_vector(WordSize_C*VecSize_C-1 downto 0);
@@ -392,6 +393,7 @@ begin
              WA_Async => RF_WA_Async,
              WA_Index => ExecuteWord.RF_W_Index,
              WA_Data => RF_WA_Data,
+             WA_Mask => RF_WA_Mask,
 
              -- LS Read port
 
@@ -405,9 +407,26 @@ begin
              LS_WriteIndex => LS_WriteIndex,
              LS_WriteData => LS_WriteData);
 
-  RF_WA_Valid <= RF_ReadValid and DatumEvaluate(ExecuteDatum, ExecuteWord.ALU_Predicate);
+  RF_WA_Valid <= RF_ReadValid;
   RF_WA_Async <= '0';
   
+  --
+  -- Scalar predication
+  --
+
+  ScalarMask_P : process(Clk)
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        RF_WA_Mask <= (others => '1');
+      else
+        for I in 0 to 2**Log2BPW_C-1 loop
+          RF_WA_Mask(I) <= DatumEvaluate(CR_Read_Datum, ControlWord.ALU_Predicate);
+        end loop;
+      end if;
+    end if;
+  end process;
+    
   --
   -- Scalar scoreboard control
   --
@@ -556,6 +575,7 @@ begin
                WA_Active => VRF_WA_Active,
                WA_Async => VRF_WA_Async,
                WA_Valid => VRF_WA_Valid(I),
+               WA_Mask => VRF_WA_Mask((I+1)*2**Log2BPW_C-1 downto I*2**Log2BPW_C),
                WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
 
@@ -582,7 +602,7 @@ begin
                A => VALU_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C),
                B => VALU_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C),
                Result => VALU_Result((I+1)*WordSize_C-1 downto I*WordSize_C),
-               Datum => VALU_Datum(I));
+               SubDatum => VALU_Datum((I+1)*2**Log2BPW_C-1 downto I*2**Log2BPW_C));
   end generate;
 
   --
@@ -593,7 +613,7 @@ begin
   VRF_WA_Active <= ExecuteWord.VRF_W_Active or AVU_R_Present;
   VRF_WA_Async <= AVU_R_Present;
   VRF_WA_Index <= to_integer(unsigned(AVU_R_Tag)) when AVU_R_Present = '1' else ExecuteWord.VRF_W_Index;
-  VRF_WA_Valid <= (others => '1') when AVU_R_Present = '1' else VALU_Mask and VRF_ReadValid;
+  VRF_WA_Valid <= (others => '1') when AVU_R_Present = '1' else VRF_ReadValid;
   VRF_WA_Data <= AVU_R_Result when AVU_R_Present = '1' else VALU_Result;
   
   --
@@ -604,10 +624,10 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        VALU_Mask <= (others => '1');
+        VRF_WA_Mask <= (others => '1');
       else
-        for I in 0 to VecSize_C-1 loop
-          VALU_Mask(I) <= DatumEvaluate(VCR_Read_Datum(I), ControlWord.VALU_Predicate);
+        for I in 0 to 2**Log2BPW_C*VecSize_C-1 loop
+          VRF_WA_Mask(I) <= DatumEvaluate(VCR_Read_Datum(I), ControlWord.VALU_Predicate);
         end loop;
       end if;
     end if;
