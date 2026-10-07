@@ -12,10 +12,17 @@
 #define EFF_LOG4V  3
 #endif
 
+#ifdef USE_GENERIC_ADD
+#define cv_add     vadd16
+#define cv_sub     vsub16
+#define cv_addri   vaddri
+#define cv_addrni  vaddrni
+#else
 #define cv_add     cvadd
 #define cv_sub     cvsub
 #define cv_addri   cvaddri
 #define cv_addrni  cvaddrni
+#endif
 	
 #ifdef EFF_LOG4V
 fft_dit_radix4_unroll4:
