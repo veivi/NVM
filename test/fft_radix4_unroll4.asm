@@ -12,6 +12,9 @@
 #define EFF_LOG4V  3
 #endif
 
+	// Select whether we use generic integer ALU operations
+	// or VU for the complex add/sub arithmetic
+	
 #ifdef USE_GENERIC_ADD
 #define cv_add     vadd16
 #define cv_sub     vsub16
