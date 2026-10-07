@@ -429,9 +429,9 @@ def assemble(predicate, mnemonic, params):
     multiple = 1
     log2multiple = 0
     
-    if mnemonic[-1].isdigit():
+    if mnemonic[-2] == '_' and mnemonic[-1].isdigit():
         multiple = ord(mnemonic[-1]) - ord('0')
-        mnemonic = mnemonic[:-1]
+        mnemonic = mnemonic[:-2]
 
         while multiple > 1:
             log2multiple = log2multiple + 1
