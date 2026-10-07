@@ -12,6 +12,11 @@
 #define EFF_LOG4V  3
 #endif
 
+#define cv_add     cvadd
+#define cv_sub     cvsub
+#define cv_addri   cvaddri
+#define cv_addrni  cvaddrni
+	
 #ifdef EFF_LOG4V
 fft_dit_radix4_unroll4:
 	debug 48
@@ -251,22 +256,22 @@ for_kb_loop:
 	  complex_vector_sub(s3, t1, t3);
 	*/
 
-	vadd16 _s0, _a0, _t2
-	vadd16 _s0_2, _a0_2, _t2_2
-	vadd16 _s0_3, _a0_3, _t2_3
-	vadd16 _s0_4, _a0_4, _t2_4
-	vsub16 _s1, _a0, _t2
-	vsub16 _s1_2, _a0_2, _t2_2
-	vsub16 _s1_3, _a0_3, _t2_3
-	vsub16 _s1_4, _a0_4, _t2_4
-	vadd16 _s2, _t1, _t3
-	vadd16 _s2_2, _t1_2, _t3_2
-	vadd16 _s2_3, _t1_3, _t3_3
-	vadd16 _s2_4, _t1_4, _t3_4
-	vsub16 _s3, _t1, _t3
-	vsub16 _s3_2, _t1_2, _t3_2
-	vsub16 _s3_3, _t1_3, _t3_3
-	vsub16 _s3_4, _t1_4, _t3_4
+	cv_add _s0, _a0, _t2
+	cv_add _s0_2, _a0_2, _t2_2
+	cv_add _s0_3, _a0_3, _t2_3
+	cv_add _s0_4, _a0_4, _t2_4
+	cv_sub _s1, _a0, _t2
+	cv_sub _s1_2, _a0_2, _t2_2
+	cv_sub _s1_3, _a0_3, _t2_3
+	cv_sub _s1_4, _a0_4, _t2_4
+	cv_add _s2, _t1, _t3
+	cv_add _s2_2, _t1_2, _t3_2
+	cv_add _s2_3, _t1_3, _t3_3
+	cv_add _s2_4, _t1_4, _t3_4
+	cv_sub _s3, _t1, _t3
+	cv_sub _s3_2, _t1_2, _t3_2
+	cv_sub _s3_3, _t1_3, _t3_3
+	cv_sub _s3_4, _t1_4, _t3_4
 
 	/*
             VCADD y0, s0, s2
@@ -283,31 +288,35 @@ for_kb_loop:
 	  complex_vector_add(y3, s1, r3p);
 	*/
 
-	vadd16 _y0, _s0, _s2
-	vadd16 _y0_2, _s0_2, _s2_2
-	vadd16 _y0_3, _s0_3, _s2_3
-	vadd16 _y0_4, _s0_4, _s2_4
-	vsub16 _y2, _s0, _s2
-	vsub16 _y2_2, _s0_2, _s2_2
-	vsub16 _y2_3, _s0_3, _s2_3
-	vsub16 _y2_4, _s0_4, _s2_4
+	cv_add _y0, _s0, _s2
+	cv_add _y0_2, _s0_2, _s2_2
+	cv_add _y0_3, _s0_3, _s2_3
+	cv_add _y0_4, _s0_4, _s2_4
+
+	cv_sub _y2, _s0, _s2
+	cv_sub _y2_2, _s0_2, _s2_2
+	cv_sub _y2_3, _s0_3, _s2_3
+	cv_sub _y2_4, _s0_4, _s2_4
 	
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
 	vst_4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j, span)
 	
-	vaddrni _y1, _s1, _s3
-	vaddrni _y1_2, _s1_2, _s3_2
-	vaddrni _y1_3, _s1_3, _s3_3
-	vaddrni _y1_4, _s1_4, _s3_4
+	cv_addrni _y1, _s1, _s3
+	cv_addrni _y1_2, _s1_2, _s3_2
+	cv_addrni _y1_3, _s1_3, _s3_3
+	cv_addrni _y1_4, _s1_4, _s3_4
 	
 	add _temp, _temp, _2delta // temp = &A[kb + j + 2*quarter]
 	vst_4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
 	
-	cvaddri _y3, _s1, _s3
-	cvaddri _y3_2, _s1_2, _s3_2
-	cvaddri _y3_3, _s1_3, _s3_3
-	cvaddri _y3_4, _s1_4, _s3_4
+	cv_addri _y3, _s1, _s3
+	cv_addri _y3_2, _s1_2, _s3_2
+	cv_addri _y3_3, _s1_3, _s3_3
+	cv_addri _y3_4, _s1_4, _s3_4
 
+	sub _temp, _temp, _delta // temp = &A[kb + j + quarter]
+	vst_4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
+	
 	/*
             VST [a + kb + j],            y0, stride=span
             VST [a + kb + j + quarter],    y1, stride=span
@@ -320,9 +329,6 @@ for_kb_loop:
 	  complex_vector_write(y3, A, kb + j + 3*quarter, span, 0x130);
 	*/
 
-	sub _temp, _temp, _delta // temp = &A[kb + j + quarter]
-	vst_4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
-	
 	add _temp, _temp, _2delta // temp = &A[kb + j + 3*quarter]
 
 	// end for(kb = 0; kb < FFT_LEN; kb += V*span)
@@ -507,22 +513,22 @@ for_k_loop_late:
 	  complex_vector_sub(s3, t1, t3);
 	*/
 
-	vadd16 _s0, _a0, _t2
-	vadd16 _s0_2, _a0_2, _t2_2
-	vadd16 _s0_3, _a0_3, _t2_3
-	vadd16 _s0_4, _a0_4, _t2_4
-	vsub16 _s1, _a0, _t2
-	vsub16 _s1_2, _a0_2, _t2_2
-	vsub16 _s1_3, _a0_3, _t2_3
-	vsub16 _s1_4, _a0_4, _t2_4
-	vadd16 _s2, _t1, _t3
-	vadd16 _s2_2, _t1_2, _t3_2
-	vadd16 _s2_3, _t1_3, _t3_3
-	vadd16 _s2_4, _t1_4, _t3_4
-	vsub16 _s3, _t1, _t3
-	vsub16 _s3_2, _t1_2, _t3_2
-	vsub16 _s3_3, _t1_3, _t3_3
-	vsub16 _s3_4, _t1_4, _t3_4
+	cv_add _s0, _a0, _t2
+	cv_add _s0_2, _a0_2, _t2_2
+	cv_add _s0_3, _a0_3, _t2_3
+	cv_add _s0_4, _a0_4, _t2_4
+	cv_sub _s1, _a0, _t2
+	cv_sub _s1_2, _a0_2, _t2_2
+	cv_sub _s1_3, _a0_3, _t2_3
+	cv_sub _s1_4, _a0_4, _t2_4
+	cv_add _s2, _t1, _t3
+	cv_add _s2_2, _t1_2, _t3_2
+	cv_add _s2_3, _t1_3, _t3_3
+	cv_add _s2_4, _t1_4, _t3_4
+	cv_sub _s3, _t1, _t3
+	cv_sub _s3_2, _t1_2, _t3_2
+	cv_sub _s3_3, _t1_3, _t3_3
+	cv_sub _s3_4, _t1_4, _t3_4
 	
 	/*
                 VCADD y0, s0, s2
@@ -539,30 +545,31 @@ for_k_loop_late:
 	  complex_vector_add(y3, s1, r3p);
 	*/
 
-	vadd16 _y0, _s0, _s2
-	vadd16 _y0_2, _s0_2, _s2_2
-	vadd16 _y0_3, _s0_3, _s2_3
-	vadd16 _y0_4, _s0_4, _s2_4
-	vsub16 _y2, _s0, _s2
-	vsub16 _y2_2, _s0_2, _s2_2
-	vsub16 _y2_3, _s0_3, _s2_3
-	vsub16 _y2_4, _s0_4, _s2_4	
+	cv_add _y0, _s0, _s2
+	cv_add _y0_2, _s0_2, _s2_2
+	cv_add _y0_3, _s0_3, _s2_3
+	cv_add _y0_4, _s0_4, _s2_4
+
+	cv_sub _y2, _s0, _s2
+	cv_sub _y2_2, _s0_2, _s2_2
+	cv_sub _y2_3, _s0_3, _s2_3
+	cv_sub _y2_4, _s0_4, _s2_4	
 
 	add _temp, _A, _4kj
 	vst_4 _y0, _temp, 1
 	
-	vaddrni _y1, _s1, _s3
-	vaddrni _y1_2, _s1_2, _s3_2
-	vaddrni _y1_3, _s1_3, _s3_3
-	vaddrni _y1_4, _s1_4, _s3_4
+	cv_addrni _y1, _s1, _s3
+	cv_addrni _y1_2, _s1_2, _s3_2
+	cv_addrni _y1_3, _s1_3, _s3_3
+	cv_addrni _y1_4, _s1_4, _s3_4
 
 	add _temp, _temp, _2delta
 	vst_4 _y2, _temp, 1
 	
-	cvaddri _y3, _s1, _s3
-	cvaddri _y3_2, _s1_2, _s3_2
-	cvaddri _y3_3, _s1_3, _s3_3
-	cvaddri _y3_4, _s1_4, _s3_4
+	cv_addri _y3, _s1, _s3
+	cv_addri _y3_2, _s1_2, _s3_2
+	cv_addri _y3_3, _s1_3, _s3_3
+	cv_addri _y3_4, _s1_4, _s3_4
 	
 	sub _temp, _temp, _delta
 	vst_4 _y1, _temp, 1
