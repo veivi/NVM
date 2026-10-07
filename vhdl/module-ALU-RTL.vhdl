@@ -182,18 +182,18 @@ begin
         end if;
         
       when ALUOp_ADDRI_C =>
-        -- Rotate A counter-clockwise and add to B
-        ALUResult <= Add(B(WordSize_C-1 downto WordSize_C/2),
-                         Negate(A(WordSize_C/2-1 downto 0)))
-                     & Add(B(WordSize_C/2-1 downto 0),
-                           A(WordSize_C-1 downto WordSize_C/2));
+        -- A + iB
+        ALUResult <= Add(A(WordSize_C-1 downto WordSize_C/2),
+                         Negate(B(WordSize_C/2-1 downto 0)))
+                     & Add(A(WordSize_C/2-1 downto 0),
+                           B(WordSize_C-1 downto WordSize_C/2));
 
       when ALUOp_ADDRNI_C =>
-        -- Rotate A clockwise and add to B
-          ALUResult <= Add(B(WordSize_C-1 downto WordSize_C/2),
-                           A(WordSize_C/2-1 downto 0))
-                       & Add(B(WordSize_C/2-1 downto 0),
-                             Negate(A(WordSize_C-1 downto WordSize_C/2)));
+        -- A - iB
+          ALUResult <= Add(A(WordSize_C-1 downto WordSize_C/2),
+                           B(WordSize_C/2-1 downto 0))
+                       & Add(A(WordSize_C/2-1 downto 0),
+                             Negate(B(WordSize_C-1 downto WordSize_C/2)));
         
       when others =>
         null;

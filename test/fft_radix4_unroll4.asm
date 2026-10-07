@@ -295,10 +295,10 @@ for_kb_loop:
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
 	vst_4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j, span)
 	
-	cvaddrni _y1, _s1, _s3
-	cvaddrni _y1_2, _s1_2, _s3_2
-	cvaddrni _y1_3, _s1_3, _s3_3
-	cvaddrni _y1_4, _s1_4, _s3_4
+	vaddrni _y1, _s1, _s3
+	vaddrni _y1_2, _s1_2, _s3_2
+	vaddrni _y1_3, _s1_3, _s3_3
+	vaddrni _y1_4, _s1_4, _s3_4
 	
 	add _temp, _temp, _2delta // temp = &A[kb + j + 2*quarter]
 	vst_4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
@@ -551,10 +551,10 @@ for_k_loop_late:
 	add _temp, _A, _4kj
 	vst_4 _y0, _temp, 1
 	
-	cvaddrni _y1, _s1, _s3
-	cvaddrni _y1_2, _s1_2, _s3_2
-	cvaddrni _y1_3, _s1_3, _s3_3
-	cvaddrni _y1_4, _s1_4, _s3_4
+	vaddrni _y1, _s1, _s3
+	vaddrni _y1_2, _s1_2, _s3_2
+	vaddrni _y1_3, _s1_3, _s3_3
+	vaddrni _y1_4, _s1_4, _s3_4
 
 	add _temp, _temp, _2delta
 	vst_4 _y2, _temp, 1
