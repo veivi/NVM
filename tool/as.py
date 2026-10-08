@@ -466,10 +466,14 @@ def assemble(predicate, mnemonic, params):
     iword = ((category["prefix"]<<(opcode_size - min_prefix)) + ispec["opcode"] + delta) << opcode_offset
     ref = None
 
-    if "multiple-span" in category:
-        (span_offset, span_size) = instruction_field(format, "span")
-        iword |= log2multiple<<span_offset;
-        
+    if log2multiple > 0:
+        if "multiple-span" in category:
+            (span_offset, span_size) = instruction_field(format, "span")
+            iword |= log2multiple<<span_offset;
+        else:
+            print(f"Instruction {mnemonic} does not support multiples.")
+            exit(10)
+            
     if predicate.pred != "a":
         # print(f"Instruction {mnemonic} is predicated with {predicate.pred}({predicate.cr})")
         

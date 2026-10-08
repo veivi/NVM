@@ -118,6 +118,8 @@ package NVM101Types is
   subtype RegIndex_T is integer range 0 to 2**Log2MaxRegs_C-1;
   
   type RegIndexArray_T is array (natural range <>) of RegIndex_T;
+
+  constant Log2MaxSpan_C : integer := 2**(2**SpanSpecSize_C - 1);
   
   subtype RegSpan_T is integer range 0 to 2**Log2MaxSpan_C-1;
   
