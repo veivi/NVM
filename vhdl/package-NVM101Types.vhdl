@@ -44,7 +44,10 @@ package NVM101Types is
                         Pred_LE_C,
                         Pred_GT_C,
                         Pred_GE_C,
-                        Pred_A_C );
+                        Pred_A_C,
+                        Pred_CS_C,
+                        Pred_CC_C,
+                        Pred_OVF_C );
 
   function PredicateDecode(Pred : std_logic_vector) return Predicate_T;
   

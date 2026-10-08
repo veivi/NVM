@@ -24,14 +24,14 @@ package body NVM101Types is
       when EncodedPred_GE_C =>
         return Pred_GE_C;
         
-      -- when EncodedPred_CS_C =>
-      --   return Pred_CS_C;
+      when EncodedPred_CS_C =>
+        return Pred_CS_C;
         
-      -- when EncodedPred_CC_C =>
-      --   return Pred_CC_C;
+      when EncodedPred_CC_C =>
+        return Pred_CC_C;
         
-      -- when EncodedPred_OVF_C =>
-      --   return Pred_OVF_C;        
+      when EncodedPred_OVF_C =>
+        return Pred_OVF_C;        
 
       when others =>
         return Pred_A_C;
@@ -60,24 +60,19 @@ package body NVM101Types is
 
   function DatumEvaluate(Datum : Datum_T; Pred : Predicate_T) return std_logic is
   begin
-    return DatumEvaluate(Datum.Compare, Pred);
-    
-    -- case Pred is
-    --   when Pred_NE_C =>
-    --     return Datum.LessThan or Datum.GreaterThan;
-    --   when Pred_EQ_C =>
-    --     return not (Datum.LessThan or Datum.GreaterThan);
-    --   when Pred_LE_C =>
-    --     return not Datum.GreaterThan;
-    --   when Pred_LT_C =>
-    --     return Datum.LessThan;
-    --   when Pred_GE_C =>
-    --     return not Datum.LessThan;
-    --   when Pred_GT_C =>
-    --     return Datum.GreaterThan;
-    --   when others =>
-    --     return '1';
-    -- end case;
+    case Pred is
+      when Pred_CS_C =>
+        return Datum.Carry;
+        
+      when Pred_CC_C =>
+        return not Datum.Carry;
+        
+      when Pred_OVF_C =>
+        return Datum.Overflow;
+
+      when others =>
+        return DatumEvaluate(Datum.Compare, Pred);
+    end case;
   end function;
 
   function LSOpIsLoad(Op : LoadStoreOp_T) return boolean is
