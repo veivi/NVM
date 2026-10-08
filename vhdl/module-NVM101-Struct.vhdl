@@ -347,7 +347,7 @@ begin
   -- Scalar load/store multiple stride is always one
   --
   
-  LS_C_Stride <= std_logic_vector(to_unsigned(1, AddrSize_C));
+  LS_C_Stride <= std_logic_vector(to_unsigned(2**ExecuteWord.LS_Log2Size, AddrSize_C));
   
   --
   -- Scalar Register File
