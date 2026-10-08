@@ -144,10 +144,11 @@ begin
   -- Vector Unit
   --
   
-  VU102_I : entity WORK.VU102(RTL)
+  AVU_I : entity WORK.VU101(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
-                Log2VecSIze_C => Log2VecSIze_C,
-                Precision_C => Precision_C)
+                Log2VecSIze_C => Log2VecSIze_C
+                --, Precision_C => Precision_C
+                )
 
     port map(Clk => Clk,
              Reset => Reset,

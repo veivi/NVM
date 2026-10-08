@@ -3,6 +3,7 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
+use WORK.SignalMath.all;
 
 entity ALU is
   generic(Log2BPW_C : integer);
@@ -22,54 +23,6 @@ architecture RTL of ALU is
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
 
   constant Word16Size_C : integer := 2*ByteSize_C;
-  
-  function Saturate(A : std_logic_vector; W : natural) return std_logic_vector is
-    constant Len_C : integer := A'range'high - A'range'low + 1;
-    variable MinValue, MaxValue, Temp : signed(A'range);
-  begin
-    MinValue := (others => '0');
-    MinValue(Len_C-1 downto W-1) := (others => '1');
-    
-    MaxValue := (others => '1');
-    MaxValue(Len_C-1 downto W-1) := (others => '0');
-    
-    Temp := signed(A);
-    
-    if Temp < MinValue then
-      Temp := MinValue;
-    elsif Temp > MaxValue then
-      Temp := MaxValue;
-    end if;
-    
-    return std_logic_vector(Temp);
-  end function;
-
-  function Add(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
-    constant W : integer := A'range'high - A'range'low + 2;
-    variable Temp : signed(W-1 downto 0);
-  begin
-    Temp := resize(signed(A), W) + resize(signed(B), W);
-    Temp := signed(Saturate(std_logic_vector(Temp), W-1));
-    return std_logic_vector(Temp(W-2 downto 0));
-  end function;
-
-  function Negate(A : std_logic_vector) return std_logic_vector is
-    constant W : integer := A'range'high - A'range'low + 2;
-    variable Temp : std_logic_vector(W-1 downto 0);
-  begin
-    Temp := std_logic_vector(-resize(signed(A), W));
-    Temp := Saturate(Temp, W-1);
-    return Temp(W-2 downto 0);
-  end function;
-  
-  function Absolute(A : std_logic_vector) return std_logic_vector is
-  begin
-    if signed(A) < 0 then
-      return Negate(A);
-    else
-      return A;
-    end if;
-  end function;
   
   signal ALUResult, CompareA, CompareB : std_logic_vector(WordSize_C-1 downto 0);
 begin
@@ -114,7 +67,7 @@ begin
         end loop;
         
       when ALUOp_ABS_C =>
-        ALUResult <= std_logic_vector(Absolute(A));
+        ALUResult <= Absolute(A);
 
       when ALUOp_ABS8_C =>
         for I in 0 to 2**Log2BPW_C-1 loop

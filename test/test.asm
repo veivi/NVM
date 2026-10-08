@@ -65,7 +65,8 @@ clear_bss_loop:
 	bgt (c0), clear_bss_loop
 	add s1, s1, V_BYTES
 
-tests_start:	
+tests_start:
+	ba test_ldpc
 	// ba write_neg_bytes
 	nop
 	
@@ -565,3 +566,71 @@ clear_vektori_loop:
 	jmpa stop_simulation
 	debug -1
 
+test_ldpc:
+	ldi s1, 0
+	ldi s2, 7
+	stb s2, s1, 0
+	ldi s2, 8
+	stb s2, s1, 1
+	ldi s2, 6
+	stb s2, s1, 2
+	ldi s2, 9
+	stb s2, s1, 3
+	ldi s2, 8
+	stb s2, s1, 4
+	ldi s2, -4
+	stb s2, s1, 5
+	ldi s2, 9
+	stb s2, s1, 6
+	ldi s2, 7
+	stb s2, s1, 7
+	ldi s2, 6
+	stb s2, s1, 8
+	ldi s2, 8
+	stb s2, s1, 9
+	ldi s2, 7
+	stb s2, s1, 10
+	ldi s2, 9
+	stb s2, s1, 11
+
+	drain
+
+	vldb v0, s1, 1
+	add s1, s1, 4
+	vldb v1, s1, 1
+	add s1, s1, 4
+	vldb v2, s1, 1
+	
+	ext 0, v63, v0, v0
+	
+	ext 1, v3, v0, v0
+	ext 1, v4, v1, v0
+	ext 1, v5, v2, v0
+
+	ext 2, v3, v0, v0
+	ext 2, v4, v1, v0
+	ext 2, v5, v2, v0
+
+	ldi s1, 0
+	vstb v3, s1, 1
+	add s1, s1, 4
+	vstb v4, s1, 1
+	add s1, s1, 4
+	vstb v5, s1, 1
+	
+	vadd v6, v0, v3
+	vadd v7, v1, v4
+	vadd v8, v2, v5
+
+	ldi s1, 0
+	vstb v6, s1, 1
+	add s1, s1, 4
+	vstb v7, s1, 1
+	add s1, s1, 4
+	vstb v8, s1, 1
+	
+	// Done
+	drain
+	sync
+	jmpa stop_simulation
+	nop
