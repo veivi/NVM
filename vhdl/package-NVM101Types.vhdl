@@ -82,15 +82,8 @@ package NVM101Types is
 
   function LSOpIsLoad(Op : LoadStoreOp_T) return boolean;
   
-  constant Log2MaxSize_C : integer := 3;
-  
   subtype SizeSpec_T is integer range 0 to 2**Log2MaxSize_C-1;
   
-  type LoadStoreSize_T is ( LS_Byte_C,
-                            LS_Short_C,
-                            LS_Long_C,
-                            LS_Word_C );
-
   type LoadStoreMode_T is ( LS_Displaced_C,
                             LS_Indexed_C );
   
