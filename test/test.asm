@@ -66,7 +66,7 @@ clear_bss_loop:
 	add s1, s1, V_BYTES
 
 tests_start:
-	// ba test_ldpc
+	ba test_ldpc
 	// ba write_neg_bytes
 	nop
 	
