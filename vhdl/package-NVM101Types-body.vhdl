@@ -53,8 +53,10 @@ package body NVM101Types is
         return not Datum.LessThan;
       when Pred_GT_C =>
         return Datum.GreaterThan;
-      when others =>
+      when Pred_A_C =>
         return '1';
+      when others =>
+        return '0';
     end case;
   end function;
 
