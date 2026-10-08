@@ -43,18 +43,25 @@ package body NVM101Types is
     case Pred is
       when Pred_NE_C =>
         return Datum.LessThan or Datum.GreaterThan;
+
       when Pred_EQ_C =>
         return not (Datum.LessThan or Datum.GreaterThan);
+
       when Pred_LE_C =>
         return not Datum.GreaterThan;
+
       when Pred_LT_C =>
         return Datum.LessThan;
+
       when Pred_GE_C =>
         return not Datum.LessThan;
+
       when Pred_GT_C =>
         return Datum.GreaterThan;
+
       when Pred_A_C =>
         return '1';
+
       when others =>
         return '0';
     end case;
