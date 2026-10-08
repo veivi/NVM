@@ -91,12 +91,12 @@ architecture RTL of VU102 is
     return Temp(PartSize_C+Precision_C-1 downto Precision_C);
   end function;
   
-  signal Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
   signal AdderResult, MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, MultiplyValid : std_logic;
   signal PartialTag, MultiplyTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
+  signal PartialRespond, MultiplyRespond : std_logic;
 begin
   --
   -- Multiplication stage
@@ -108,7 +108,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         PartialValid <= '0';
-        Operation <= (others => '0');
+        PartialOperation <= (others => '0');
 
       elsif AVU_C_Present = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
@@ -153,11 +153,12 @@ begin
         end loop;
 
         PartialValid <= '1';
-        PartialOperation <= AVU_C_Operation;        
+        PartialOperation <= AVU_C_Operation;
+        PartialRespond <= AVU_C_Respond;
         PartialTag <= AVU_C_Tag;
       else
         PartialValid <= '0';
-        Operation <= (others => '0');
+        PartialOperation <= (others => '0');
       end if;
     end if;
   end process;
@@ -172,6 +173,7 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         MultiplyValid <= '0';
+        MultiplyRespond <= '0';
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
@@ -186,11 +188,13 @@ begin
         end loop;
 
         MultiplyTag <= PartialTag;
-        MultiplyOperation <= PartialOperation;        
+        MultiplyOperation <= PartialOperation;
+        MultiplyRespond <= PartialRespond;
         MultiplyValid <= '1';
       else
         MultiplyValid <= '0';
         MultiplyOperation <= (others => '0');
+        MultiplyRespond <= '0';
       end if;
     end if;
   end process;
@@ -218,7 +222,7 @@ begin
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
           end if;
-          AVU_R_Present <= '1';
+          AVU_R_Present <= MultiplyRespond;
           AVU_R_Tag <= MultiplyTag;
         end loop;
       else
