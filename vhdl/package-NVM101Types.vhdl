@@ -119,9 +119,11 @@ package NVM101Types is
   
   type RegIndexArray_T is array (natural range <>) of RegIndex_T;
 
+  subtype RegSpanSpec_T is integer range 0 to 2**SpanSpecSize_C-1;  -- Encoded specifier
+  
   constant Log2MaxSpan_C : integer := 2**(2**SpanSpecSize_C - 1);
   
-  subtype RegSpan_T is integer range 0 to 2**Log2MaxSpan_C-1;
+  subtype RegSpan_T is integer range 0 to 2**Log2MaxSpan_C-1;     -- Expanded from the encoded spec
   
   subtype CondRegIndex_T is integer range 0 to 2**Log2NumOfCondRegs_C-1;
   
@@ -157,12 +159,12 @@ package NVM101Types is
     LS_Target : RegIndex_T;
     LS_Log2Size : SizeSpec_T;
     LS_Mode : LoadStoreMode_T;
-    LS_Span : RegSpan_T;
+    LS_Span : RegSpanSpec_T;
     VLS_Operation : LoadStoreOp_T;
     VLS_Target : RegIndex_T;
     VLS_Log2Size : SizeSpec_T;
     VLS_Mode : VectorLoadStoreMode_T;
-    VLS_Span : RegSpan_T;
+    VLS_Span : RegSpanSpec_T;
     ALU_Operation : ALUOp_T;
     ALU_Predicate : Predicate_T;
     ALU_Mode : ALUMode_T;

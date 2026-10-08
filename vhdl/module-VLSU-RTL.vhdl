@@ -20,7 +20,7 @@ entity VLSU is
        C_Log2Size : in SizeSpec_T;
        C_Stall : in std_logic;
        C_Ready : out std_logic;
-       C_Span : in RegSpan_T;
+       C_Span : in RegSpanSpec_T;
        C_Target : in RegIndex_T;
        C_Addr : in std_logic_vector(AddrSize_C-1 downto 0);
        C_Stride : in std_logic_vector(AddrSize_C-1 downto 0);

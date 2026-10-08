@@ -17,7 +17,7 @@ entity VRFU is
 
        SB_Set : in std_logic;
        SB_Index : in RegIndex_T;
-       SB_Span : in RegSpan_T;
+       SB_Span : in RegSpanSpec_T;
 
        --
        -- Interlock interface
