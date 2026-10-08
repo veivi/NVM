@@ -69,7 +69,7 @@ architecture RTL of VLSU is
   type BufferEntry_T is record
     State : LoadStoreOp_T;
     Addr : std_logic_vector(AddrSize_C-1 downto 0);
-    Log2Size : integer range 0 to 2*Log2BPW_C-1;
+    Log2Size : SizeSpec_T;
     Stride : std_logic_vector(AddrSize_C-1 downto 0);
     Count : integer range 0 to 2**Log2MaxSpan_C-1;
     Target : RegIndex_T;
@@ -83,7 +83,7 @@ architecture RTL of VLSU is
   type WorkEntry_T is record
     State : LoadStoreOp_T;
     Addr : integer range 0 to 2**Log2BPW_C-1;
-    Log2Size : integer range 0 to 2*Log2BPW_C-1;
+    Log2Size : SizeSpec_T;
     Lifetime : Lifetime_T;
     Target : RegIndex_T;
   end record;
