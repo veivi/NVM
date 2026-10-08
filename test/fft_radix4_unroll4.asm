@@ -221,16 +221,16 @@ for_kb_loop:
 	lsl _4kbj, _4kbj, 2      // 4kbj = 4*(kb + j)
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
 	add _temp, _temp, _delta // temp = &A[kb + j + quarter]
-	vld_4 _a1, _temp, _span    // complex_vector_read(a1, A, kb + j + quarter, span)
+	vld.4 _a1, _temp, _span    // complex_vector_read(a1, A, kb + j + quarter, span)
 	
 	add _temp, _temp, _delta // temp = &A[kb + j + 2*quarter]
-	vld_4 _a2, _temp, _span    // complex_vector_read(a2, A, kb + j + 2*quarter, span)
+	vld.4 _a2, _temp, _span    // complex_vector_read(a2, A, kb + j + 2*quarter, span)
 	
 	add _temp, _temp, _delta // temp = &A[kb + j + 3*quarter]
-	vld_4 _a3, _temp, _span    // complex_vector_read(a3, A, kb + j + 3*quarter, span)
+	vld.4 _a3, _temp, _span    // complex_vector_read(a3, A, kb + j + 3*quarter, span)
 
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
-	vld_4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
+	vld.4 _a0, _temp, _span // complex_vector_read(a0, A, kb + j, span)
 		
 	/*
             t0 = a0
@@ -309,7 +309,7 @@ for_kb_loop:
 	cv_sub _y2_4, _s0_4, _s2_4
 	
 	add _temp, _A, _4kbj  // temp = &A[kb + j]
-	vst_4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j, span)
+	vst.4 _y0, _temp, _span // complex_vector_write(y0, A, kb + j, span)
 	
 	cv_addrni _y1, _s1, _s3
 	cv_addrni _y1_2, _s1_2, _s3_2
@@ -317,7 +317,7 @@ for_kb_loop:
 	cv_addrni _y1_4, _s1_4, _s3_4
 	
 	add _temp, _temp, _2delta // temp = &A[kb + j + 2*quarter]
-	vst_4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
+	vst.4 _y2, _temp, _span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
 	
 	cv_addri _y3, _s1, _s3
 	cv_addri _y3_2, _s1_2, _s3_2
@@ -325,7 +325,7 @@ for_kb_loop:
 	cv_addri _y3_4, _s1_4, _s3_4
 
 	sub _temp, _temp, _delta // temp = &A[kb + j + quarter]
-	vst_4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
+	vst.4 _y1, _temp, _span    // complex_vector_write(y1, A, kb + j + quarter, span)
 	
 	/*
             VST [a + kb + j],            y0, stride=span
@@ -347,7 +347,7 @@ for_kb_loop:
 	cmp c0, _kb, _fft_len       // c0 = compare(kb, fft_len)
 
 	blt c0, for_kb_loop               // while kb < fft_len
-	vst_4 _y3, _temp, _span    // complex_vector_write(y3, A, kb + j + 3*quarter, span)
+	vst.4 _y3, _temp, _span    // complex_vector_write(y3, A, kb + j + 3*quarter, span)
 
 	//
 	// end for(j = 0; j < quarter; j++)
@@ -434,15 +434,15 @@ for_j_loop_late:
 
 	add _temp, _w_table, _delta_j
 	move(_w_stride, _index_mult)
-	vld_4 _w1, _temp, _w_stride // complex_vector_read(w1, w, j * index_mult, index_mult)
+	vld.4 _w1, _temp, _w_stride // complex_vector_read(w1, w, j * index_mult, index_mult)
 
 	add _temp, _temp, _delta_j
 	add _w_stride, _w_stride, _index_mult
-	vld_4 _w2, _temp, _w_stride // complex_vector_read(w2, w, j * 2*index_mult, 2*index_mult)
+	vld.4 _w2, _temp, _w_stride // complex_vector_read(w2, w, j * 2*index_mult, 2*index_mult)
 	
 	add _temp, _temp, _delta_j
 	add _w_stride, _w_stride, _index_mult
-	vld_4 _w3, _temp, _w_stride // complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult)
+	vld.4 _w3, _temp, _w_stride // complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult)
 
 	//
 	// Pseudo: for k = 0, span, 2*span, ... N-span:
@@ -478,16 +478,16 @@ for_k_loop_late:
 	
 	add _temp, _A, _4kj  // temp = &A[k + j]
 	add _temp, _temp, _delta // temp = &A[k + j + quarter]
-	vld_4 _a1, _temp, 1 // complex_vector_read(a1, A, k + j + quarter, 1)
+	vld.4 _a1, _temp, 1 // complex_vector_read(a1, A, k + j + quarter, 1)
 
 	add _temp, _temp, _delta // temp = &A[k + j + 2*quarter]
-	vld_4 _a2, _temp, 1 // complex_vector_read(a2, A, k + j + 2*quarter, 1)
+	vld.4 _a2, _temp, 1 // complex_vector_read(a2, A, k + j + 2*quarter, 1)
 	
 	add _temp, _temp, _delta // temp = &A[k + j + 3*quarter]
-	vld_4 _a3, _temp, 1 // complex_vector_read(a3, A, k + j + 3*quarter, 1)
+	vld.4 _a3, _temp, 1 // complex_vector_read(a3, A, k + j + 3*quarter, 1)
 
 	add _temp, _A, _4kj  // temp = &A[k + j]
-	vld_4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
+	vld.4 _a0, _temp, 1 // complex_vector_read(a0, A, k + j, 1)
 	
 	/*
                 t0 = a0
@@ -566,7 +566,7 @@ for_k_loop_late:
 	cv_sub _y2_4, _s0_4, _s2_4	
 
 	add _temp, _A, _4kj
-	vst_4 _y0, _temp, 1
+	vst.4 _y0, _temp, 1
 	
 	cv_addrni _y1, _s1, _s3
 	cv_addrni _y1_2, _s1_2, _s3_2
@@ -574,7 +574,7 @@ for_k_loop_late:
 	cv_addrni _y1_4, _s1_4, _s3_4
 
 	add _temp, _temp, _2delta
-	vst_4 _y2, _temp, 1
+	vst.4 _y2, _temp, 1
 	
 	cv_addri _y3, _s1, _s3
 	cv_addri _y3_2, _s1_2, _s3_2
@@ -582,7 +582,7 @@ for_k_loop_late:
 	cv_addri _y3_4, _s1_4, _s3_4
 	
 	sub _temp, _temp, _delta
-	vst_4 _y1, _temp, 1
+	vst.4 _y1, _temp, 1
 	
 	/*
                 Vst + k+j],           y0
@@ -603,7 +603,7 @@ for_k_loop_late:
 	add _k, _k, _span
 	cmp c0, _k, _fft_len
 	blt c0, for_k_loop_late
-	vst_4 _y3, _temp, 1
+	vst.4 _y3, _temp, 1
 	
 	// end for(j = 0; j < quarter; j += V) {
 

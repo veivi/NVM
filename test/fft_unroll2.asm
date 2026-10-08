@@ -56,13 +56,13 @@ for_v_loop_early:
 	add s10, s7, s9    // s10 = j + v
 	lsl s10, s10, 2   // s10 = 4*(j + v)
 	add s10, s10, s1   // s10 = &A[j + v]
-	vld_2 v0, s10, s4   // v0-1 = "u" = complex_vector_read(A, j + v, m)
+	vld.2 v0, s10, s4   // v0-1 = "u" = complex_vector_read(A, j + v, m)
 	
 	// 	  complex_vector_read(a, A, j + v + half_m, m);
 
 	lsl s12, s5, 2     // s12 = 4*half_m
 	add s13, s10, s12  // s13 =  &A[j + v + half_m]
-	vld_2 v2, s13, s4   // v2-3 = "a" = complex_vector_read(A, j + v + half_m, m)
+	vld.2 v2, s13, s4   // v2-3 = "a" = complex_vector_read(A, j + v + half_m, m)
 
 	// 	  complex_vector_mul_bc(t, a, &omega);
 
@@ -85,9 +85,9 @@ for_v_loop_early:
 	// 	  complex_vector_write(x, A, j + v, m);
 	// 	  complex_vector_write(y, A, j + v + half_m, m);
 	
-	vst_2 v4, s10, s4           // complex_vector_write(x, A, j + v, m)
+	vst.2 v4, s10, s4           // complex_vector_write(x, A, j + v, m)
 	blt c1, for_v_loop_early  // Loop as long as v < FFT_LEN
-	vst_2 v6, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
+	vst.2 v6, s13, s4           // complex_vector_write(y, A, j + v + half_m, m)
 
 end_for_v_loop_early:
 	add s7, s7, 1         // j++
@@ -137,7 +137,7 @@ for_v_loop_late:
 	lsl s8, s9, s6  // s8 = v<<log2_tab_step = v * tab_step
 	lsl s8, s8, 2   // s8 = 4*v*tab_step
 	add s8, s17, s8  // s8 = &w_table[v * tab_step]
-	vld_2 v0, s8, s16  // v0-1 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
+	vld.2 v0, s8, s16  // v0-1 = "omega" = complex_vector_read(w, v * tab_step, tab_step)
 	
 	// 	  complex_vector_read(u, A, k + v, 1);
 	
@@ -145,14 +145,14 @@ for_v_loop_late:
 	lsl s10, s10, 2   // s10 = 4*(k + v)
 	add s10, s10, s1   // s10 = &A[k + v]
 
-	vld_2 v2, s10, 1    // v2-3 = "u" = complex_vector_read(A, k + v, 1);
+	vld.2 v2, s10, 1    // v2-3 = "u" = complex_vector_read(A, k + v, 1);
 
 	//        complex_vector_read(a, A, k + v + half_m, 1);
 	
 	lsl s12, s5, 2     // s12 = 4*half_m
 	add s13, s10, s12  // s13 =  &A[k + v + half_m]
 	
-	vld_2 v4, s13, 1     // v4-5 = "a" = complex_vector_read(A, k + v + half_m, 1);
+	vld.2 v4, s13, 1     // v4-5 = "a" = complex_vector_read(A, k + v + half_m, 1);
 	
 	add s9, s9, EFF_V           // v += EFF_V
 	cmp c1, s9, s5
@@ -172,9 +172,9 @@ for_v_loop_late:
 	
         // 	  complex_vector_write(x, A, k + v, 1)
 	
-	vst_2 v6, s10, 1
+	vst.2 v6, s10, 1
 	blt c1, for_v_loop_late  // while v < half_m
-	vst_2 v8, s13, 1           // complex_vector_write(x, A, k + v + half_m + V, 1)
+	vst.2 v8, s13, 1           // complex_vector_write(x, A, k + v + half_m + V, 1)
 	
 end_for_v_loop_late:
 	add s7, s7, s4           // k += m

@@ -99,7 +99,7 @@ token_spec = [
     ("UNIT",      r"[uU]\d+"),
     ("HEX",       r"-?0x[\da-fA-F]+"),
     ("DEC",       r"-?\d+"),
-    ("IDENT",     r"[A-Za-z_]\w*"),
+    ("IDENT",     r"[A-Za-z_][\w.]*"),
     ("COMMA",     r","),
     ("PLUS",      r"\+"),
     ("BRACKET_L", r"\["),
@@ -429,7 +429,7 @@ def assemble(predicate, mnemonic, params):
     multiple = 1
     log2multiple = 0
     
-    if mnemonic[-2] == '_' and mnemonic[-1].isdigit():
+    if mnemonic[-2] == '.' and mnemonic[-1].isdigit():
         multiple = ord(mnemonic[-1]) - ord('0')
         mnemonic = mnemonic[:-2]
 
