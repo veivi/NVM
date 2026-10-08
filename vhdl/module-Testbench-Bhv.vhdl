@@ -64,7 +64,7 @@ architecture Bhv of Testbench is
   signal DebugActive : std_logic;
   signal DebugOut : std_logic_vector(WordSize_C-1 downto 0);
   
-  signal AVU_C_Present : std_logic;
+  signal AVU_C_Present, AVU_C_Respond : std_logic;
   signal AVU_C_Accept : std_logic;
   signal AVU_C_Operation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal AVU_C_Tag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
@@ -134,6 +134,7 @@ begin
              AVU_C_Accept => AVU_C_Accept,
              AVU_C_Operation => AVU_C_Operation ,
              AVU_C_Tag => AVU_C_Tag ,
+             AVU_C_Respond => AVU_C_Respond,
              AVU_C_OperandA => AVU_C_OperandA ,
              AVU_C_OperandB => AVU_C_OperandB ,
              AVU_R_Present => AVU_R_Present ,
@@ -157,6 +158,7 @@ begin
              AVU_C_Accept => AVU_C_Accept,
              AVU_C_Operation => AVU_C_Operation ,
              AVU_C_Tag => AVU_C_Tag ,
+             AVU_C_Respond => AVU_C_Respond,
              AVU_C_OperandA => AVU_C_OperandA ,
              AVU_C_OperandB => AVU_C_OperandB ,
              AVU_R_Present => AVU_R_Present ,

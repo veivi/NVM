@@ -293,6 +293,7 @@ def generate_opcode(op, variant, first):
     if "ext-result" in category:
         (offset, length) = instruction_field(format, category["ext-result"])
         decoder_lines.append(f"      ControlWord.{category["unit"]}_Dest <= RegIndex(I_Code({offset+length-1} downto {offset}));")
+        decoder_lines.append(f"      ControlWord.{category["unit"]}_ExpectResult <= '1';")
 
 #
 # Loop through all opcodes

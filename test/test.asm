@@ -601,11 +601,11 @@ test_ldpc:
 	add s1, s1, 4
 	vldb v2, s1, 1
 	
-	ext 0, v63, v0, v0
+	exta 0, v0, v0
 	
-	ext 1, v3, v0, v0
-	ext 1, v4, v1, v0
-	ext 1, v5, v2, v0
+	exta 1, v0, v0
+	exta 1, v1, v0
+	exta 1, v2, v0
 
 	ext 2, v3, v0, v0
 	ext 2, v4, v1, v0

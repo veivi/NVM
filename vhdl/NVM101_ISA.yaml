@@ -283,7 +283,6 @@ instruction_categories:
     sub-operation: "subop"
     vector-read-a: "vs1"
     vector-read-b: "vs2"
-    vector-read-c: "vd"
     ext-result: "vd"
 
   ext_bc:
@@ -294,8 +293,16 @@ instruction_categories:
     sub-operation: "subop"
     vector-read-a: "vs1"
     register-read-b: "rs2"
-    vector-read-c: "vd"
     ext-result: "vd"
+
+  ext_acc:
+    format: "ext"
+    prefix: 62
+    operands: [ "subop", "vs1", "vs2" ]
+    unit: "Ext"
+    sub-operation: "subop"
+    vector-read-a: "vs1"
+    vector-read-b: "vs2"
 
   fence:
     format: "system"
@@ -344,6 +351,11 @@ instruction_set:
     
   EXTB:
     category: "ext_bc"
+    opcode: 0
+    behaviour: "Extension"
+    
+  EXTA:
+    category: "ext_acc"
     opcode: 0
     behaviour: "Extension"
     

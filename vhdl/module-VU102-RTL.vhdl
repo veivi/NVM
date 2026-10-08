@@ -19,6 +19,7 @@ entity VU102 is
        AVU_C_Accept : out std_logic;
        AVU_C_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
        AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Respond : in std_logic;
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 

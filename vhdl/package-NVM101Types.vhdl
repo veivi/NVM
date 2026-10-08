@@ -172,6 +172,7 @@ package NVM101Types is
     Ext_Active : std_logic;
     Ext_Operation : integer range 0 to 2**ExtOpSize_C-1;
     Ext_Dest : RegIndex_T;
+    Ext_ExpectResult : std_logic;
   end record;
 
   constant DefaultControlWord_C : ControlWord_T :=
@@ -183,6 +184,6 @@ package NVM101Types is
       LSOp_None_C, 0, 0, LS_Displaced_C, 0,
       LSOp_None_C, 0, 0, VLS_Imm_C, 0,
       ALUOp_None_C, Pred_A_C, ALU_RegReg_C, ALUOp_None_C, Pred_A_C, ALU_RegReg_C, ImmOp_None_C, FenceOp_None_C,
-      '0', 0, 0);
+      '0', 0, 0, '0' );
 end package;
 

@@ -18,6 +18,7 @@ entity VU101 is
        AVU_C_Accept : out std_logic;
        AVU_C_Operation : in std_logic_vector(ExtOpSize_C-1 downto 0);
        AVU_C_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Respond : in std_logic;
        AVU_C_OperandA : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : in std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
@@ -46,7 +47,7 @@ architecture RTL of VU101 is
   signal Min1, Min2, MinIndex : Int8Array_T(BPW_C*VecSize_C-1 downto 0);
   signal Sign, EdgeSign : std_logic_vector(BPW_C*VecSize_C-1 downto 0);
   signal Tag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
-  signal Busy : std_logic;  
+  signal Busy, Respond : std_logic;  
   signal Index : integer range 0 to 2**ByteSize_C-1;
 begin
   --
@@ -59,12 +60,14 @@ begin
       if Reset = '1' then
         Busy <= '0';
         Tag <= (others => '0');
+        Respond <= '0';
         Operation <= (others => '0');
         Index <= 0;
         
       elsif AVU_C_Present = '1' then
         Busy <= '1';
         Tag <= AVU_C_Tag;
+        Respond <= AVU_C_Respond;
 
         case to_integer(unsigned(AVU_C_Operation)) is
           when 0 =>
@@ -117,7 +120,7 @@ begin
   
   AVU_C_Accept <= '1';
   
-  AVU_R_Present <= Busy;
+  AVU_R_Present <= Busy and Respond;
   AVU_R_Tag <= Tag;
 
   Response_P : process(Min1, Min2, MinIndex, Index, Sign, EdgeSign)

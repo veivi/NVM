@@ -48,6 +48,7 @@ entity NVM101 is
        AVU_C_Accept : in std_logic;
        AVU_C_Operation : out std_logic_vector(ExtOpSize_C-1 downto 0);
        AVU_C_Tag : out std_logic_vector(Log2MaxRegs_C-1 downto 0);
+       AVU_C_Respond : out std_logic;
        AVU_C_OperandA : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
@@ -694,7 +695,8 @@ begin
   --
 
   VRF_SB_Set <=
-    '1' when ControlWord.VLS_Operation /= LSOp_None_C or ControlWord.Ext_Active = '1' else '0';
+    '1' when ControlWord.VLS_Operation /= LSOp_None_C
+    or ( ControlWord.Ext_Active and ControlWord.Ext_ExpectResult) = '1' else '0';
   VRF_SB_Index <= ControlWord.Ext_Dest when ControlWord.Ext_Active = '1' else ControlWord.VLS_Target;
   VRF_SB_Span <= ControlWord.VLS_Span;
 
@@ -705,6 +707,7 @@ begin
   AVU_C_Present <= ExecuteWord.Ext_Active;
   AVU_C_Operation <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Operation, ExtOpSize_C));
   AVU_C_Tag <= std_logic_vector(to_unsigned(ExecuteWord.Ext_Dest, Log2MaxRegs_C));
+  AVU_C_Respond <= ExecuteWord.Ext_ExpectResult;
 
   AVUOperand_P : process(ExecuteWord, VRF_RA_Data, VRF_RB_Data, RF_RB_Data)
   begin
