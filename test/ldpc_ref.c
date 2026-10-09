@@ -57,6 +57,17 @@
 #define SCALE34(m) ((3 * (m)) >> 2)
 #endif
 
+/*
+ * Magnitude clamp applied to |Q| before the min search, so every message is
+ * bounded by SCALE34(g_mag_max).  127 means "no clamp" (the original
+ * behaviour).  A layered decoder with int8 posteriors needs this on real
+ * codes: columns shared by dozens of layers keep L pinned at +-127 while the
+ * stored messages R are as large as 95, so L - R_old can flip sign and the
+ * decoder diverges after reaching the correct codeword.  Keeping |R| well
+ * below the posterior range (about 1/4 of it) fixes that.  See ldpc_nr.c.
+ */
+static int g_mag_max = 127;
+
 typedef int8_t llr_t;
 
 typedef struct {
@@ -91,6 +102,7 @@ static void ref_decode(const code_t *K, llr_t (*L)[MAXZ], int iters)
                 for (int i = 0; i < Z; i++) {
                     int q = sat8(L[ec[e]][(i + es[e]) % Z] - Rref[l][ec[e]][i]);
                     int m = q < 0 ? -q : q;
+                    if (m > g_mag_max) m = g_mag_max;
                     Q[e][i] = q;
                     sp[i] ^= (q < 0);
                     if (m < m1[i])      { m2[i] = m1[i]; m1[i] = m; ix[i] = e; }
@@ -174,6 +186,7 @@ static void lcmp(avu_t *a, const word_t *q)
 {
     for (int i = 0; i < 4 * a->V; i++) {
         int x = lane_get(q, i), m = x < 0 ? -x : x;
+        if (m > g_mag_max) m = g_mag_max;
         a->sp[i] ^= (x < 0);
         if (m < a->min1[i])      { a->min2[i] = a->min1[i]; a->min1[i] = m; a->idx[i] = a->cmp_cnt; }
         else if (m < a->min2[i]) { a->min2[i] = m; }
