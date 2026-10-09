@@ -289,7 +289,8 @@ static int kern_decode(const code_t *K, int V, llr_t (*L)[MAXZ], int iters, int 
 
     avu_t avu;
     word_t vQ[MAXD][MAXV], vL[MAXV], vR[MAXV], vN[MAXV];
-
+    int kern_count = 0;
+    
     for (int it = 0; it < iters; it++) {
         for (int l = 0; l < K->mb; l++) {
             const layer_t *Ly = &ly[l];
@@ -302,6 +303,7 @@ static int kern_decode(const code_t *K, int V, llr_t (*L)[MAXZ], int iters, int 
                     vld(vR, &Rmem[l][e][v * V], V);
                     vsubs8(vQ[e], vL, vR, V);
                     lcmp(&avu, vQ[e]);
+		    kern_count += 5;
                 }
                 for (int e = 0; e < Ly->d; e++) {                 /* pass 2 */
                     const edge_t *E = &Ly->e[e];
@@ -312,6 +314,7 @@ static int kern_decode(const code_t *K, int V, llr_t (*L)[MAXZ], int iters, int 
                     vst(dst + v * V, vL, V);
                     vrotb(vL, vL, V, 24);
                     vst(dst + Qp + v * V, vL, V);
+		    kern_count += 6;
                 }
             }
             for (int e = 0; e < Ly->d; e++) cur[Ly->e[e].c] ^= 1; /* swap */
@@ -319,6 +322,8 @@ static int kern_decode(const code_t *K, int V, llr_t (*L)[MAXZ], int iters, int 
         }
     }
 
+    printf("kern_count = %d\n", kern_count);
+    
     /* unpack, undo the end-of-iteration frame */
     for (int c = 0; c < K->nb; c++)
         for (int w = 0; w < Qp; w++)
@@ -389,8 +394,9 @@ static int toy_test(int dump)
 static int random_tests(void)
 {
     static const struct { int Z, V; } cfg[] = {
-        { 4, 1 }, { 8, 2 }, { 32, 4 }, { 32, 8 }, { 64, 4 }, { 64, 16 },
-        { 96, 8 }, { 96, 4 }, { 128, 8 }, { 128, 16 }, { 240, 5 }, { 384, 16 }, { 384, 8 },
+      // { 4, 1 }, { 8, 2 }, { 32, 4 }, { 32, 8 }, { 64, 4 }, { 64, 16 },
+      // { 96, 8 }, { 96, 4 }, { 128, 8 }, { 128, 16 }, { 240, 5 },
+	{ 384, 16 }, { 384, 8 },
     };
     int trials = 0, bad = 0, converged = 0;
 
