@@ -19,7 +19,8 @@
 			 add s0, s0, 4
 
 //
-// Function prologue and epilogue for nested functions (stores LR onto stack)
+// Function prologue and epilogue for nested functions (LR saved on stack)
+//   Parameter s specifies the register to be used as scratch
 //
 
 #define prologue(s)      mflr s \
