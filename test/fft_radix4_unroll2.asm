@@ -1,3 +1,13 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (c) 2026 Juhani Vehvilainen. All rights reserved.
+// 
+// PROPRIETARY AND CONFIDENTIAL.
+// Unauthorized copying, modification, or distribution of this file, 
+// via any medium, is strictly prohibited.
+//
+///////////////////////////////////////////////////////////////////////////////
+
 	.export "fft_dit_radix4_unroll2"
 	.import "w_table"
 
