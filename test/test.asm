@@ -18,8 +18,6 @@
 #define STACK_WORDS   100
 	
 bss_start:	
-	.long STACK_WORDS
-top_of_stack:
 	
 vektoridata_alku:
 	.long 64
@@ -28,8 +26,10 @@ vektoridata_loppu:
 fft_data:
 	.long FFT_LEN
 
-	.align V_BYTES  // Force the section to be multiple of vector size
+	.long STACK_WORDS
+top_of_stack:
 	
+	.align V_BYTES  // Force the section to be multiple of vector size	
 bss_end:	
 	
 	.section "const"

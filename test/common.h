@@ -13,10 +13,10 @@
 // Single register push/pop
 //
 
-#define push(s)          sub s0, s0, 4 \
-                         st s, s0, 0
-#define pop(s)           ld s, s0, 0 \
-			 add s0, s0, 4
+#define push(s)          sub sp, sp, 4 \
+                         st s, sp, 0
+#define pop(s)           ld s, sp, 0 \
+			 add sp, sp, 4
 
 //
 // Function prologue and epilogue for nested functions (LR saved on stack)
