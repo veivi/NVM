@@ -18,7 +18,7 @@ end Testbench;
 architecture Bhv of Testbench is
   constant ClockCycle_C : time := 10 ns;
   constant Log2IROMSize_C : integer := 12;
-  constant AddrSize_C : integer := 20;
+  constant AddrSize_C : integer := 24;
   constant Log2BPW_C : integer := 2;
   constant WordAddrSize_C : integer := AddrSize_C - Log2BPW_C;
   constant BytesPerWord_C : integer := 2**Log2BPW_C;
@@ -145,10 +145,10 @@ begin
   -- Vector Unit
   --
   
-  AVU_I : entity WORK.VU101(RTL)
+  AVU_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C
-                --, Precision_C => Precision_C
+                , Precision_C => Precision_C
                 )
 
     port map(Clk => Clk,

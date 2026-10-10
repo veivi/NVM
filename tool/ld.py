@@ -179,6 +179,16 @@ def main():
             else:
                 raise LinkError(f"Unrecognized reference type {ref["type"]}")
 
+            if "function" in ref:
+                # print(f"  Function reference {ref["function"]}")
+                match ref["function"]:
+                    case "hi":
+                        target = target>>12
+                        # print(f"hi() = {target}")
+                    case "lo":
+                        target = target & ((1<<12)-1)
+                        # print(f"lo() = {target}")
+                        
             print(f"  {globalName} resolved to {target}")
             patch_instruction(sections[symSect], symOffset, target, ref["bit_offset"], ref["num_bits"])
 

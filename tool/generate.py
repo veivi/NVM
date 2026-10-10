@@ -154,6 +154,7 @@ decoder_lines = [
     "    --",
     "",
     "    ControlWord <= DefaultControlWord_C;",
+    "    Imm_Data <= (others => '0');",
     ""
 ]
 

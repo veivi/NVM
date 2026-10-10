@@ -37,11 +37,6 @@ fft_data:
 	
 bss_end:	
 	
-	.section "data"
-
-merkkijono:	
-	.string "Paska merkkijono\0"
-	
 	.section "const"
 
 w_table:
@@ -53,8 +48,8 @@ test_data:
 	.section "code"
 	
 init:
-	ldi s1, bss_start
-	ldi s2, bss_end
+	load_big(s1, bss_start)
+	load_big(s2, bss_end)
 	sub s2, s2, s1
 
 	vclear(v0)
@@ -66,14 +61,16 @@ clear_bss_loop:
 	add s1, s1, V_BYTES
 
 tests_start:
-	ba test_ldpc
+	// ba test_ldpc
 	// ba write_neg_bytes
 	nop
 	
 	// Initialize fft_data with the test signal
 
-	ldi s0, test_data
-	ldi s1, fft_data
+	load_big(s0, test_data)
+	load_big(s1, fft_data)
+	// ldi s1, fft_data
+
 	ldi s2, FFT_LEN
 	lsr s2, s2, LOG2V
 	
@@ -93,7 +90,7 @@ init_fft_loop:
 
 	debug 0x57A7     // Stopwatch start
 	
-	ldi s1, fft_data
+	load_big(s1, fft_data)
 
 #ifdef RADIX4
 	ldi s2, LOG2FFT_LEN

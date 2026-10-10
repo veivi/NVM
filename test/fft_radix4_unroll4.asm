@@ -61,7 +61,7 @@ fft_dit_radix4_unroll4:
 #define _fft_len     s8	
 	
 	ldi _s, 1               // s = 1
-	ldi _w_table, w_table
+	load_big(_w_table, w_table)
 	lsl _fft_len, _LOG4N, 1
 	lsl _fft_len, _s, _fft_len // fft_len = 1<<(2*log4(N))
 

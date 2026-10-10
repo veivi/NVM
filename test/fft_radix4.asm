@@ -45,10 +45,10 @@ fft_dit_radix4:
 #define _w_table     s7
 #define _fft_len     s8	
 	
+	load_big(_w_table, w_table)
 	ldi _s, 1               // s = 1
-	ldi _w_table, w_table
 	lsl _fft_len, _LOG4N, 1
-	lsl _fft_len, _s, _fft_len // fft_len = 1<<(2*log4(N))
+	lsl _fft_len, _s, _fft_len // fft_len = 1<<(2*log4(N))	
 
 for_s_loop_early:
 	lsl _span, _s, 1          // span = 2*s

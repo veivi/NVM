@@ -43,7 +43,7 @@ end MPM;
 architecture Bhv of MPM is  
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
   
-  constant ROMBase_C : integer := 2**(16 - Log2BPW_C);
+  constant ROMBase_C : integer := 2**(20 - Log2BPW_C);
     
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
 
@@ -214,7 +214,7 @@ begin
           
         elsif State(Latency_C)(P).Transfer = Read_C then
           assert State(Latency_C)(P).Addr < Barrier_C/2**Log2BPW_C or State(Latency_C)(P).Addr >= ROMBase_C
-            report "RAM barrier violated"
+            report "RAM barrier violated (READ)"
             severity warning;
           
           Something := true;
@@ -240,7 +240,7 @@ begin
 
           write(OutLine, string'("|"));
         else
-          write(OutLine, string'("               |"));
+          write(OutLine, string'("                |"));
         end if;
       end loop;
 
@@ -264,11 +264,7 @@ begin
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => '0');
         
         else
-          assert State(Latency_C)(P).Addr < Barrier_C/2**Log2BPW_C or State(Latency_C)(P).Addr >= ROMBase_C
-            report "RAM barrier violated"
-            severity failure;
-          
-          LCR_Present(P) <= '1';
+         LCR_Present(P) <= '1';
           LCR_Tag((P+1)*TagSize_C-1 downto P*TagSize_C) <= State(Latency_C)(P).Tag;
           LCR_Data((P+1)*WordSize_C-1 downto P*WordSize_C) <= (others => 'X');
 

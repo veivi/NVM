@@ -2,19 +2,19 @@
 segment_list:
   code_rom0:
     base: 0
-    size: 1024
+    size: 0x100000
 
   ram0:
     base: 0
-    size: 65536
+    size: 0x100000
 
   data_rom0:
-    base: 65536
-    size: 65536
+    base: 0x100000
+    size: 0x100000
     
 section_mapping:
-  data: ram0
   const: data_rom0
   code: code_rom0
   bss: ram0
+  data: ram0
 

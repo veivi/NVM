@@ -19,7 +19,7 @@ fft_dit_unroll8:
 
 	ldi s3, 1          // s3 = "s" = 1
 	lsl s15, s3, s2    // s15 = 1<<LOG2LEN = FFT_LEN
-	ldi s17, w_table   // s17 points to w_table
+	load_big(s17, w_table) // s17 points to w_table
 
 for_s_loop_early:
 	ldi s4, 1

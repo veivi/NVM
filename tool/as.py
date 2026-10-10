@@ -100,8 +100,11 @@ token_spec = [
     ("HEX",       r"-?0x[\da-fA-F]+"),
     ("DEC",       r"-?\d+"),
     ("IDENT",     r"[A-Za-z_][\w.]*"),
+    ("FUNCTION",  r"\$[A-Za-z_][\w.]*"),
     ("COMMA",     r","),
     ("PLUS",      r"\+"),
+    ("PAR_L", r"\("),
+    ("PAR_R", r"\)"),
     ("BRACKET_L", r"\["),
     ("BRACKET_R", r"\]"),
     ("NEWLINE",   r"\n"),
@@ -217,6 +220,13 @@ class Ident:
         self.name = name
     def __repr__(self):
         return f"Ident({self.name})"
+
+class Function:
+    def __init__(self, name, arg):
+        self.name = name
+        self.arg = arg
+    def __repr__(self):
+        return f"Function({self.name}, {self.arg})"
 
 class StringLit:
     def __init__(self, value):
@@ -384,7 +394,22 @@ class Parser:
         elif tok.type == "IDENT":
             self.advance()
             return Ident(tok.value)
-            return Multiple(int(tok.value[1:]))
+        elif tok.type == "FUNCTION":
+            name = tok.value[1:]
+            # print(f"Function name {name}")
+            self.advance()
+            if not self.check("PAR_L"):
+                raise ParseError("Function expected opening parenthesis")
+            self.advance()
+            if not self.check("IDENT"):
+                raise ParseError("Function expected identifier")
+
+            tok = self.advance()
+            
+            if not self.check("PAR_R"):
+                raise ParseError("Function expected closing parenthesis")
+            self.advance()
+            return Function(name, tok.value)
         elif tok.type == "BRACKET_L":
             self.advance()
             
@@ -447,7 +472,7 @@ def assemble(predicate, mnemonic, params):
     delta = 0
     
     if "variant-name" in ispec:
-        if type(params[-1]) in (Immediate, Ident):
+        if type(params[-1]) in (Immediate, Ident, Function):
             # Must be an immediate variant
             
             varName = ispec["variant-name"]
@@ -589,6 +614,10 @@ def assemble(predicate, mnemonic, params):
             elif type(op) == Ident:
                 # print(f"ref {op.name}")
                 ref = { "type": arg, "symbol": op.name, "bit_offset": offset, "num_bits": size }
+
+            elif type(op) == Function:
+                # print(f"ref {op}")
+                ref = { "type": arg, "function": op.name, "symbol": op.arg, "bit_offset": offset, "num_bits": size }
                 
             else:
                 raise ParseError(f"{mnemonic} immediate expected for a value/index/offset")
