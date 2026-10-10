@@ -80,7 +80,7 @@ if [ "$contention" = "" ]; then
     contention="0.1"
 fi
 
-generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=16 -gRAMSize_C=$bss_end -gContention_C=$contention -gLatency_C=$latency"
+generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=17 -gRAMSize_C=$bss_end -gContention_C=$contention -gLatency_C=$latency"
 
 echo "-- Test bench configuration: $generics"
 
