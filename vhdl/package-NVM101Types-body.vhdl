@@ -1,3 +1,11 @@
+-------------------------------------------------------------------------------
+-- Copyright (c) 2026 Juhani Vehvilainen. All rights reserved.
+-- 
+-- PROPRIETARY AND CONFIDENTIAL.
+-- Unauthorized copying, modification, or distribution of this file, 
+-- via any medium, is strictly prohibited.
+-------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;

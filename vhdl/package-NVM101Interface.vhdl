@@ -1,6 +1,10 @@
---
---
---
+-------------------------------------------------------------------------------
+-- Copyright (c) 2026 Juhani Vehvilainen. All rights reserved.
+-- 
+-- PROPRIETARY AND CONFIDENTIAL.
+-- Unauthorized copying, modification, or distribution of this file, 
+-- via any medium, is strictly prohibited.
+-------------------------------------------------------------------------------
 
 package NVM101Interface is
   constant Log2ByteSize_C : integer := 3;

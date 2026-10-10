@@ -1,4 +1,12 @@
-architecture: "COP103"
+################################################################################
+## Copyright (c) 2026 Juhani Vehvilainen. All rights reserved.
+## 
+## PROPRIETARY AND CONFIDENTIAL.
+## Unauthorized copying, modification, or distribution of this file, 
+## via any medium, is strictly prohibited.
+################################################################################
+
+architecture: "NVM101"
 version: "1.0"
 iword_size_bits: 32
 minimum_opcode: 6
