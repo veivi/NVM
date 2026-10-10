@@ -30,9 +30,8 @@
 #ifdef EFF_LOG4V
 fft_dit_radix4_unroll4:
 	debug 48
-	
-	mflr s3
-	push(s3)
+
+	prologue(s3)
 	
 	// Params: s1 = data, s2 = log4(N)
 
@@ -623,10 +622,9 @@ for_k_loop_late:
 	drain      // Store fence
 
 	// Done
-
-	pop(s3)
-	mtlr s3
-	nop
+	
+	epilogue(s3)
+	
 	ret
 	nop
 #endif

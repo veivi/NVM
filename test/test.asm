@@ -43,7 +43,7 @@ test_data:
 	.section "code"
 	
 init:
-	load_big(s0, top_of_stack)
+	load_big(sp, top_of_stack)
 	
 	load_big(s1, bss_start)
 	load_big(s2, bss_end)
