@@ -69,8 +69,6 @@ tests_start:
 
 	load_big(s0, test_data)
 	load_big(s1, fft_data)
-	// ldi s1, fft_data
-
 	load_big(s2, FFT_LEN)
 	lsr s2, s2, LOG2V
 	
