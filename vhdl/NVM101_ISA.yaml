@@ -9,7 +9,7 @@ minimum_opcode: 6
 
 instruction_formats:
   nop: { opcode: 24 }
-  system: { opcode: 16 }
+  system: { opcode: 16, _: 4, rs: 6, rd: 6 }
   imm: { opcode: 6, value: 20, rd: 6 }
   jump_imm: { opcode: 6, i_target : 26 }
   jump_ind: { opcode: 6, i_disp: 20, rs: 6 }
@@ -316,6 +316,20 @@ instruction_categories:
     unit: "FCU"
     operands: []
     
+  move_to_system:
+    format: "system"
+    prefix: 63
+    unit: "FCU"
+    operands: [ rs ]
+    register-read-a: "rs"
+    
+  move_from_system:
+    format: "system"
+    prefix: 63
+    unit: "FCU"
+    operands: [ rd ]
+    register-write: "rd"
+    
   nop:
     format: "nop"
     prefix: 0
@@ -343,6 +357,18 @@ instruction_set:
     opcode: 2
     operation: "FlowOp_RET_C"
     behaviour: "Jump to LR"
+  
+  MTLR:
+    category: "move_to_system"
+    opcode: 3
+    operation: "FlowOp_MTLR_C"
+    behaviour: "Move to LR"
+  
+  MFLR:
+    category: "move_from_system"
+    opcode: 4
+    operation: "FlowOp_MFLR_C"
+    behaviour: "Move from LR"
   
   EXT:
     category: "ext"

@@ -48,7 +48,8 @@ entity FCU is
        VCR_Write_Datum : in SimpleDatumVector_T(2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        
        Imm_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
-       Reg_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));
+       Reg_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
+       Reg_Data_Out : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));
 end FCU;
 
 architecture RTL of FCU is
@@ -64,7 +65,7 @@ architecture RTL of FCU is
   signal Evaluated : std_logic;
 begin
   --
-  -- Instruction pointer storage
+  -- Instruction pointer and link register storage
   --
 
   IP_P : process(Clk)
@@ -79,24 +80,37 @@ begin
         DIP <= FIP;
         FIP <= NIP;
 
-        case ControlWord.FCU_Operation is
-          when FlowOp_BCL_C =>
-            if Evaluated = '1' then
+        if ExecuteWord.FCU_Operation = FlowOp_MTLR_C then
+          -- Move to Link Register
+
+          LR <= Reg_Data(AddrSize_C-1 downto 0);
+          
+        else
+          case ControlWord.FCU_Operation is
+            when FlowOp_BCL_C =>
+              if Evaluated = '1' then
+                LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
+              end if;
+
+            when FlowOp_JMPAL_C | FlowOp_JMPL_C =>
               LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
-            end if;
 
-          when FlowOp_JMPAL_C | FlowOp_JMPL_C =>
-            LR <= std_logic_vector(unsigned(FIP) + to_unsigned(1, AddrSize_C));
-
-          when others =>
-            -- No linking
-            null;            
-        end case;
+            when others =>
+              -- No linking
+              null;            
+          end case;
+        end if;
       else
       end if;
     end if;
   end process;
 
+  --
+  --
+  --
+
+  Reg_Data_Out <= std_logic_vector(resize(unsigned(LR), 2**Log2BPW_C*ByteSize_C));
+  
   --
   -- Next instruction pointer
   --

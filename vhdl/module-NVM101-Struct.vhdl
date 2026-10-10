@@ -78,6 +78,7 @@ architecture Struct of NVM101 is
   signal ExecuteDatum : Datum_T;
   
   signal Imm_Data, Execute_Imm_Data : std_logic_vector(WordSize_C-1 downto 0);
+  signal RF_WA_Data_FCU : std_logic_vector(WordSize_C-1 downto 0);
   
   signal LS_Ready : std_logic;
   signal LS_C_Stride : std_logic_vector(AddrSize_C-1 downto 0);
@@ -178,7 +179,8 @@ begin
              VCR_Read_Datum => VCR_Read_Datum,
              
              Imm_Data => Imm_Data,
-             Reg_Data => RF_RA_Data);
+             Reg_Data => RF_RA_Data,
+             Reg_Data_Out => RF_WA_Data_FCU );
     
   --
   -- Debug port
@@ -440,7 +442,10 @@ begin
   -- Scalar RF Write A Multiplexing
   --
 
-  RF_WA_Data <= ALU_Result when ExecuteWord.ALU_Operation /= ALUOp_None_C else Execute_Imm_Data;
+  RF_WA_Data <=
+    ALU_Result when ExecuteWord.ALU_Operation /= ALUOp_None_C
+    else RF_WA_Data_FCU when ExecuteWord.FCU_Operation = FlowOp_MFLR_C
+    else Execute_Imm_Data;
   
   --
   -- Scalar ALU

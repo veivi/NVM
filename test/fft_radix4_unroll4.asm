@@ -31,6 +31,9 @@
 fft_dit_radix4_unroll4:
 	debug 48
 	
+	mflr s3
+	push(s3)
+	
 	// Params: s1 = data, s2 = log4(N)
 
 #define _A          s1
@@ -621,6 +624,9 @@ for_k_loop_late:
 
 	// Done
 
+	pop(s3)
+	mtlr s3
+	nop
 	ret
 	nop
 #endif

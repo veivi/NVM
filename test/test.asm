@@ -15,16 +15,11 @@
 	
 	.section "bss"
 
-bss_start:	
-	.byte 5
-
-	.align 16
-test:	
-	.long 1
-	.short 10
-	.word 1
+#define STACK_WORDS   100
 	
-	.align 4
+bss_start:	
+	.long STACK_WORDS
+top_of_stack:
 	
 vektoridata_alku:
 	.long 64
@@ -48,6 +43,8 @@ test_data:
 	.section "code"
 	
 init:
+	load_big(s0, top_of_stack)
+	
 	load_big(s1, bss_start)
 	load_big(s2, bss_end)
 	sub s2, s2, s1
@@ -67,18 +64,18 @@ tests_start:
 	
 	// Initialize fft_data with the test signal
 
-	load_big(s0, test_data)
-	load_big(s1, fft_data)
-	load_big(s2, FFT_LEN)
-	lsr s2, s2, LOG2V
+	load_big(s1, test_data)
+	load_big(s2, fft_data)
+	load_big(s3, FFT_LEN)
+	lsr s3, s3, LOG2V
 	
 init_fft_loop:
-	vld v0, s0, 1
-	add s0, s0, V_BYTES
-	sub s2, s2, 1
-	vst v0, s1, 1
-	bgt (c0), init_fft_loop
+	vld v0, s1, 1
 	add s1, s1, V_BYTES
+	sub s3, s3, 1
+	vst v0, s2, 1
+	bgt (c0), init_fft_loop
+	add s2, s2, V_BYTES
 
 	// Drain!!
 
