@@ -138,30 +138,35 @@ def main():
     #
     
     for module, ref_list in references.items():
-        print(f"Resolving module {module}...")
-    
         for ref in ref_list:
             symbol = ref["symbol"]
-
-            if symbol in imports[module] or symbol in exports[module]:
-                globalName = symbol
-            else:
-                globalName = module + ":" + symbol
-
-            if globalName in labels:
-                label = labels[globalName]
-            else:
-                raise LinkError(f"Unrecognized symbol '{symbol}' in module {module}")
-
-            targetModule = label["module"]
-            targetSect = label["section"]
-            targetOffset = label["offset"] + moduleStart[targetModule][targetSect]
-        
             symSect = ref["section"]
             symOffset = ref["index"] + moduleStart[module][symSect]
+                                             
+            print(f"Resolving module {module} reference to {symbol}...")
+    
+            if symbol[0].isdigit():
+                # It's a literal
+                target = int(symbol)
+                # print(f"Literal {target}")
+            else:
+                if symbol in imports[module] or symbol in exports[module]:
+                    globalName = symbol
+                else:
+                    globalName = module + ":" + symbol
+
+                if globalName in labels:
+                    label = labels[globalName]
+                else:
+                    raise LinkError(f"Unrecognized symbol '{symbol}' in module {module}")
+
+                targetModule = label["module"]
+                targetSect = label["section"]
+                targetOffset = label["offset"] + moduleStart[targetModule][targetSect]
         
-            target = segmentList[sectionMap[targetSect]]["base"] + sectionBase[targetSect] + targetOffset
-                                     
+                target = segmentList[sectionMap[targetSect]]["base"] + sectionBase[targetSect] + targetOffset
+                # print(f"Symbol {symbol} = {target}")
+                    
             if ref["type"] == "i_target":
                 target = target>>2
             

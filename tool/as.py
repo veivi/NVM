@@ -401,7 +401,7 @@ class Parser:
             if not self.check("PAR_L"):
                 raise ParseError("Function expected opening parenthesis")
             self.advance()
-            if not self.check("IDENT"):
+            if not self.check("IDENT") and not self.check("DEC") and not self.check("HEX"):
                 raise ParseError("Function expected identifier")
 
             tok = self.advance()
