@@ -184,8 +184,9 @@ def main():
             else:
                 raise LinkError(f"Unrecognized reference type {ref["type"]}")
 
+            print(f"  {globalName} resolved to {target}")
+            
             if "function" in ref:
-                # print(f"  Function reference {ref["function"]}")
                 match ref["function"]:
                     case "hi":
                         target = target>>12
@@ -194,7 +195,8 @@ def main():
                         target = target & ((1<<12)-1)
                         # print(f"lo() = {target}")
                         
-            print(f"  {globalName} resolved to {target}")
+                print(f"  Function {ref["function"]} returns {target}")
+                
             patch_instruction(sections[symSect], symOffset, target, ref["bit_offset"], ref["num_bits"])
 
     #

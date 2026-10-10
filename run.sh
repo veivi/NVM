@@ -80,7 +80,7 @@ if [ "$contention" = "" ]; then
     contention="0.1"
 fi
 
-generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=14 -gRAMSize_C=$bss_end -gContention_C=$contention -gLatency_C=$latency"
+generics="-g VecSize_C=$vecsize -gPrecision_C=$precision -gLog2RAMSize_C=16 -gRAMSize_C=$bss_end -gContention_C=$contention -gLatency_C=$latency"
 
 echo "-- Test bench configuration: $generics"
 
@@ -94,9 +94,13 @@ fi
 rm log.txt
 rm artefact/sim_log.txt
 
-echo "Starting the simulation..."
+sim_opts=" --stop-time=10ms --exit-severity=error --wave=wave.fst"
+# sim_opts="$sim_opts --dump-arrays=64"
 
-nvc >&artefact/sim_log.txt -r Testbench --stop-time=10ms --exit-severity=error --wave=wave.fst --dump-arrays=64
+echo "Starting the simulation..."
+echo "  sim options = $sim_opts"
+
+nvc >&artefact/sim_log.txt -r Testbench $sim_opts
 
 if [ $? -ne 0 ]; then
     echo "NVC run failed"
