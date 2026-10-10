@@ -118,7 +118,7 @@ init_fft_loop:
 	
 	ldi s3, 1
 	lsl s3, s3, s2
-	ldi s4, 0xff
+	ldi s4, 0x80
 	lsl s4, s4, 16
 	
 read_loop:

@@ -871,7 +871,7 @@ void store_reference(const char *name, complex_t A[], int len)
     
     for(i = 0; i < len; i++) {
       complex_t a = A[i];
-      fprintf(file, "%.4X:=%.8X (S)\n", 0xFF0000 + i*4, to_fixed_point(&a));
+      fprintf(file, "%.4X:=%.8X (S)\n", 0x800000 + i*4, to_fixed_point(&a));
     }
     
     fclose(file);
