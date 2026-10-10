@@ -243,6 +243,12 @@ def generate_opcode(op, variant, first):
         (offset, length) = instruction_field(format, category["register-write"])
         decoder_lines.append("      ControlWord.RF_W_Active <= '1';")
         decoder_lines.append(f"      ControlWord.RF_W_Index <= RegIndex(I_Code({offset+length-1} downto {offset}));")
+    if "system-read" in category:
+        (offset, length) = instruction_field(format, category["system-read"])
+        decoder_lines.append(f"      ControlWord.FCU_Index <= RegIndex(I_Code({offset+length-1} downto {offset}));")
+    if "system-write" in category:
+        (offset, length) = instruction_field(format, category["system-write"])
+        decoder_lines.append(f"      ControlWord.FCU_Index <= RegIndex(I_Code({offset+length-1} downto {offset}));")
     if "vector-read-a" in category:
         (offset, length) = instruction_field(format, category["vector-read-a"])
         decoder_lines.append("      ControlWord.VRF_RA_Active <= '1';")

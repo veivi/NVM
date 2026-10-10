@@ -9,7 +9,8 @@ minimum_opcode: 6
 
 instruction_formats:
   nop: { opcode: 24 }
-  system: { opcode: 16, _: 4, rs: 6, rd: 6 }
+  system_read: { opcode: 16, _: 4, zs: 6, rd: 6 }
+  system_write: { opcode: 16, _: 4, rs: 6, zd: 6 }
   imm: { opcode: 6, value: 20, rd: 6 }
   jump_imm: { opcode: 6, i_target : 26 }
   jump_ind: { opcode: 6, i_disp: 20, rs: 6 }
@@ -305,30 +306,32 @@ instruction_categories:
     vector-read-b: "vs2"
 
   fence:
-    format: "system"
+    format: "system_read"
     prefix: 63
     unit: "Fence"
     operands: []
 
   system:
-    format: "system"
+    format: "system_read"
     prefix: 63
     unit: "FCU"
     operands: []
     
   move_to_system:
-    format: "system"
+    format: "system_write"
     prefix: 63
     unit: "FCU"
-    operands: [ rs ]
+    operands: [ zd, rs ]
     register-read-a: "rs"
+    system-write: "zd"
     
   move_from_system:
-    format: "system"
+    format: "system_read"
     prefix: 63
     unit: "FCU"
-    operands: [ rd ]
+    operands: [ rd, zs ]
     register-write: "rd"
+    system-read: "zs"
     
   nop:
     format: "nop"
@@ -358,17 +361,17 @@ instruction_set:
     operation: "FlowOp_RET_C"
     behaviour: "Jump to LR"
   
-  MTLR:
+  MTSYS:
     category: "move_to_system"
     opcode: 3
-    operation: "FlowOp_MTLR_C"
-    behaviour: "Move to LR"
+    operation: "FlowOp_MvToSys_C"
+    behaviour: "Move to System"
   
-  MFLR:
+  MFSYS:
     category: "move_from_system"
     opcode: 4
-    operation: "FlowOp_MFLR_C"
-    behaviour: "Move from LR"
+    operation: "FlowOp_MvFrSys_C"
+    behaviour: "Move from System"
   
   EXT:
     category: "ext"

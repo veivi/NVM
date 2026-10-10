@@ -150,7 +150,8 @@ begin
   FCU_I : entity WORK.FCU(RTL)
     generic map(AddrSize_C => AddrSize_C,
                 Log2BPW_C => Log2BPW_C,
-                Log2VecSize_C => Log2VecSize_C)
+                Log2VecSize_C => Log2VecSize_C,
+                Log2NumOfRegs_C => Log2NumOfRegs_C)
 
     port map(Clk => Clk,
              Reset => Reset,
@@ -444,7 +445,7 @@ begin
 
   RF_WA_Data <=
     ALU_Result when ExecuteWord.ALU_Operation /= ALUOp_None_C
-    else RF_WA_Data_FCU when ExecuteWord.FCU_Operation = FlowOp_MFLR_C
+    else RF_WA_Data_FCU when ExecuteWord.FCU_Operation = FlowOp_MvFrSys_C
     else Execute_Imm_Data;
   
   --

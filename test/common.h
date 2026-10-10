@@ -21,14 +21,14 @@
 //
 // Function prologue and epilogue for nested functions (LR saved on stack)
 //   Parameter s specifies the register to be used as scratch
-//
+//   z1 = link register
 
-#define prologue(s)      mflr s \
+#define prologue(s)      mfsys s, z1   \
                          sub sp, sp, 4 \
                          st s, sp, 0
 
 #define epilogue(s)      ld s, sp, 0 \
-			 mtlr s \
+                         mtsys z1, s  \
 			 add sp, sp, 4
 
 #endif

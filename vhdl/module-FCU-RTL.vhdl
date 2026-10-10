@@ -7,7 +7,8 @@ use WORK.NVM101Types.all;
 entity FCU is
   generic(AddrSize_C : integer;
           Log2BPW_C : integer;
-          Log2VecSize_C : integer);
+          Log2VecSize_C : integer;
+          Log2NumOfRegs_C : integer);
 
   port(Clk : in std_logic;
        Reset : in std_logic;
@@ -63,6 +64,7 @@ architecture RTL of FCU is
   signal CR_Read_Value : Datum_T;
   signal VectorCR : VectorDatumArray_T(0 to 2**Log2NumOfCondRegs_C-1);
   signal Evaluated : std_logic;
+  signal IDPointer : integer range 0 to 2**Log2IdRecordSize_C-1;
 begin
   --
   -- Instruction pointer and link register storage
@@ -80,7 +82,8 @@ begin
         DIP <= FIP;
         FIP <= NIP;
 
-        if ExecuteWord.FCU_Operation = FlowOp_MTLR_C then
+        if ExecuteWord.FCU_Operation = FlowOp_MvToSys_C
+          and ExecuteWord.FCU_Index = System_LR_C then
           -- Move to Link Register
 
           LR <= Reg_Data(AddrSize_C-1 downto 0);
@@ -106,10 +109,78 @@ begin
   end process;
 
   --
-  --
+  -- System register read decode
   --
 
-  Reg_Data_Out <= std_logic_vector(resize(unsigned(LR), 2**Log2BPW_C*ByteSize_C));
+  SystemRead_P : process(ExecuteWord, LR, IDPointer)
+  begin
+    case ExecuteWord.FCU_Index is
+      when System_LR_C =>
+        -- Link register value
+        Reg_Data_Out <= std_logic_vector(resize(unsigned(LR), 2**Log2BPW_C*ByteSize_C));
+
+      when System_ID_C =>
+        -- ID register value
+        case IDPointer is
+          when 0 =>
+            -- Magic number
+            Reg_Data_Out <=
+              std_logic_vector(to_unsigned(16#DEDBEEF#, 2**Log2BPW_C*ByteSize_C));
+
+          when 1 =>
+            -- Word size
+            Reg_Data_Out <=
+              std_logic_vector(to_unsigned(2**Log2BPW_C*ByteSize_C, 2**Log2BPW_C*ByteSize_C));
+            
+          when 2 =>
+            -- Address size
+            Reg_Data_Out <=
+              std_logic_vector(to_unsigned(AddrSize_C, 2**Log2BPW_C*ByteSize_C));
+            
+          when 3 =>
+            -- Vector size
+            Reg_Data_Out <=
+              std_logic_vector(to_unsigned(2**Log2VecSize_C, 2**Log2BPW_C*ByteSize_C));
+            
+          when 4 =>
+            -- Num of registers
+            Reg_Data_Out <=
+              std_logic_vector(to_unsigned(2**Log2NumOfRegs_C, 2**Log2BPW_C*ByteSize_C));
+
+          when others =>
+            Reg_Data_Out <= 
+              std_logic_vector(to_unsigned(16#B16B00B#, 2**Log2BPW_C*ByteSize_C));
+        end case;
+
+      when others =>
+        Reg_Data_Out <= (others => '0');
+        
+    end case;
+  end process;
+
+  --
+  -- ID Pointer
+  --
+
+  IDPointer_P : process(Clk)
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        IDPointer <= 0;
+        
+      elsif ExecuteWord.FCU_Index = System_ID_C then
+        if ExecuteWord.FCU_Operation = FlowOp_MvToSys_C then
+          -- Write to ID register
+
+          IDPointer <= to_integer(unsigned(Reg_Data(Log2IDRecordSize_C-1 downto 0)));
+        elsif ExecuteWord.FCU_Operation = FlowOp_MvFrSys_C then
+          -- Read from ID register
+
+          IDPointer <= ( IDPointer + 1 ) mod 2**Log2IDRecordSize_C;
+        end if;
+      end if;
+    end if;
+  end process;
   
   --
   -- Next instruction pointer

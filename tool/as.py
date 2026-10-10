@@ -94,6 +94,7 @@ token_spec = [
     ("REGISTER",  r"%\d+"),
     ("SCALAR",    r"s\d+"),
     ("VECTOR",    r"v\d+"),
+    ("SYSTEM",    r"z\d+"),
     ("CREGISTER", r"[cC]\d+"),
     ("VCREGISTER", r"vc\d+"),
     ("UNIT",      r"[uU]\d+"),
@@ -158,6 +159,12 @@ class Register:
         self.index = num
     def __repr__(self):
         return f"S({self.index})"
+
+class SystemRegister:
+    def __init__(self, num):
+        self.index = num
+    def __repr__(self):
+        return f"SYS({self.index})"
 
 #class CRRef:
 #    def __init__(self, num):
@@ -367,6 +374,9 @@ class Parser:
         elif tok.type == "SCALAR":
             self.advance()
             return Register(int(tok.value[1:]))
+        elif tok.type == "SYSTEM":
+            self.advance()
+            return SystemRegister(int(tok.value[1:]))
         elif tok.type == "VECTOR":
             self.advance()
             return VectorRegister(int(tok.value[1:]))
@@ -557,6 +567,14 @@ def assemble(predicate, mnemonic, params):
                 iword |= op.index << offset
             else:
                 raise ParseError(f"{mnemonic} vd/vs/vs1/vs2 expects a vector register")
+            
+        elif arg in ("zd", "zs"):
+            op = params[param_index]
+            
+            if type(op) == SystemRegister:
+                iword |= op.index << offset
+            else:
+                raise ParseError(f"{mnemonic} zd/zs expects a system register")
             
         elif arg == "cr":
             op = params[param_index]

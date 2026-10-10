@@ -43,7 +43,25 @@ test_data:
 	.section "code"
 	
 init:
+	// Identify first
+
+	clear(s2)
+	clear(s3)
+	mtsys z0, s2  // Clear ID pointer
+	ldi s1, 8
+	
+id_loop:
+	mfsys s2, z0  // Read ID
+	st s2, s3, 0
+	sub s1, s1, 1
+	bge (c0), id_loop
+	add s3, s3, 4
+	
+	// Initialize stack pointer
+	
 	load_big(sp, top_of_stack)
+
+	// Clear BSS data
 	
 	load_big(s1, bss_start)
 	load_big(s2, bss_end)

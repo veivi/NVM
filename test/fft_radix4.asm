@@ -16,9 +16,7 @@
 fft_dit_radix4:
 	debug 48
 
-	sub s0, s0, 4
-	mflr s3
-	st s3, s0, 0   // Store LR to stack
+	prologue(s3)
 	
 	// Params: s1 = data, s2 = log4(N)
 
@@ -482,10 +480,7 @@ for_k_loop_late:
 
 	// Done
 
-	ld s3, s0, 0   // Restore LR from stack
-	add s0, s0, 4
-	mtlr s3
-	nop
+	epilogue(s3)
 	ret
 	nop
 #endif
