@@ -213,6 +213,16 @@ architecture RTL of VU103 is
     return ( Sign => Sign, Exp => Exp, Mantissa => Mant);
   end function;
 
+  function Negate(A : MultiplyResult_T) return MultiplyResult_T is
+  begin
+    return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
+  end function;
+  
+  function Add(A : MultiplyResult_T; B : MultiplyResult_T) return MultiplyResult_T is
+  begin
+    -- FIXME: Implement!
+  end function;
+    
   function Normalize(A : MultiplyResult_T) return Scalar_T is
     variable Exp : ExtExp_T;
     variable Mant : DoubleMantissa_T;
@@ -347,7 +357,7 @@ begin
   end process;
 
   --
-  -- Partial result adder
+  -- Partial result adder, result output
   --
   
   PartialAdder_P : process(Clk)
@@ -355,60 +365,29 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        MultiplyValid <= '0';
-        MultiplyRespond <= '0';
+        AVU_R_Present <= '0';
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if PartialOperation(2 downto 0) = "000" then
-            MultiplyResult(I) <= Complex(Normalize(Add(PartialMultiplyResult(I).RealARealB,
-                                                       Negate(PartialMultiplyResult(I).ImagAImagB))),
-                                         Normalize(Add(PartialMultiplyResult(I).RealAImagB,
-                                                       PartialMultiplyResult(I).ImagARealB)));
-          else
-            MultiplyResult(I) <= Complex(Normalize(PartialAddResult(I).Real),
-                                         Normalize(PartialAddResult(I).Imag));
-          end if;
-        end loop;
-
-        MultiplyTag <= PartialTag;
-        MultiplyOperation <= PartialOperation;
-        MultiplyRespond <= PartialRespond;
-        MultiplyValid <= '1';
-      else
-        MultiplyValid <= '0';
-        MultiplyOperation <= (others => '0');
-        MultiplyRespond <= '0';
-      end if;
-    end if;
-  end process;
-
-  --
-  -- Accumulator/Result output
-  --
-  
-  Accumulator_P : process(Clk)
-  begin
-    if rising_edge(Clk) then
-      if Reset = '1' then
-        AVU_R_Present <= '0';
-        AVU_R_Tag <= (others => '0');
-
-      elsif MultiplyValid = '1' then
-        for I in 0 to 2**Log2VecSize_C-1 loop
-          if MultiplyOperation(3) = '1' then
-            -- Add the previous result to the result
+          if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
+            -- Complex multiply
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
+              <= Complex(Normalize(Add(PartialMultiplyResult(I).RealARealB,
+                                       Negate(PartialMultiplyResult(I).ImagAImagB))),
+                         Normalize(Add(PartialMultiplyResult(I).RealAImagB,
+                                       PartialMultiplyResult(I).ImagARealB)));
           else
-            -- Just output result of operation between A and B
+            -- Complex add/sub/etc
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= Complex(Normalize(PartialAddResult(I).Real),
+                         Normalize(PartialAddResult(I).Imag));
           end if;
-          AVU_R_Present <= MultiplyRespond;
-          AVU_R_Tag <= MultiplyTag;
         end loop;
+
+        AVU_R_Tag <= PartialTag;
+        AVU_R_Present <= PartialRespond;
       else
         AVU_R_Present <= '0';
       end if;
