@@ -9,6 +9,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
@@ -66,6 +67,34 @@ typedef struct complex {
 
 #elif USE_FP16
 
+// #define TEST_FP16        1
+
+#define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
+#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
+
+#define MUL(a, b) fp16_mul(a, b)
+#define ADD(a, b) fp16_add(a, b)
+#define SUB(a, b) fp16_sub(a, b)
+#define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
+#define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
+#define COMPLEX_MUL(a, b) (complex_t) { SUB(MUL((a).real, (b).real), MUL((a).imag, (b).imag)), \
+      ADD(MUL((a).real, (b).imag), MUL((a).imag, (b).real)) }
+#define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
+#define TO_DOUBLE(a) ((double) fp16_to_float(a))
+
+#define FP16_PRECISION   12  // Includes implicit '1'
+#define FP16_MANT_BITS   (FP16_PRECISION - 1)
+#define FP16_EXP_BITS    (8*sizeof(fp16_t) - 1 - FP16_MANT_BITS)
+#define FP16_EXP_BIAS    ((1<<FP16_EXP_BITS)/2)
+#define MASK(n)          ((1<<(n)) - 1)
+
+#define FP16_MANTISSA(a)   (a != 0 ? (((a) & MASK(FP16_MANT_BITS)) | (1<<FP16_MANT_BITS)) : 0)
+#define FP16_EXP(a)        (((a)>>FP16_MANT_BITS) & MASK(FP16_EXP_BITS))
+#define FP16_SIGN(a)       (((a)>>(FP16_MANT_BITS + FP16_EXP_BITS)) & 1)
+#define FP16_PACK(s, e, m) ((((s) & 1)<<(FP16_MANT_BITS + FP16_EXP_BITS)) \
+			    | (((e) & MASK(FP16_EXP_BITS))<<FP16_MANT_BITS) \
+			    | ((m) & MASK(FP16_MANT_BITS)))
+
 typedef uint16_t fp16_t;
 
 typedef fp16_t part_t;
@@ -74,26 +103,159 @@ typedef struct complex {
   part_t real, imag;
 } complex_t;
 
-fp16_t fp16_from_int(int a);
-fp16_t fp16_from_float(float a);
-float fp16_to_float(fp16_t a);
-fp16_t fp16_mul(fp16_t a, fp16_t b);
-fp16_t fp16_add(fp16_t a, fp16_t b);
-fp16_t fp16_sub(fp16_t a, fp16_t b);
+fp16_t fp16_from_float(float a)
+{
+  float f_mant = 0.0f;
+  int f_exp, s = 0;
+  
+  f_mant = frexpf(a, &f_exp);
 
-#define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
-#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
+  s = f_mant < 0.0f ? 1 : 0;
+  f_mant = fabsf(f_mant);
 
-#define MUL(a, b) fp16_mul(a, b)
-#define NORM(a) (a)
-#define ADD(a, b) fp16_add(a, b)
-#define SUB(a, b) fp16_sub(a, b)
-#define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
-#define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
-#define COMPLEX_MUL(a, b) (complex_t) { NORM(MUL((a).real, (b).real)-MUL((a).imag, (b).imag)), \
-      NORM(MUL((a).real, (b).imag)+MUL((a).imag, (b).real)) }
-#define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
-#define TO_DOUBLE(a) ((double) fp16_to_float(a))
+  // printf("a = %.3f: s=%d  mant=%.3f  exp=%d\n", a, s, f_mant, f_exp);
+  
+  f_exp += FP16_EXP_BIAS;
+    
+  if(f_mant == 0.0f || f_exp < 0)
+    // Underflow to zero
+    return 0;
+  
+  return FP16_PACK(s, f_exp, (int16_t) (f_mant * (1<<FP16_PRECISION)));
+}
+
+fp16_t fp16_from_int(int a)
+{
+  return fp16_from_float((float) a);
+}
+
+float fp16_to_float(fp16_t a)
+{
+  float result = 0.0f;
+
+  if(a == 0)
+    return 0.0f;
+  
+  result = (float) FP16_MANTISSA(a) / (float) (1<<FP16_PRECISION);
+
+  if(FP16_SIGN(a))
+    result = -result;
+  
+  return ldexpf(result, FP16_EXP(a) - FP16_EXP_BIAS);
+}
+
+fp16_t fp16_mul(fp16_t a, fp16_t b)
+{
+  printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+  
+  //printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
+  //	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+  
+  int s = FP16_SIGN(a) ^ FP16_SIGN(b);
+  int exp = FP16_EXP(a) + FP16_EXP(b) - FP16_EXP_BIAS;
+  int mant = (FP16_MANTISSA(a) * FP16_MANTISSA(b)) >> (FP16_PRECISION - 1);
+
+  if(mant > (1<<FP16_PRECISION)) {
+    exp ++;
+    mant >>= 1;
+  }
+  
+  if(exp > ((1<<FP16_EXP_BITS))) {
+    // Overflow
+    exp = (1<<FP16_EXP_BITS);
+    mant = (1<<FP16_PRECISION)-1;
+    
+  }
+
+  fp16_t result = 0;
+  
+  if(mant > 0 && exp > 0)
+    // No underflow
+    result = FP16_PACK(s, exp - 1, mant);
+
+  // printf("  result mant = %.3f \n", (double) ((float) mant/(1<<FP16_PRECISION)));
+
+  printf("  result = %.4f \n", TO_DOUBLE(result));
+
+  return result;
+}
+
+fp16_t fp16_add(fp16_t a, fp16_t b)
+{
+  if(FP16_EXP(a) < FP16_EXP(b)) {
+    // Swap so exp(a) is always >= exp(b)
+    fp16_t t = a;
+    a = b;
+    b = t;
+  }
+
+  printf("add %.4f + %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+  
+  //  printf("add mant = %.3f + mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
+  // 	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+  
+  int mant_a = FP16_MANTISSA(a);
+  int exp_a = FP16_EXP(a);
+  int mant_b = FP16_MANTISSA(b) >> (exp_a - FP16_EXP(b));
+
+  if(FP16_SIGN(a))
+    mant_a = -mant_a;
+  
+  if(FP16_SIGN(b))
+    mant_b = -mant_b;
+
+  mant_a += mant_b;
+
+  int s = mant_a < 0 ? 1 : 0;
+
+  if(mant_a < 0)
+    mant_a = -mant_a;
+  
+  if(mant_a > (1<<FP16_PRECISION)-1) {
+    exp_a++;
+    mant_a >>= 1;
+    
+  } else if(mant_a == 0) {
+    // Underflow to 0
+    exp_a = -1;
+    
+  } else {
+    while(mant_a < (1<<FP16_PRECISION)/2) {
+      exp_a --;
+      mant_a <<= 1;
+    }
+  }
+
+  fp16_t result = 0;
+  
+  if(exp_a >= 0) {
+    // Not underflow
+    
+    if(exp_a > (1<<FP16_EXP_BITS)-1) {
+      // Overflow
+      exp_a = (1<<FP16_EXP_BITS)-1;
+      mant_a = (1<<FP16_PRECISION)-1;
+    }
+
+    result = FP16_PACK(s, exp_a, mant_a);
+  }
+  
+  // printf("  result mant = %.3f \n", (double) ((float) mant_a/(1<<FP16_PRECISION)));
+
+  printf("  result = %.4f \n", TO_DOUBLE(result));
+
+  return result;
+}
+
+fp16_t fp16_neg(fp16_t a)
+{
+  return a ^(1<<(FP16_MANT_BITS + FP16_EXP_BITS));
+}
+
+fp16_t fp16_sub(fp16_t a, fp16_t b)
+{
+  return fp16_add(a, fp16_neg(b));
+}
 
 #else
 
@@ -930,20 +1092,84 @@ int main()
   store_complex_bin("data_rom.txt", "w", w, FFT_LEN, false);
 
   for(i = 0; i < FFT_LEN; i++)
-    printf("W[%d] = %.8x\n", i, to_fixed_point(&w[i]));
+    printf("W[%d] = %.3f + i%.3f\n", i, TO_DOUBLE(w[i].real), TO_DOUBLE(w[i].imag));
+  // printf("W[%d] = %.8x\n", i, to_fixed_point(&w[i]));
+
+#if TEST_FP16
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("%.3f x %.3f = %.3f\n", TO_DOUBLE(fp16_from_int(i)), TO_DOUBLE(fp16_from_float(0.7f)), TO_DOUBLE(MUL(fp16_from_int(i), fp16_from_float(0.7f))));
+    printf("%.3f x %.3f = %.3f\n", -TO_DOUBLE(fp16_from_int(i)), TO_DOUBLE(fp16_from_float(0.7f)), TO_DOUBLE(MUL(fp16_from_int(-i), fp16_from_float(0.7f))));
+    printf("%.3f x %.3f = %.3f\n", TO_DOUBLE(fp16_from_int(i)), TO_DOUBLE(fp16_from_float(-0.7f)), TO_DOUBLE(MUL(fp16_from_int(i), fp16_from_float(-0.7f))));
+  }
+
+  part_t x = fp16_from_int(3);
+
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    x = MUL(x, fp16_from_float(0.9f));
+  }
+
+  x = fp16_from_int(1);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    x = MUL(x, fp16_from_float(1.1f));
+  }
+  
+  x = fp16_from_int(-1);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    x = MUL(x, fp16_from_float(1.1f));
+  }
+  
+  x = fp16_from_int(-1);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    // x = ADD(x, fp16_from_float(0.07f));
+    x = ADD(fp16_from_float(0.07f), x);
+  }
+  
+  x = fp16_from_int(-1);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    // x = ADD(x, fp16_from_float(0.07f));
+    x = ADD(fp16_from_float(2.7f), x);
+  }
+  
+  x = fp16_from_int(-1);
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    printf("x = %.3f\n", TO_DOUBLE(x));
+    // x = ADD(x, fp16_from_float(0.07f));
+    x = ADD(fp16_from_float(-2.7f), x);
+  }
+  
+  for(i = 0; i < FFT_LEN; i++) {
+    x = fp16_neg(fp16_from_int(2*i));
+    printf("x = %.3f\n", TO_DOUBLE(x));
+  }
+  
+  exit(0);
+#endif
   
   for(i = 0; i < FFT_LEN; i++) {
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32), 0.2f*sinf(i*2*pi/32));
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.2f*sinf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.2f*sinf(i*2*pi/32), 0.4f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
   }
+  
+  for(i = 0; i < FFT_LEN; i++)
+    printf("Input[%d] = %.3f + i%.3f\n", i, TO_DOUBLE(fft_data[i].real), TO_DOUBLE(fft_data[i].imag));
   
 #ifdef RADIX4
   radix4_digit_reversal_permutation(fft_data);
@@ -955,9 +1181,6 @@ int main()
   store_reference("input_reference.txt", fft_data, FFT_LEN);
 
   /*
-  for(i = 0; i < FFT_LEN; i++)
-    printf("Input[%d] = %.3f + i%.3f\n", i, TO_DOUBLE(fft_data[i].real), TO_DOUBLE(fft_data[i].imag));
-  
   for(i = 0; i < FFT_LEN; i++)
     printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
   */
