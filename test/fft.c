@@ -68,6 +68,7 @@ typedef struct complex {
 #elif USE_FP16
 
 // #define TEST_FP16        1
+#define DEBUG_FP16       1
 
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
@@ -146,8 +147,8 @@ float fp16_to_float(fp16_t a)
 
 fp16_t fp16_mul(fp16_t a, fp16_t b)
 {
-#if FP16_TEST
-  printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+#if DEBUG_FP16
+  printf("mul %.4f x %.4f\n", TO_DOUBLE(a), TO_DOUBLE(b));
   
   printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
   	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
@@ -175,7 +176,7 @@ fp16_t fp16_mul(fp16_t a, fp16_t b)
     // No underflow
     result = FP16_PACK(s, exp - 1, mant);
 
-#if FP16_TEST
+#if DEBUG_FP16
   printf("  result mant = %.3f \n", (double) ((float) mant/(1<<FP16_PRECISION)));
   printf("  result = %.4f \n", TO_DOUBLE(result));
 #endif
@@ -192,8 +193,8 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     b = t;
   }
 
-#if FP16_TEST
-  printf("add %.4f + %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+#if DEBUG_FP16
+  printf("add %.4f + %.4f\n", TO_DOUBLE(a), TO_DOUBLE(b));
   printf("add mant = %.3f + mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
    	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
 #endif
@@ -244,7 +245,7 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     result = FP16_PACK(s, exp_a, mant_a);
   }
   
-#if FP16_TEST
+#if DEBUG_FP16
   printf("  result mant = %.3f \n", (double) ((float) mant_a/(1<<FP16_PRECISION)));
   printf("  result = %.4f \n", TO_DOUBLE(result));
 #endif
