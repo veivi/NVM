@@ -16,7 +16,7 @@
 #include <assert.h>
 
 // #define USE_FLOATS  1
-// #define USE_FP16   1
+#define USE_FP16   1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -89,7 +89,7 @@ typedef struct complex {
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) fp16_to_float(a))
 
-#define FP16_MANTISSA(a)   (a != 0 ? (((a) & MASK(FP16_MANT_BITS)) | (1<<FP16_MANT_BITS)) : 0)
+#define FP16_MANTISSA(a)   (((a) & MASK(FP16_EXP_BITS+FP16_MANT_BITS)) != 0 ? (((a) & MASK(FP16_MANT_BITS)) | (1<<FP16_MANT_BITS)) : 0)
 #define FP16_EXP(a)        (((a)>>FP16_MANT_BITS) & MASK(FP16_EXP_BITS))
 #define FP16_SIGN(a)       (((a)>>(FP16_MANT_BITS + FP16_EXP_BITS)) & 1)
 #define FP16_PACK(s, e, m) ((((s) & 1)<<(FP16_MANT_BITS + FP16_EXP_BITS)) \
@@ -200,8 +200,8 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
 #endif
   
   int exp_a = FP16_EXP(a);
-  int mant_a = FP16_MANTISSA(a);
-  int mant_b = FP16_MANTISSA(b)>>(exp_a - FP16_EXP(b));
+  int16_t mant_a = FP16_MANTISSA(a);
+  int16_t mant_b = FP16_MANTISSA(b)>>(exp_a - FP16_EXP(b));
 
   if(FP16_SIGN(a))
     mant_a = -mant_a;
@@ -217,6 +217,7 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     mant_a = -mant_a;
   
   if(mant_a > (1<<FP16_PRECISION)-1) {
+    // Mantissa grew beyond 1, shift right
     exp_a++;
     mant_a >>= 1;
     
@@ -225,6 +226,8 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     exp_a = -1;
     
   } else {
+    // Normalize so mantissa is between 0.5 and 1
+    
     while(mant_a < (1<<FP16_PRECISION)/2) {
       exp_a--;
       mant_a <<= 1;
@@ -255,7 +258,7 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
 
 fp16_t fp16_neg(fp16_t a)
 {
-  return a == 0 ? 0 : a ^(1<<(FP16_MANT_BITS + FP16_EXP_BITS));
+  return a ^ (1<<(FP16_MANT_BITS + FP16_EXP_BITS));
 }
 
 fp16_t fp16_sub(fp16_t a, fp16_t b)
@@ -1153,12 +1156,12 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++) {
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32), 0.2f*sinf(i*2*pi/32));
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.2f*sinf(i*2*pi/32), 0.4f);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.4f, 0.2f*sinf(i*2*pi/32));
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(1.0f + 0.5f*cosf(i*2*pi/64) + 0.5f*cosf(i*2*pi/32), 1.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
