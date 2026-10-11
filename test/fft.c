@@ -304,7 +304,7 @@ int32_t saturate(int32_t a, int p)
 complex_t fft_data[FFT_LEN];
 complex_t w[FFT_LEN];
 
-uint32_t to_fixed_point(complex_t *a)
+uint32_t to_machine(complex_t *a)
 {
 #if USE_FLOATS
   int32_t result = (int32_t) (a->real * (float) (1<<PRECISION));
@@ -371,7 +371,7 @@ complex_t complex_array_ref(complex_t array[], int index, int base)
   assert(index < FFT_LEN);
   
   complex_t value = array[index];
-  printf("%.4x ~%.8x | ", base + index*4, to_fixed_point(&value));
+  printf("%.4x ~%.8x | ", base + index*4, to_machine(&value));
   return value;
 } 
 
@@ -379,7 +379,7 @@ void complex_array_set(complex_t value, complex_t array[], int index, int base)
 {
   assert(index < FFT_LEN);
   
-  printf("%.4x:=%.8x | ", base + index*4, to_fixed_point(&value));
+  printf("%.4x:=%.8x | ", base + index*4, to_machine(&value));
   array[index] = value;
 } 
 
@@ -387,7 +387,7 @@ void complex_vector_print(complex_t value[])
 {
   int i = 0;
   for(i = 0; i < V; i++)
-    printf("%.8x (%.3f +i%.3f), ", to_fixed_point(&value[i]), TO_DOUBLE(value[i].real), TO_DOUBLE(value[i].imag));
+    printf("%.8x (%.3f +i%.3f), ", to_machine(&value[i]), TO_DOUBLE(value[i].real), TO_DOUBLE(value[i].imag));
   printf("\n");
 }
 
@@ -1034,16 +1034,6 @@ void fft_radix4(complex_t A[])
 }
 #endif
 
-void print_bin(FILE *file, uint32_t a)
-{
-  int i = 0;
-  while(i < 8*sizeof(a)) {
-    fprintf(file, "%c", a & 0x80000000UL ? '1' : '0');
-    a <<= 1;
-    i++;
-  }
-}
-
 void store_complex_bin(const char *name, const char *mode, complex_t A[], int len, bool reverse)
 {
   static uint32_t addr = 0;
@@ -1059,9 +1049,9 @@ void store_complex_bin(const char *name, const char *mode, complex_t A[], int le
       
       // printbin(file, (int16_t) (a.real * (1<<PRECISION)));
       // printbin(file, (int16_t) (a.imag * (float) (1<<PRECISION)));
-      //      print_bin(file, to_fixed_point(&a));
+      //      print_bin(file, to_machine(&a));
 
-      fprintf(file, "%.8x %.8x\n", addr, to_fixed_point(&a));
+      fprintf(file, "%.8x %.8x\n", addr, to_machine(&a));
       addr += sizeof(uint32_t);
     }
 
@@ -1079,7 +1069,7 @@ void store_reference(const char *name, complex_t A[], int len)
     
     for(i = 0; i < len; i++) {
       complex_t a = A[i];
-      fprintf(file, "%.4X:=%.8X (S)\n", 0x800000 + i*4, to_fixed_point(&a));
+      fprintf(file, "%.4X:=%.8X (S)\n", 0x800000 + i*4, to_machine(&a));
     }
     
     fclose(file);
@@ -1098,7 +1088,7 @@ int main()
 
   for(i = 0; i < FFT_LEN; i++)
     printf("W[%d] = %.3f + i%.3f\n", i, TO_DOUBLE(w[i].real), TO_DOUBLE(w[i].imag));
-  // printf("W[%d] = %.8x\n", i, to_fixed_point(&w[i]));
+  // printf("W[%d] = %.8x\n", i, to_machine(&w[i]));
 
 #if TEST_FP16
   for(i = 0; i < FFT_LEN; i++) {
@@ -1187,7 +1177,7 @@ int main()
 
   /*
   for(i = 0; i < FFT_LEN; i++)
-    printf("Input[%d] = %.8x\n", i, to_fixed_point(&fft_data[i]));
+    printf("Input[%d] = %.8x\n", i, to_machine(&fft_data[i]));
   */
 #ifdef RADIX4
   fft_radix4(fft_data);
