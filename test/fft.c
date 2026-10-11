@@ -69,6 +69,12 @@ typedef struct complex {
 
 // #define TEST_FP16        1
 
+#define FP16_PRECISION   12  // Includes implicit '1'
+#define FP16_MANT_BITS   (FP16_PRECISION - 1)
+#define FP16_EXP_BITS    (8*sizeof(fp16_t) - 1 - FP16_MANT_BITS)
+#define FP16_EXP_BIAS    ((1<<FP16_EXP_BITS)/2)
+
+#define MASK(n)          ((1<<(n)) - 1)
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
 #define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
 
@@ -81,12 +87,6 @@ typedef struct complex {
       ADD(MUL((a).real, (b).imag), MUL((a).imag, (b).real)) }
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) fp16_to_float(a))
-
-#define FP16_PRECISION   12  // Includes implicit '1'
-#define FP16_MANT_BITS   (FP16_PRECISION - 1)
-#define FP16_EXP_BITS    (8*sizeof(fp16_t) - 1 - FP16_MANT_BITS)
-#define FP16_EXP_BIAS    ((1<<FP16_EXP_BITS)/2)
-#define MASK(n)          ((1<<(n)) - 1)
 
 #define FP16_MANTISSA(a)   (a != 0 ? (((a) & MASK(FP16_MANT_BITS)) | (1<<FP16_MANT_BITS)) : 0)
 #define FP16_EXP(a)        (((a)>>FP16_MANT_BITS) & MASK(FP16_EXP_BITS))
@@ -146,7 +146,7 @@ float fp16_to_float(fp16_t a)
 
 fp16_t fp16_mul(fp16_t a, fp16_t b)
 {
-  printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+  // printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
   
   //printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
   //	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
@@ -175,7 +175,7 @@ fp16_t fp16_mul(fp16_t a, fp16_t b)
 
   // printf("  result mant = %.3f \n", (double) ((float) mant/(1<<FP16_PRECISION)));
 
-  printf("  result = %.4f \n", TO_DOUBLE(result));
+  // printf("  result = %.4f \n", TO_DOUBLE(result));
 
   return result;
 }
@@ -194,10 +194,14 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
   //  printf("add mant = %.3f + mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
   // 	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
   
-  int mant_a = FP16_MANTISSA(a);
   int exp_a = FP16_EXP(a);
-  int mant_b = FP16_MANTISSA(b) >> (exp_a - FP16_EXP(b));
+  int exp_delta = FP16_EXP(a) - FP16_EXP(b);
+  int mant_a = FP16_MANTISSA(a);
+  int mant_b = FP16_MANTISSA(b);
 
+  mant_a <<= exp_delta;
+  exp_a += exp_delta;
+  
   if(FP16_SIGN(a))
     mant_a = -mant_a;
   
@@ -208,24 +212,27 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
 
   int s = mant_a < 0 ? 1 : 0;
 
-  if(mant_a < 0)
+  if(s)
     mant_a = -mant_a;
   
-  if(mant_a > (1<<FP16_PRECISION)-1) {
+  if(mant_a > ((1<<FP16_PRECISION)<<exp_delta)-1) {
     exp_a++;
     mant_a >>= 1;
     
   } else if(mant_a == 0) {
     // Underflow to 0
-    exp_a = -1;
+    exp_a = exp_delta - 1;
     
   } else {
-    while(mant_a < (1<<FP16_PRECISION)/2) {
-      exp_a --;
+    while(mant_a < ((1<<FP16_PRECISION)<<exp_delta)/2) {
+      exp_a--;
       mant_a <<= 1;
     }
   }
 
+  exp_a -= exp_delta;
+  mant_a >>= exp_delta;
+  
   fp16_t result = 0;
   
   if(exp_a >= 0) {
@@ -249,7 +256,7 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
 
 fp16_t fp16_neg(fp16_t a)
 {
-  return a ^(1<<(FP16_MANT_BITS + FP16_EXP_BITS));
+  return a == 0 ? 0 : a ^(1<<(FP16_MANT_BITS + FP16_EXP_BITS));
 }
 
 fp16_t fp16_sub(fp16_t a, fp16_t b)
