@@ -172,7 +172,7 @@ fp16_t fp16_mul(fp16_t a, fp16_t b)
 
   fp16_t result = 0;
   
-  if(mant > 0 && exp > 0)
+  if(mant > 0 && exp > 1)
     // No underflow
     result = FP16_PACK(s, exp - 1, mant);
 
