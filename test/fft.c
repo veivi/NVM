@@ -146,10 +146,12 @@ float fp16_to_float(fp16_t a)
 
 fp16_t fp16_mul(fp16_t a, fp16_t b)
 {
-  // printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
+#if FP16_TEST
+  printf("mul %.4f x %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
   
-  //printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
-  //	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+  printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
+  	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+#endif
   
   int s = FP16_SIGN(a) ^ FP16_SIGN(b);
   int exp = FP16_EXP(a) + FP16_EXP(b) - FP16_EXP_BIAS;
@@ -173,10 +175,11 @@ fp16_t fp16_mul(fp16_t a, fp16_t b)
     // No underflow
     result = FP16_PACK(s, exp - 1, mant);
 
-  // printf("  result mant = %.3f \n", (double) ((float) mant/(1<<FP16_PRECISION)));
-
-  // printf("  result = %.4f \n", TO_DOUBLE(result));
-
+#if FP16_TEST
+  printf("  result mant = %.3f \n", (double) ((float) mant/(1<<FP16_PRECISION)));
+  printf("  result = %.4f \n", TO_DOUBLE(result));
+#endif
+  
   return result;
 }
 
@@ -189,10 +192,11 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     b = t;
   }
 
+#if FP16_TEST
   printf("add %.4f + %.4f", TO_DOUBLE(a), TO_DOUBLE(b));
-  
-  //  printf("add mant = %.3f + mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
-  // 	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+  printf("add mant = %.3f + mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
+   	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+#endif
   
   int exp_a = FP16_EXP(a);
   int mant_a = FP16_MANTISSA(a);
@@ -240,10 +244,11 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
     result = FP16_PACK(s, exp_a, mant_a);
   }
   
-  // printf("  result mant = %.3f \n", (double) ((float) mant_a/(1<<FP16_PRECISION)));
-
+#if FP16_TEST
+  printf("  result mant = %.3f \n", (double) ((float) mant_a/(1<<FP16_PRECISION)));
   printf("  result = %.4f \n", TO_DOUBLE(result));
-
+#endif
+  
   return result;
 }
 
@@ -1157,12 +1162,12 @@ int main()
   
   for(i = 0; i < FFT_LEN; i++) {
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32), 0.2f*sinf(i*2*pi/32));
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.2f*sinf(i*2*pi/32), 0.4f);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.2f*sinf(i*2*pi/32), 0.4f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1 + 0.2f*cosf(i*2*pi/64) + 0.2f*cosf(i*2*pi/32), 0);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.05f + 0.05f*cosf(i*2*pi/8) + 0.05f*cosf(i*2*pi/32), 0);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
