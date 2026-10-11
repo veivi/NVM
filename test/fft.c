@@ -15,6 +15,7 @@
 #include <assert.h>
 
 // #define USE_FLOATS  1
+#define USE_FP16   1
 
 #ifndef LOG2LEN
 #error Need to define LOG2LEN at compile time
@@ -47,14 +48,10 @@
 #error Vector length must be power of two between 2 and 64
 #endif
 
-#ifndef PRECISION
-#define PRECISION 12
-#endif
-
 #define FFT_LEN     (1<<LOG2LEN)
 #define pi          ((float) M_PI)
 
-#ifdef USE_FLOATS
+#if USE_FLOATS
 typedef struct complex {
   float real, imag;
 } complex_t;
@@ -67,7 +64,42 @@ typedef struct complex {
 #define COMPLEX_ABS(a) sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) (a))
 
+#elif USE_FP16
+
+typedef uint16_t fp16_t;
+
+typedef fp16_t part_t;
+
+typedef struct complex {
+  part_t real, imag;
+} complex_t;
+
+fp16_t fp16_from_int(int a);
+fp16_t fp16_from_float(float a);
+float fp16_to_float(fp16_t a);
+fp16_t fp16_mul(fp16_t a, fp16_t b);
+fp16_t fp16_add(fp16_t a, fp16_t b);
+fp16_t fp16_sub(fp16_t a, fp16_t b);
+
+#define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
+#define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
+
+#define MUL(a, b) fp16_mul(a, b)
+#define NORM(a) (a)
+#define ADD(a, b) fp16_add(a, b)
+#define SUB(a, b) fp16_sub(a, b)
+#define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
+#define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
+#define COMPLEX_MUL(a, b) (complex_t) { NORM(MUL((a).real, (b).real)-MUL((a).imag, (b).imag)), \
+      NORM(MUL((a).real, (b).imag)+MUL((a).imag, (b).real)) }
+#define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
+#define TO_DOUBLE(a) ((double) fp16_to_float(a))
+
 #else
+
+#ifndef PRECISION
+#define PRECISION 12
+#endif
 
 typedef int16_t part_t;
 
@@ -90,7 +122,6 @@ int32_t saturate(int32_t a, int p)
   return a;
 }
 
-#define SATURATE(a, p) (a) < -1L<<(p+(16-p)) ? 
 #define MUL(a, b) ((int32_t) a * (int32_t)b)
 #define NORM(a) (part_t) (saturate(a, 2*PRECISION)>>PRECISION)
 #define ADD(a, b) saturate((int32_t) a + (int32_t) b, PRECISION)
