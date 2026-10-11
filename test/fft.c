@@ -195,13 +195,9 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
   // 	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
   
   int exp_a = FP16_EXP(a);
-  int exp_delta = FP16_EXP(a) - FP16_EXP(b);
   int mant_a = FP16_MANTISSA(a);
-  int mant_b = FP16_MANTISSA(b);
+  int mant_b = FP16_MANTISSA(b)>>(exp_a - FP16_EXP(b));
 
-  mant_a <<= exp_delta;
-  exp_a += exp_delta;
-  
   if(FP16_SIGN(a))
     mant_a = -mant_a;
   
@@ -215,24 +211,21 @@ fp16_t fp16_add(fp16_t a, fp16_t b)
   if(s)
     mant_a = -mant_a;
   
-  if(mant_a > ((1<<FP16_PRECISION)<<exp_delta)-1) {
+  if(mant_a > (1<<FP16_PRECISION)-1) {
     exp_a++;
     mant_a >>= 1;
     
   } else if(mant_a == 0) {
     // Underflow to 0
-    exp_a = exp_delta - 1;
+    exp_a = -1;
     
   } else {
-    while(mant_a < ((1<<FP16_PRECISION)<<exp_delta)/2) {
+    while(mant_a < (1<<FP16_PRECISION)/2) {
       exp_a--;
       mant_a <<= 1;
     }
   }
 
-  exp_a -= exp_delta;
-  mant_a >>= exp_delta;
-  
   fp16_t result = 0;
   
   if(exp_a >= 0) {
