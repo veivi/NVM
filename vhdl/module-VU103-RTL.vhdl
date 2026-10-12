@@ -59,14 +59,8 @@ architecture RTL of VU103 is
   
   subtype Scalar_T is std_logic_vector(ScalarSize_C-1 downto 0);
 
-  subtype Mantissa_T is std_logic_vector(Precision_C-1 downto 0);  -- With implicit
+  subtype Mantissa_T is unsigned(Precision_C-1 downto 0);  -- With implicit
                                                                    -- '1'
-
-  constant ExtMantSize_C : integer := Precision_C + 2;
-  
-  subtype ExtMantissa_T is signed(ExtMantSize_C-1 downto 0); 
-
-  subtype DoubleMantissa_T is unsigned(2*Precision_C-1 downto 0); 
 
   subtype Exp_T is integer range 0 to 2**ExpSize_C-1;
 
@@ -89,52 +83,43 @@ architecture RTL of VU103 is
       return (others => '0');
     else
       -- Not zero, add the implied leading '1'
-      return '1' & A(MantSize_C-1 downto 0);
+      return unsigned('1' & A(MantSize_C-1 downto 0));
     end if;
   end function;
 
   function ScalarMake(Sign : std_logic; E : Exp_T; M : Mantissa_T) return Scalar_T is
-    variable T : std_logic_vector(ScalarSize_C-1 downto 0);
   begin
-    return Sign & std_logic_vector(to_unsigned(E, ExpSize_C)) & M(MantSize_C-1 downto 0);
+    return Sign & std_logic_vector(to_unsigned(E, ExpSize_C))
+      & std_logic_vector(M(MantSize_C-1 downto 0));
   end function;
   
-  function ExtendMant(A : Mantissa_T) return ExtMantissa_T is
-    variable T : ExtMantissa_T;
-  begin
-    T := (others => '0');
-    T(Precision_C-1 downto 0) := signed(A);
-    return T;
-  end function;
-  
-  -- Non-normalized result of addition
-  
-  type AddResult_T is record
+  --
+  -- Generic FP number
+  --
+
+  type GenericFP_T is record
     Sign : std_logic;
     Exp : Exp_T;
-    Mantissa : ExtMantissa_T;
+    Mantissa : unsigned;
   end record;
 
-  -- Non-normalized result of multiplication
-  
-  type MultiplyResult_T is record
-    Sign : std_logic;
-    Exp : ExtExp_T;
-    Mantissa : DoubleMantissa_T;
-  end record;
-
-  function NegateFP16(A : Scalar_T) return Scalar_T is
+  function GenericFromScalar(A : Scalar_t) return GenericFP_T is
   begin
-    return ScalarMake(not ScalarSign(A), ScalarExp(A), ScalarMant(A));
+    return ( Sign => ScalarSign(A), Exp => ScalarExp(A), Mantissa => ScalarMant(A) );
   end function;
   
-  function AddFP16(A : Scalar_T; B : Scalar_T) return AddResult_T is
-    variable Bigger, Smaller : Scalar_T;
-    variable ExpBig, ExpSmall : Exp_T;
-    variable MantBig, MantSmall : ExtMantissa_T;
+  --
+  -- Generic adder, result is not normalized
+  --
+    
+  function AddGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
+    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 2;
+    variable Bigger, Smaller : GenericFP_T(Mantissa(A.Mantissa'range));
+    variable Exp, ExpSmall : Exp_T;
+    variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
     variable Sign : std_logic;
   begin
-    if ScalarExp(A) >= ScalarExp(B) then
+    if A.Exp >= B.Exp then
       Bigger := A;
       Smaller := B;
     else
@@ -142,38 +127,57 @@ architecture RTL of VU103 is
       Smaller := A;
     end if;
 
-    ExpBig := ScalarExp(Bigger);
-    MantBig := ExtendMant(ScalarMant(Bigger));
-    ExpSmall := ScalarExp(Smaller);
-    MantSmall := shift_right(ExtendMant(ScalarMant(Smaller)), ExpBig - ExpSmall);
+    Exp := Bigger.Exp;
+    Mant := resize(Bigger.Mantissa, ExtMantSize_C);
+    
+    ExpSmall := Smaller.Exp;
+    MantSmall := shift_right(resize(Smaller.Mantissa, ExtMantSize_C), Exp - ExpSmall);
 
-    if ScalarSign(Bigger) = '1' then
-      MantBig := -MantBig;
+    if Bigger.Sign = '1' then
+      Mant := unsigned(-signed(Mant));
     end if;
 
-    if ScalarSign(Smaller) = '1' then
-      MantSmall := -MantSmall;
+    if Smaller.Sign = '1' then
+      MantSmall := unsigned(-signed(MantSmall));
     end if;
 
-    MantBig := MantBig + MantSmall;
+    Mant := Mant + MantSmall;
 
-    Sign := MantBig(Precision_C);
+    Sign := Mant(Precision_C);
 
     if Sign = '1' then
-      MantBig := -MantBig;
+      Mant := unsigned(-signed(Mant));
     end if;
+    
+    return ( Sign => Sign, Exp => Exp, Mantissa => Mant );
+  End;
 
-    return ( Sign => Sign, Exp => ExpBig, Mantissa => MantBig );
+  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
+    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1
+                                        + B.Mantissa'range'high - B.Mantissa'range'low + 1;
+    variable Sign : std_logic;
+    variable Exp : ExtExp_T;
+    variable Mant : unsigned(ExtMantSize_C-1 downto 0);
+  begin
+    return ( Sign => A.Sign xor B.Sign,
+             Exp => A.Exp + B.Exp - ExpBias_C,
+             Mantissa => unsigned(A.Mantissa) * unsigned(B.Mantissa));
+  end function;
+  
+  function NegateGenericFP(A : GenericFP_T) return GenericFP_T is
+  begin
+    return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
   end function;
 
-  function Normalize(A : AddResult_T) return Scalar_T is
+  function Normalize(A : GenericFP_T; PrecDelta : integer) return Scalar_T is
+    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1;
     variable Exp : ExtExp_T;
-    variable Mant : ExtMantissa_T;
+    variable Mant : unsigned(ExtMantSize_C-1 downto 0);
   begin
     Exp := A.Exp;
     Mant := A.Mantissa;
 
-    if Mant > to_signed(2**Precision_C, ExtMantSize_C) then
+    if Mant > to_unsigned(2**(Precision_C + PrecDelta), ExtMantSize_C) then
       -- TOo big, shift one right and increment exponent
       if Exp < 2**ExpSize_C-1 then
         -- We have room in the exponent
@@ -184,10 +188,10 @@ architecture RTL of VU103 is
         Mant := (others => '1');
       end if;
       
-    elsif Mant /= to_signed(0, ExtMantSize_C) then
+    elsif Mant /= to_unsigned(0, ExtMantSize_C) then
       -- Not zero, normalize if needed by shifting left
 
-      while Mant(Precision_C) = '0' and Exp > 0 loop
+      while Mant(Precision_C+PrecDelta) = '0' and Exp > 0 loop
         Exp := Exp - 1;
         Mant := shift_left(Mant, 1);
       end loop;
@@ -198,58 +202,59 @@ architecture RTL of VU103 is
       Mant := (others => '0');
     end if;
     
-    return ScalarMake(A.Sign, Exp, std_logic_vector(Mant(MantSize_C-1 downto 0)));
+    return ScalarMake(A.Sign, Exp, Mant(PrecDelta+MantSize_C-1 downto PrecDelta));
   end function;
 
-  function MultiplyFP16(A : Scalar_T; B : Scalar_T) return MultiplyResult_T is
-    variable Sign : std_logic;
-    variable Exp : ExtExp_T;
-    variable Mant : DoubleMantissa_T;
+  function NegateFP16(A : Scalar_T) return Scalar_T is
   begin
-    Sign := ScalarSign(A) xor ScalarSign(B);
-    Exp := ScalarExp(A) + ScalarExp(B) - ExpBias_C;
-    Mant := unsigned(ScalarMant(A)) * unsigned(ScalarMant(B));
-
-    return ( Sign => Sign, Exp => Exp, Mantissa => Mant);
-  end function;
-
-  function Negate(A : MultiplyResult_T) return MultiplyResult_T is
-  begin
-    return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
+    return ScalarMake(not ScalarSign(A), ScalarExp(A), ScalarMant(A));
   end function;
   
-  function Add(A : MultiplyResult_T; B : MultiplyResult_T) return MultiplyResult_T is
+  function AddFP16(A : Scalar_T; B : Scalar_T) return GenericFP_T is
   begin
-    -- FIXME: Implement!
-  end function;
-    
-  function Normalize(A : MultiplyResult_T) return Scalar_T is
-    variable Exp : ExtExp_T;
-    variable Mant : DoubleMantissa_T;
-  begin
-    Exp := A.Exp;
-    Mant := A.Mantissa;
-    
-    if Mant > to_unsigned(2*2**Precision_C, 2*MantSize_C) then
-      -- Adjust exponent
-      Exp := Exp - 1;
-      Mant := shift_right(Mant, 1);
-    end if;
-
-    if Exp > 2**ExpSize_C-1 then
-      -- Overflow to max
-      Exp := 2**ExpSize_C-1;
-      Mant := (others => '1');
-    elsif Exp = 0 or Mant = to_unsigned(0, 2*MantSize_C) then
-      -- The result is zero
-      Exp := 0;
-      Mant := (others => '0');
-    end if;
-
-    return ScalarMake(A.Sign, Exp,
-                      std_logic_vector(Mant(Precision_C+MantSize_C-1 downto Precision_C)));
+    return AddGenericFP(GenericFromScalar(A), GenericFromScalar(B));
   end function;
 
+  function MultiplyFP16(A : Scalar_T; B : Scalar_T) return GenericFP_T is
+  begin
+    return MultiplyGenericFP(GenericFromScalar(A), GenericFromScalar(B));
+  end function;
+
+  -- function Normalize(A : MultiplyResult_T) return Scalar_T is
+  --   variable Exp : ExtExp_T;
+  --   variable Mant : DoubleMantissa_T;
+  -- begin
+  --   Exp := A.Exp;
+  --   Mant := A.Mantissa;
+    
+  --   if Mant > to_unsigned(2*2**Precision_C, 2*MantSize_C) then
+  --     -- Adjust exponent
+  --     Exp := Exp + 1;
+  --     Mant := shift_right(Mant, 1);
+  --   end if;
+
+  --   if Exp > 2**ExpSize_C-1 then
+  --     -- Overflow to max
+  --     Exp := 2**ExpSize_C-1;
+  --     Mant := (others => '1');
+  --   elsif Exp = 0 or Mant = to_unsigned(0, 2*MantSize_C) then
+  --     -- The result is zero
+  --     Exp := 0;
+  --     Mant := (others => '0');
+  --   end if;
+
+  --   return ScalarMake(A.Sign, Exp,
+  --                     Mant(Precision_C+MantSize_C-1 downto Precision_C));
+  -- end function;
+
+  -- Non-normalized result of addition
+  
+  subtype AddResult_T is GenericFP_T(Mantissa(Precision_C+1 downto 0));
+
+  -- Non-normalized result of multiplication
+  
+  subtype MultiplyResult_T is GenericFP_T(Mantissa(2*Precision_C-1 downto 0));
+  
   type PartialMultiplyResult_T is record
     RealARealB : MultiplyResult_T;
     ImagAImagB : MultiplyResult_T;
@@ -373,16 +378,18 @@ begin
             -- Complex multiply
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(Normalize(Add(PartialMultiplyResult(I).RealARealB,
-                                       Negate(PartialMultiplyResult(I).ImagAImagB))),
-                         Normalize(Add(PartialMultiplyResult(I).RealAImagB,
-                                       PartialMultiplyResult(I).ImagARealB)));
+              <= Complex(Normalize(AddGenericFP(PartialMultiplyResult(I).RealARealB,
+                                                NegateGenericFP(PartialMultiplyResult(I).ImagAImagB)),
+                                   Precision_C),
+                         Normalize(AddGenericFP(PartialMultiplyResult(I).RealAImagB,
+                                                PartialMultiplyResult(I).ImagARealB),
+                                   Precision_C));
           else
             -- Complex add/sub/etc
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(Normalize(PartialAddResult(I).Real),
-                         Normalize(PartialAddResult(I).Imag));
+              <= Complex(Normalize(PartialAddResult(I).Real, 0),
+                         Normalize(PartialAddResult(I).Imag, 0));
           end if;
         end loop;
 
