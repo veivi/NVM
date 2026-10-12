@@ -199,8 +199,8 @@ architecture RTL of VU103 is
 
     if Exp < 1 then
       -- Underflow to zero
-      Mant := (others => '0');
       Exp := 0;
+      Mant := (others => '0');
     end if;
     
     return ScalarMake(A.Sign, Exp, Mant(PrecDelta+Precision_C-1 downto PrecDelta));
