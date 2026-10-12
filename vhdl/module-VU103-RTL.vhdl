@@ -97,13 +97,13 @@ architecture RTL of VU103 is
   -- Generic FP number
   --
 
-  type GenericFP_T is record
+  type GenFP_T is record
     Sign : std_logic;
     Exp : Exp_T;
     Mantissa : unsigned;
   end record;
 
-  function GenericFromScalar(A : Scalar_t) return GenericFP_T is
+  function GenericFromScalar(A : Scalar_t) return GenFP_T is
   begin
     return ( Sign => ScalarSign(A), Exp => ScalarExp(A), Mantissa => ScalarMant(A) );
   end function;
@@ -112,9 +112,9 @@ architecture RTL of VU103 is
   -- Generic adder, result is not normalized
   --
     
-  function AddGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
+  function AddGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
     variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 2;
-    variable Bigger, Smaller : GenericFP_T(Mantissa(A.Mantissa'range));
+    variable Bigger, Smaller : GenFP_T(Mantissa(A.Mantissa'range));
     variable Exp, ExpSmall : Exp_T;
     variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
     variable Sign : std_logic;
@@ -152,7 +152,7 @@ architecture RTL of VU103 is
     return ( Sign => Sign, Exp => Exp, Mantissa => Mant );
   End;
 
-  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
+  function MultiplyGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
     constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1
                                         + B.Mantissa'range'high - B.Mantissa'range'low + 1;
     variable Sign : std_logic;
@@ -164,12 +164,12 @@ architecture RTL of VU103 is
              Mantissa => unsigned(A.Mantissa) * unsigned(B.Mantissa));
   end function;
   
-  function NegateGenericFP(A : GenericFP_T) return GenericFP_T is
+  function NegateGenFP(A : GenFP_T) return GenFP_T is
   begin
     return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
   end function;
 
-  function Normalize(A : GenericFP_T; PrecDelta : integer) return Scalar_T is
+  function NormalizeGenFP(A : GenFP_T; PrecDelta : integer) return Scalar_T is
     constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1;
     variable Exp : ExtExp_T;
     variable Mant : unsigned(ExtMantSize_C-1 downto 0);
@@ -210,14 +210,14 @@ architecture RTL of VU103 is
     return ScalarMake(not ScalarSign(A), ScalarExp(A), ScalarMant(A));
   end function;
   
-  function AddFP16(A : Scalar_T; B : Scalar_T) return GenericFP_T is
+  function AddFP16(A : Scalar_T; B : Scalar_T) return GenFP_T is
   begin
-    return AddGenericFP(GenericFromScalar(A), GenericFromScalar(B));
+    return AddGenFP(GenericFromScalar(A), GenericFromScalar(B));
   end function;
 
-  function MultiplyFP16(A : Scalar_T; B : Scalar_T) return GenericFP_T is
+  function MultiplyFP16(A : Scalar_T; B : Scalar_T) return GenFP_T is
   begin
-    return MultiplyGenericFP(GenericFromScalar(A), GenericFromScalar(B));
+    return MultiplyGenFP(GenericFromScalar(A), GenericFromScalar(B));
   end function;
 
   -- function Normalize(A : MultiplyResult_T) return Scalar_T is
@@ -249,11 +249,11 @@ architecture RTL of VU103 is
 
   -- Non-normalized result of addition
   
-  subtype AddResult_T is GenericFP_T(Mantissa(Precision_C+1 downto 0));
+  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
 
   -- Non-normalized result of multiplication
   
-  subtype MultiplyResult_T is GenericFP_T(Mantissa(2*Precision_C-1 downto 0));
+  subtype MultiplyResult_T is GenFP_T(Mantissa(2*Precision_C-1 downto 0));
   
   type PartialMultiplyResult_T is record
     RealARealB : MultiplyResult_T;
@@ -378,18 +378,18 @@ begin
             -- Complex multiply
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(Normalize(AddGenericFP(PartialMultiplyResult(I).RealARealB,
-                                                NegateGenericFP(PartialMultiplyResult(I).ImagAImagB)),
-                                   Precision_C),
-                         Normalize(AddGenericFP(PartialMultiplyResult(I).RealAImagB,
-                                                PartialMultiplyResult(I).ImagARealB),
-                                   Precision_C));
+              <= Complex(NormalizeGenFP(AddGenFP(PartialMultiplyResult(I).RealARealB,
+                                                 NegateGenFP(PartialMultiplyResult(I).ImagAImagB)),
+                                        Precision_C),
+                         NormalizeGenFP(AddGenFP(PartialMultiplyResult(I).RealAImagB,
+                                                 PartialMultiplyResult(I).ImagARealB),
+                                        Precision_C));
           else
             -- Complex add/sub/etc
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(Normalize(PartialAddResult(I).Real, 0),
-                         Normalize(PartialAddResult(I).Imag, 0));
+              <= Complex(NormalizeGenFP(PartialAddResult(I).Real, 0),
+                         NormalizeGenFP(PartialAddResult(I).Imag, 0));
           end if;
         end loop;
 
