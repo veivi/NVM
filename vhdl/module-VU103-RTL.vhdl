@@ -51,191 +51,28 @@ architecture RTL of VU103 is
   
   constant ScalarSize_C : integer := WordSize_C/2;
   
-  constant MantSize_C : integer := Precision_C - 1;  -- Implicit '1' not counted
-  
-  constant ExpSize_C : integer := ScalarSize_C - 1 - MantSize_C; -- -1 is for sign
-
-  constant ExpBias_C : integer := 2**ExpSize_C/2 + 1;
-  
   subtype Scalar_T is std_logic_vector(ScalarSize_C-1 downto 0);
 
-  subtype Mantissa_T is unsigned(Precision_C-1 downto 0);  -- With implicit '1'
-
-  subtype Exp_T is integer range 0 to 2**ExpSize_C-1;
-
-  subtype ExtExp_T is integer range -2*2**ExpSize_C to 2*2**ExpSize_C-1;  -- Extended
-
-  type Complex_T is record
-    Real : Scalar_T;
-    Imag : Scalar_T;
-  end record;
-
-  type ComplexArray_T is array (natural range <>) of Complex_T;
-  
-  function ScalarSign(A : Scalar_T) return std_logic is
+  function RealPart(A : Word_T) return Scalar_T is
   begin
-    return A(ScalarSize_C-1);
-  end function;
-
-  function ScalarExp(A : Scalar_T) return Exp_T is
-  begin
-    return to_integer(unsigned(A(ScalarSize_C-2 downto MantSize_C)));
+    return A(WordSize_C-1 downto ScalarSize_C);
   end function;
   
-  function ScalarMant(A : Scalar_T) return Mantissa_T is
+  function ImagPart(A : Word_T) return Scalar_T is
   begin
-    if ScalarExp(A) = 0 then
-      -- It's a +/- zero
-      return (others => '0');
-    else
-      -- Not zero, add the implied leading '1'
-      return unsigned('1' & A(MantSize_C-1 downto 0));
-    end if;
+    return A(ScalarSize_C-1 downto 0);
   end function;
 
-  function ScalarMake(Sign : std_logic; E : Exp_T; M : Mantissa_T) return Scalar_T is
+  function Complex(RealPart : Scalar_T; ImagPart : Scalar_T) return Word_T is
   begin
-    return Sign & std_logic_vector(to_unsigned(E, ExpSize_C))
-      & std_logic_vector(M(MantSize_C-1 downto 0));
+    return RealPart & ImagPart;
   end function;
+
+  -- Non-normalized result of multiplication or addition
   
-  --
-  -- Generic FP number
-  --
-
-  type GenFP_T is record
-    Sign : std_logic;
-    Exp : Exp_T;
-    Mantissa : unsigned;
-  end record;
-
-  function GenericFromScalar(A : Scalar_t) return GenFP_T is
-  begin
-    return ( Sign => ScalarSign(A), Exp => ScalarExp(A), Mantissa => ScalarMant(A) );
-  end function;
+  subtype MultiplyResult_T is GenericFP_T(Mantissa(2*Precision_C-1 downto 0));
   
-  --
-  -- Generic adder, result is not normalized
-  --
-    
-  function AddGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
-    -- Extended mantissa must hold negative values and the result of addition,
-    -- so two extra bits needed
-    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 3;
-    variable Bigger, Smaller : GenFP_T(Mantissa(A.Mantissa'range));
-    variable Exp, ExpSmall : ExtExp_T;
-    variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
-    variable Sign : std_logic;
-  begin
-    if A.Exp >= B.Exp then
-      Bigger := A;
-      Smaller := B;
-    else
-      Bigger := B;
-      Smaller := A;
-    end if;
-
-    Exp := Bigger.Exp;
-    Mant := resize(Bigger.Mantissa, ExtMantSize_C);
-    
-    ExpSmall := Smaller.Exp;
-    MantSmall := shift_right(resize(Smaller.Mantissa, ExtMantSize_C), Exp - ExpSmall);
-
-    if Bigger.Sign = '1' then
-      Mant := unsigned(-signed(Mant));
-    end if;
-
-    if Smaller.Sign = '1' then
-      MantSmall := unsigned(-signed(MantSmall));
-    end if;
-
-    Mant := Mant + MantSmall;
-
-    Sign := Mant(Precision_C);
-
-    if Sign = '1' then
-      Mant := unsigned(-signed(Mant));
-    end if;
-    
-    return ( Sign => Sign, Exp => Exp, Mantissa => Mant );
-  End;
-
-  function MultiplyGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
-    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1
-                                        + B.Mantissa'range'high - B.Mantissa'range'low + 1;
-    variable Sign : std_logic;
-    variable Exp : ExtExp_T;
-    variable Mant : unsigned(ExtMantSize_C-1 downto 0);
-  begin
-    return ( Sign => A.Sign xor B.Sign,
-             Exp => A.Exp + B.Exp - ExpBias_C,
-             Mantissa => unsigned(A.Mantissa) * unsigned(B.Mantissa));
-  end function;
-  
-  function NegateGenFP(A : GenFP_T) return GenFP_T is
-  begin
-    return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
-  end function;
-
-  function NormalizeGenFP(A : GenFP_T; PrecDelta : integer) return Scalar_T is
-    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1;
-    variable Exp : ExtExp_T;
-    variable Mant : unsigned(ExtMantSize_C-1 downto 0);
-  begin
-    Exp := A.Exp;
-    Mant := A.Mantissa;
-
-    if Mant > to_unsigned(2**(Precision_C + PrecDelta), ExtMantSize_C) then
-      -- TOo big, shift one right and increment exponent
-      if Exp < 2**ExpSize_C-1 then
-        -- We have room in the exponent
-        Exp := Exp + 1;
-        Mant := shift_right(Mant, 1);
-      else
-        -- Overflow to max
-        Mant := (others => '1');
-      end if;
-      
-    elsif Mant /= to_unsigned(0, ExtMantSize_C) then
-      -- Not zero, normalize if needed by shifting left
-
-      while Mant(Precision_C+PrecDelta) = '0' and Exp > 0 loop
-        Exp := Exp - 1;
-        Mant := shift_left(Mant, 1);
-      end loop;
-    end if;
-
-    if Exp < 1 then
-      -- Underflow to zero
-      Exp := 0;
-      Mant := (others => '0');
-    end if;
-    
-    return ScalarMake(A.Sign, Exp, Mant(PrecDelta+Precision_C-1 downto PrecDelta));
-  end function;
-
-  function NegateFP16(A : Scalar_T) return Scalar_T is
-  begin
-    return ScalarMake(not ScalarSign(A), ScalarExp(A), ScalarMant(A));
-  end function;
-  
-  function AddFP16(A : Scalar_T; B : Scalar_T) return GenFP_T is
-  begin
-    return AddGenFP(GenericFromScalar(A), GenericFromScalar(B));
-  end function;
-
-  function MultiplyFP16(A : Scalar_T; B : Scalar_T) return GenFP_T is
-  begin
-    return MultiplyGenFP(GenericFromScalar(A), GenericFromScalar(B));
-  end function;
-
-  -- Non-normalized result of multiplication
-  
-  subtype MultiplyResult_T is GenFP_T(Mantissa(2*Precision_C-1 downto 0));
-  
-  subtype DenormMultiplyResult_T is GenFP_T(Mantissa(2*Precision_C+1 downto 0));
-  
-  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
+  subtype AddResult_T is GenericFP_T(Mantissa(1+Precision_C-1 downto 0));
   
   type PartialComplexMultiplyResult_T is record
     RealARealB : MultiplyResult_T;
@@ -244,6 +81,8 @@ architecture RTL of VU103 is
     ImagARealB : MultiplyResult_T;
   end record;
 
+  subtype DenormMultiplyResult_T is GenericFP_T(Mantissa(1+2*Precision_C-1 downto 0));
+  
   type DenormComplexMultiplyResult_T is record
     Real : DenormMultiplyResult_T;
     Imag : DenormMultiplyResult_T;
@@ -262,21 +101,6 @@ architecture RTL of VU103 is
   
   type DenormAddResultArray_T is array (natural range <>) of DenormAddResult_T;
   
-  function RealPart(A : Word_T) return Scalar_T is
-  begin
-    return A(WordSize_C-1 downto ScalarSize_C);
-  end function;
-  
-  function ImagPart(A : Word_T) return Scalar_T is
-  begin
-    return A(ScalarSize_C-1 downto 0);
-  end function;
-
-  function Complex(RealPart : Scalar_T; ImagPart : Scalar_T) return Word_T is
-  begin
-    return RealPart & ImagPart;
-  end function;
-
   signal PartialMultiplyResult : PartialMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
   signal DenormMultiplyResult : DenormMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
   signal DenormAddResult : DenormAddResultArray_T(0 to 2**Log2VecSize_C-1);
@@ -307,34 +131,34 @@ begin
             when 0 =>
               -- A * B
             
-              PartialMultiplyResult(I) <= ( MultiplyFP16(RealPart(A), RealPart(B)),
-                                            MultiplyFP16(ImagPart(A), ImagPart(B)),
-                                            MultiplyFP16(RealPart(A), ImagPart(B)),
-                                            MultiplyFP16(ImagPart(A), RealPart(B)) );
+              PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B)),
+                                            FP16MultiplyDenorm(ImagPart(A), ImagPart(B)),
+                                            FP16MultiplyDenorm(RealPart(A), ImagPart(B)),
+                                            FP16MultiplyDenorm(ImagPart(A), RealPart(B)) );
 
             when 1 =>      
               -- A + B
             
-              DenormAddResult(I) <= ( AddFP16(RealPart(A), RealPart(B)),
-                                       AddFP16(ImagPart(A), ImagPart(B)) );
+              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B)),
+                                       FP16AddDenorm(ImagPart(A), ImagPart(B)) );
               
             when 2 =>      
               -- A - B
             
-              DenormAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(RealPart(B))),
-                                       AddFP16(ImagPart(A), NegateFP16(ImagPart(B))) );
+              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B)),
+                                       FP16SubtractDenorm(ImagPart(A), ImagPart(B)) );
               
             when 3 =>      
               -- A + iB
             
-              DenormAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(ImagPart(B))),
-                                       AddFP16(ImagPart(A), RealPart(B)) );
+              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B)),
+                                       FP16AddDenorm(ImagPart(A), RealPart(B)) );
               
             when 4 =>      
               -- A - iB
             
-              DenormAddResult(I) <= ( AddFP16(RealPart(A), ImagPart(B)),
-                                       AddFP16(ImagPart(A), NegateFP16(RealPart(B))) );
+              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B)),
+                                       FP16SubtractDenorm(ImagPart(A), RealPart(B)) );
               
             when others =>
               -- Invalid operation
@@ -352,7 +176,9 @@ begin
       end if;
     end if;
   end process;
-
+  
+  AVU_C_Accept <= '1';
+  
   --
   -- Partial result adder
   --
@@ -367,19 +193,19 @@ begin
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
-            -- Complex multiply
+            -- Complex multiply, add partial terms with full precision
             
-            DenormMultiplyResult(I).Real <= AddGenFP(PartialMultiplyResult(I).RealARealB,
-                                                     NegateGenFP(PartialMultiplyResult(I).ImagAImagB));
+            DenormMultiplyResult(I).Real <= AddGenericFP(PartialMultiplyResult(I).RealARealB,
+                                                     NegateGenericFP(PartialMultiplyResult(I).ImagAImagB));
 
-            DenormMultiplyResult(I).Imag <= AddGenFP(PartialMultiplyResult(I).RealAImagB,
+            DenormMultiplyResult(I).Imag <= AddGenericFP(PartialMultiplyResult(I).RealAImagB,
                                                       PartialMultiplyResult(I).ImagARealB);
           else
             -- Complex add/sub/etc, normalize already
             
             AddResult(I)
-              <= Complex(NormalizeGenFP(DenormAddResult(I).Real, 0),
-                         NormalizeGenFP(DenormAddResult(I).Imag, 0));
+              <= Complex(NormalizeFP16(DenormAddResult(I).Real, 0),
+                         NormalizeFP16(DenormAddResult(I).Imag, 0));
           end if;
         end loop;
 
@@ -407,11 +233,11 @@ begin
       elsif DenormValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
-            -- Complex multiply
+            -- Complex multiply, normalize now
             
             AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(NormalizeGenFP(DenormMultiplyResult(I).Real, Precision_C),
-                         NormalizeGenFP(DenormMultiplyResult(I).Imag, Precision_C));
+              <= Complex(NormalizeFP16(DenormMultiplyResult(I).Real, Precision_C),
+                         NormalizeFP16(DenormMultiplyResult(I).Imag, Precision_C));
           else
             -- Complex add/sub/etc, was normalized during the previous stage
             
@@ -426,6 +252,4 @@ begin
       end if;
     end if;
   end process;
-  
-  AVU_C_Accept <= '1';
 end RTL;

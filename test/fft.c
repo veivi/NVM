@@ -73,7 +73,7 @@ typedef struct complex {
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
 #define FP16_EXP_BITS    (8*sizeof(fp16_t) - 1 - FP16_MANT_BITS)
-#define FP16_EXP_BIAS    ((1<<FP16_EXP_BITS)/2)
+#define FP16_EXP_BIAS    (((1<<FP16_EXP_BITS)/2)-1)
 
 #define MASK(n)          ((1<<(n)) - 1)
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
@@ -156,7 +156,7 @@ fp16_t fp16_mul(fp16_t a, fp16_t b)
   
   int s = FP16_SIGN(a) ^ FP16_SIGN(b);
   int exp = FP16_EXP(a) + FP16_EXP(b) - FP16_EXP_BIAS;
-  int mant = (FP16_MANTISSA(a) * FP16_MANTISSA(b)) >> (FP16_PRECISION - 1);
+  int32_t mant = (FP16_MANTISSA(a) * FP16_MANTISSA(b)) >> (FP16_PRECISION - 1);
 
   if(mant > (1<<FP16_PRECISION)) {
     exp ++;
@@ -1159,8 +1159,8 @@ int main()
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/32) + 0.4f, 0.2f*sinf(i*2*pi/32));
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/64), 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
-    fft_data[i] = COMPLEX_FROM_FLOAT(1.0f + 0.5f*cosf(i*2*pi/64) + 0.5f*cosf(i*2*pi/32), 1.0f);
-    // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
+    // fft_data[i] = COMPLEX_FROM_FLOAT(1.0f + 0.5f*cosf(i*2*pi/64) + 0.5f*cosf(i*2*pi/32), 1.0f);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.005f + 0.005f*cosf(i*2*pi/8) + 0.005f*cosf(i*2*pi/32), 0);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
