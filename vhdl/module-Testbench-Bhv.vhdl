@@ -153,7 +153,7 @@ begin
   -- Vector Unit
   --
   
-  AVU_I : entity WORK.VU102(RTL)
+  AVU_I : entity WORK.VU103(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSIze_C
                 , Precision_C => Precision_C

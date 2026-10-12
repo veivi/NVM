@@ -115,7 +115,7 @@ architecture RTL of VU103 is
   function AddGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
     variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 2;
     variable Bigger, Smaller : GenFP_T(Mantissa(A.Mantissa'range));
-    variable Exp, ExpSmall : Exp_T;
+    variable Exp, ExpSmall : ExtExp_T;
     variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
     variable Sign : std_logic;
   begin
@@ -200,9 +200,10 @@ architecture RTL of VU103 is
     if Exp < 1 then
       -- Underflow to zero
       Mant := (others => '0');
+      Exp := 0;
     end if;
     
-    return ScalarMake(A.Sign, Exp, Mant(PrecDelta+MantSize_C-1 downto PrecDelta));
+    return ScalarMake(A.Sign, Exp, Mant(PrecDelta+Precision_C-1 downto PrecDelta));
   end function;
 
   function NegateFP16(A : Scalar_T) return Scalar_T is
@@ -249,7 +250,7 @@ architecture RTL of VU103 is
 
   -- Non-normalized result of addition
   
-  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
+  subtype AddResult_T is GenFP_T(Mantissa(Precision_C downto 0));
 
   -- Non-normalized result of multiplication
   
