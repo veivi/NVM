@@ -59,8 +59,7 @@ architecture RTL of VU103 is
   
   subtype Scalar_T is std_logic_vector(ScalarSize_C-1 downto 0);
 
-  subtype Mantissa_T is unsigned(Precision_C-1 downto 0);  -- With implicit
-                                                                   -- '1'
+  subtype Mantissa_T is unsigned(Precision_C-1 downto 0);  -- With implicit '1'
 
   subtype Exp_T is integer range 0 to 2**ExpSize_C-1;
 
@@ -113,7 +112,9 @@ architecture RTL of VU103 is
   --
     
   function AddGenFP(A : GenFP_T; B : GenFP_T) return GenFP_T is
-    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 2;
+    -- Extended mantissa must hold negative values and the result of addition,
+    -- so two extra bits needed
+    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 3;
     variable Bigger, Smaller : GenFP_T(Mantissa(A.Mantissa'range));
     variable Exp, ExpSmall : ExtExp_T;
     variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
@@ -221,36 +222,9 @@ architecture RTL of VU103 is
     return MultiplyGenFP(GenericFromScalar(A), GenericFromScalar(B));
   end function;
 
-  -- function Normalize(A : MultiplyResult_T) return Scalar_T is
-  --   variable Exp : ExtExp_T;
-  --   variable Mant : DoubleMantissa_T;
-  -- begin
-  --   Exp := A.Exp;
-  --   Mant := A.Mantissa;
-    
-  --   if Mant > to_unsigned(2*2**Precision_C, 2*MantSize_C) then
-  --     -- Adjust exponent
-  --     Exp := Exp + 1;
-  --     Mant := shift_right(Mant, 1);
-  --   end if;
-
-  --   if Exp > 2**ExpSize_C-1 then
-  --     -- Overflow to max
-  --     Exp := 2**ExpSize_C-1;
-  --     Mant := (others => '1');
-  --   elsif Exp = 0 or Mant = to_unsigned(0, 2*MantSize_C) then
-  --     -- The result is zero
-  --     Exp := 0;
-  --     Mant := (others => '0');
-  --   end if;
-
-  --   return ScalarMake(A.Sign, Exp,
-  --                     Mant(Precision_C+MantSize_C-1 downto Precision_C));
-  -- end function;
-
   -- Non-normalized result of addition
   
-  subtype AddResult_T is GenFP_T(Mantissa(Precision_C downto 0));
+  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
 
   -- Non-normalized result of multiplication
   
