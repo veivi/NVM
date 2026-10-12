@@ -64,6 +64,13 @@ architecture RTL of VU103 is
   subtype Exp_T is integer range 0 to 2**ExpSize_C-1;
 
   subtype ExtExp_T is integer range -2*2**ExpSize_C to 2*2**ExpSize_C-1;  -- Extended
+
+  type Complex_T is record
+    Real : Scalar_T;
+    Imag : Scalar_T;
+  end record;
+
+  type ComplexArray_T is array (natural range <>) of Complex_T;
   
   function ScalarSign(A : Scalar_T) return std_logic is
   begin
@@ -222,29 +229,38 @@ architecture RTL of VU103 is
     return MultiplyGenFP(GenericFromScalar(A), GenericFromScalar(B));
   end function;
 
-  -- Non-normalized result of addition
-  
-  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
-
   -- Non-normalized result of multiplication
   
   subtype MultiplyResult_T is GenFP_T(Mantissa(2*Precision_C-1 downto 0));
   
-  type PartialMultiplyResult_T is record
+  subtype DenormMultiplyResult_T is GenFP_T(Mantissa(2*Precision_C+1 downto 0));
+  
+  subtype AddResult_T is GenFP_T(Mantissa(Precision_C+1 downto 0));
+  
+  type PartialComplexMultiplyResult_T is record
     RealARealB : MultiplyResult_T;
     ImagAImagB : MultiplyResult_T;
     RealAImagB : MultiplyResult_T;
     ImagARealB : MultiplyResult_T;
   end record;
 
-  type PartialAddResult_T is record
+  type DenormComplexMultiplyResult_T is record
+    Real : DenormMultiplyResult_T;
+    Imag : DenormMultiplyResult_T;
+  end record;
+
+  -- Non-normalized result of addition
+  
+  type DenormAddResult_T is record
     Real : AddResult_T;
     Imag : AddResult_T;
   end record;
 
-  type PartialMultiplyResultArray_T is array (natural range <>) of PartialMultiplyResult_T;
+  type PartialMultiplyResultArray_T is array (natural range <>) of PartialComplexMultiplyResult_T;
+
+  type DenormMultiplyResultArray_T is array (natural range <>) of DenormComplexMultiplyResult_T;
   
-  type PartialAddResultArray_T is array (natural range <>) of PartialAddResult_T;
+  type DenormAddResultArray_T is array (natural range <>) of DenormAddResult_T;
   
   function RealPart(A : Word_T) return Scalar_T is
   begin
@@ -262,12 +278,13 @@ architecture RTL of VU103 is
   end function;
 
   signal PartialMultiplyResult : PartialMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal PartialAddResult : PartialAddResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
-  signal PartialValid, MultiplyValid : std_logic;
-  signal PartialTag, MultiplyTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
-  signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
-  signal PartialRespond, MultiplyRespond : std_logic;
+  signal DenormMultiplyResult : DenormMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
+  signal DenormAddResult : DenormAddResultArray_T(0 to 2**Log2VecSize_C-1);
+  signal AddResult : WordArray_T(0 to 2**Log2VecSize_C-1);
+  signal PartialValid, DenormValid : std_logic;
+  signal PartialTag, DenormTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
+  signal PartialOperation, DenormOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
+  signal PartialRespond, DenormRespond : std_logic;
 begin
   --
   -- Multiplication stage
@@ -298,25 +315,25 @@ begin
             when 1 =>      
               -- A + B
             
-              PartialAddResult(I) <= ( AddFP16(RealPart(A), RealPart(B)),
+              DenormAddResult(I) <= ( AddFP16(RealPart(A), RealPart(B)),
                                        AddFP16(ImagPart(A), ImagPart(B)) );
               
             when 2 =>      
               -- A - B
             
-              PartialAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(RealPart(B))),
+              DenormAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(RealPart(B))),
                                        AddFP16(ImagPart(A), NegateFP16(ImagPart(B))) );
               
             when 3 =>      
               -- A + iB
             
-              PartialAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(ImagPart(B))),
+              DenormAddResult(I) <= ( AddFP16(RealPart(A), NegateFP16(ImagPart(B))),
                                        AddFP16(ImagPart(A), RealPart(B)) );
               
             when 4 =>      
               -- A - iB
             
-              PartialAddResult(I) <= ( AddFP16(RealPart(A), ImagPart(B)),
+              DenormAddResult(I) <= ( AddFP16(RealPart(A), ImagPart(B)),
                                        AddFP16(ImagPart(A), NegateFP16(RealPart(B))) );
               
             when others =>
@@ -337,7 +354,7 @@ begin
   end process;
 
   --
-  -- Partial result adder, result output
+  -- Partial result adder
   --
   
   PartialAdder_P : process(Clk)
@@ -345,31 +362,65 @@ begin
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
-        AVU_R_Present <= '0';
+        DenormValid <= '0';
 
       elsif PartialValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
           if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
             -- Complex multiply
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(NormalizeGenFP(AddGenFP(PartialMultiplyResult(I).RealARealB,
-                                                 NegateGenFP(PartialMultiplyResult(I).ImagAImagB)),
-                                        Precision_C),
-                         NormalizeGenFP(AddGenFP(PartialMultiplyResult(I).RealAImagB,
-                                                 PartialMultiplyResult(I).ImagARealB),
-                                        Precision_C));
+            DenormMultiplyResult(I).Real <= AddGenFP(PartialMultiplyResult(I).RealARealB,
+                                                     NegateGenFP(PartialMultiplyResult(I).ImagAImagB));
+
+            DenormMultiplyResult(I).Imag <= AddGenFP(PartialMultiplyResult(I).RealAImagB,
+                                                      PartialMultiplyResult(I).ImagARealB);
           else
-            -- Complex add/sub/etc
+            -- Complex add/sub/etc, normalize already
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(NormalizeGenFP(PartialAddResult(I).Real, 0),
-                         NormalizeGenFP(PartialAddResult(I).Imag, 0));
+            AddResult(I)
+              <= Complex(NormalizeGenFP(DenormAddResult(I).Real, 0),
+                         NormalizeGenFP(DenormAddResult(I).Imag, 0));
           end if;
         end loop;
 
-        AVU_R_Tag <= PartialTag;
-        AVU_R_Present <= PartialRespond;
+        DenormValid <= '1';
+        DenormOperation <= PartialOperation;
+        DenormTag <= PartialTag;
+        DenormRespond <= PartialRespond;
+      else
+        DenormValid <= '0';
+      end if;
+    end if;
+  end process;
+  
+  --
+  -- Normalize, result output
+  --
+  
+  Normalizer_P : process(Clk)
+    variable A, B : Word_T;
+  begin
+    if rising_edge(Clk) then
+      if Reset = '1' then
+        AVU_R_Present <= '0';
+
+      elsif DenormValid = '1' then
+        for I in 0 to 2**Log2VecSize_C-1 loop
+          if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
+            -- Complex multiply
+            
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= Complex(NormalizeGenFP(DenormMultiplyResult(I).Real, Precision_C),
+                         NormalizeGenFP(DenormMultiplyResult(I).Imag, Precision_C));
+          else
+            -- Complex add/sub/etc, was normalized during the previous stage
+            
+            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= AddResult(I);
+          end if;
+        end loop;
+
+        AVU_R_Tag <= DenormTag;
+        AVU_R_Present <= DenormRespond;
       else
         AVU_R_Present <= '0';
       end if;
