@@ -71,9 +71,9 @@ architecture RTL of VU103 is
 
   -- Non-normalized result of multiplication or addition
   
-  constant MulPrec_C : integer := 1;
+  constant IntPrec_C : integer := Precision_C/4;
 
-  subtype DenormResult_T is GenericFP_T(Mantissa(MulPrec_C+Precision_C-1 downto 0));
+  subtype DenormResult_T is GenericFP_T(Mantissa(IntPrec_C+Precision_C-1 downto 0));
   
   type PartialComplexMultiplyResult_T is record
     RealARealB : DenormResult_T;
@@ -113,10 +113,10 @@ begin
           A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                        FP16MultiplyDenorm(ImagPart(A), ImagPart(B), MulPrec_C),
-                                        FP16MultiplyDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                        FP16MultiplyDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+          PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B), IntPrec_C),
+                                        FP16MultiplyDenorm(ImagPart(A), ImagPart(B), IntPrec_C),
+                                        FP16MultiplyDenorm(RealPart(A), ImagPart(B), IntPrec_C),
+                                        FP16MultiplyDenorm(ImagPart(A), RealPart(B), IntPrec_C) );
 
         end loop;
 
@@ -173,26 +173,26 @@ begin
               when 1 =>      
                 -- A + B
             
-                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                        FP16AddDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
+                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B), IntPrec_C),
+                                        FP16AddDenorm(ImagPart(A), ImagPart(B), IntPrec_C) );
               
               when 2 =>      
                 -- A - B
             
-                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                        FP16SubtractDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
+                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B), IntPrec_C),
+                                        FP16SubtractDenorm(ImagPart(A), ImagPart(B), IntPrec_C) );
 
               when 3 =>      
                 -- A + iB
             
-                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                        FP16AddDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B), IntPrec_C),
+                                        FP16AddDenorm(ImagPart(A), RealPart(B), IntPrec_C) );
               
               when 4 =>      
                 -- A - iB
             
-                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                        FP16SubtractDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B), IntPrec_C),
+                                        FP16SubtractDenorm(ImagPart(A), RealPart(B), IntPrec_C) );
               
               when others =>
                 -- Invalid operation
@@ -226,8 +226,8 @@ begin
 
       elsif DenormValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          R := Complex(NormalizeFP16(DenormResult(I).Real, MulPrec_C),
-                       NormalizeFP16(DenormResult(I).Imag, MulPrec_C));
+          R := Complex(NormalizeFP16(DenormResult(I).Real, IntPrec_C),
+                       NormalizeFP16(DenormResult(I).Imag, IntPrec_C));
 
           AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= R;
 
