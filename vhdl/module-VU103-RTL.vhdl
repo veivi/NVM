@@ -134,7 +134,9 @@ begin
   end process;
   
   AVU_C_Accept <=
+    -- We can always issue a multiplication
     '1' when to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0
+    -- We can only issue if there's no conflicting multiply going on
     else not PartialValid;
   
   --
