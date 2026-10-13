@@ -95,7 +95,6 @@ architecture RTL of VU103 is
   signal DenormResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, DenormValid : std_logic;
   signal PartialTag, DenormTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
-  signal PartialOperation, DenormOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
   signal PartialRespond, DenormRespond : std_logic;
 begin
   --
@@ -108,7 +107,6 @@ begin
     if rising_edge(Clk) then
       if Reset = '1' then
         PartialValid <= '0';
-        PartialOperation <= (others => '0');
 
       elsif AVU_C_Present = '1' and to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0then
         for I in 0 to 2**Log2VecSize_C-1 loop
@@ -123,12 +121,10 @@ begin
         end loop;
 
         PartialValid <= '1';
-        PartialOperation <= AVU_C_Operation;
         PartialRespond <= AVU_C_Respond;
         PartialTag <= AVU_C_Tag;
       else
         PartialValid <= '0';
-        PartialOperation <= (others => '0');
       end if;
     end if;
   end process;
@@ -140,10 +136,10 @@ begin
     else not PartialValid;
   
   --
-  -- Partial result adder
+  -- Adder stage
   --
   
-  PartialAdder_P : process(Clk)
+  Adder_P : process(Clk)
     variable A, B : Word_T;
   begin
     if rising_edge(Clk) then
@@ -151,7 +147,7 @@ begin
         DenormValid <= '0';
 
       else
-        if PartialValid = '1' and to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
+        if PartialValid = '1' then
           -- Complex multiply in the pipeline
         
           for I in 0 to 2**Log2VecSize_C-1 loop
@@ -163,7 +159,6 @@ begin
           end loop;   
 
           DenormValid <= '1';
-          DenormOperation <= PartialOperation;
           DenormTag <= PartialTag;
           DenormRespond <= PartialRespond;
             
@@ -206,7 +201,6 @@ begin
           end loop;
           
           DenormValid <= '1';
-          DenormOperation <= AVU_C_Operation;
           DenormTag <= AVU_C_Tag;
           DenormRespond <= AVU_C_Respond;
         else
