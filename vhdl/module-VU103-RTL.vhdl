@@ -92,9 +92,7 @@ architecture RTL of VU103 is
   type DenormResultArray_T is array (natural range <>) of DenormComplexResult_T;
   
   signal PartialMultiplyResult : PartialMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal DenormAddResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal DenormMultiplyResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal AddResult : WordArray_T(0 to 2**Log2VecSize_C-1);
+  signal DenormResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, DenormValid : std_logic;
   signal PartialTag, DenormTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal PartialOperation, DenormOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
@@ -112,48 +110,16 @@ begin
         PartialValid <= '0';
         PartialOperation <= (others => '0');
 
-      elsif AVU_C_Present = '1' then
+      elsif AVU_C_Present = '1' and to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0then
         for I in 0 to 2**Log2VecSize_C-1 loop
           A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
 
-          case to_integer(unsigned(AVU_C_Operation(2 downto 0))) is
-            when 0 =>
-              -- A * B
-            
-              PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                            FP16MultiplyDenorm(ImagPart(A), ImagPart(B), MulPrec_C),
-                                            FP16MultiplyDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                            FP16MultiplyDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+          PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                        FP16MultiplyDenorm(ImagPart(A), ImagPart(B), MulPrec_C),
+                                        FP16MultiplyDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                        FP16MultiplyDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
 
-            when 1 =>      
-              -- A + B
-            
-              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                       FP16AddDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
-              
-            when 2 =>      
-              -- A - B
-            
-              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B), MulPrec_C),
-                                       FP16SubtractDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
-
-            when 3 =>      
-              -- A + iB
-            
-              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                       FP16AddDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
-              
-            when 4 =>      
-              -- A - iB
-            
-              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B), MulPrec_C),
-                                       FP16SubtractDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
-              
-            when others =>
-              -- Invalid operation
-              null;
-          end case;
         end loop;
 
         PartialValid <= '1';
@@ -167,7 +133,9 @@ begin
     end if;
   end process;
   
-  AVU_C_Accept <= '1';
+  AVU_C_Accept <=
+    '1' when to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0
+    else not PartialValid;
   
   --
   -- Partial result adder
@@ -180,32 +148,70 @@ begin
       if Reset = '1' then
         DenormValid <= '0';
 
-      elsif PartialValid = '1' then
-        for I in 0 to 2**Log2VecSize_C-1 loop
-          if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
-            -- Complex multiply, add partial terms with full precision
-            
-            DenormMultiplyResult(I).Real <=
-              SubtractGenericFP(PartialMultiplyResult(I).RealARealB,
-                                PartialMultiplyResult(I).ImagAImagB, 0);
-            DenormMultiplyResult(I).Imag <=
-              AddGenericFP(PartialMultiplyResult(I).RealAImagB,
-                           PartialMultiplyResult(I).ImagARealB, 0);
-          else
-            -- Complex add/sub/etc, normalize already
-            
-            AddResult(I)
-              <= Complex(NormalizeFP16(DenormAddResult(I).Real, MulPrec_C),
-                         NormalizeFP16(DenormAddResult(I).Imag, MulPrec_C));
-          end if;
-        end loop;
-
-        DenormValid <= '1';
-        DenormOperation <= PartialOperation;
-        DenormTag <= PartialTag;
-        DenormRespond <= PartialRespond;
       else
-        DenormValid <= '0';
+        if PartialValid = '1' and to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
+          -- Complex multiply in the pipeline
+        
+          for I in 0 to 2**Log2VecSize_C-1 loop
+            DenormResult(I) <=
+              ( SubtractGenericFP(PartialMultiplyResult(I).RealARealB,
+                                  PartialMultiplyResult(I).ImagAImagB, 0),
+                AddGenericFP(PartialMultiplyResult(I).RealAImagB,
+                             PartialMultiplyResult(I).ImagARealB, 0) );
+          end loop;   
+
+          DenormValid <= '1';
+          DenormOperation <= PartialOperation;
+          DenormTag <= PartialTag;
+          DenormRespond <= PartialRespond;
+            
+        elsif AVU_C_Present = '1' and to_integer(unsigned(AVU_C_Operation(2 downto 0))) /= 0 then
+            -- Complex add/sub/etc being started
+
+          for I in 0 to 2**Log2VecSize_C-1 loop
+            A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
+            B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);
+          
+            case to_integer(unsigned(AVU_C_Operation(2 downto 0))) is
+              when 1 =>      
+                -- A + B
+            
+                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                        FP16AddDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
+              
+              when 2 =>      
+                -- A - B
+            
+                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                        FP16SubtractDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
+
+              when 3 =>      
+                -- A + iB
+            
+                DenormResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                        FP16AddDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+              
+              when 4 =>      
+                -- A - iB
+            
+                DenormResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                        FP16SubtractDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
+              
+              when others =>
+                -- Invalid operation
+                null;
+            end case;
+          end loop;
+          
+          DenormValid <= '1';
+          DenormOperation <= AVU_C_Operation;
+          DenormTag <= AVU_C_Tag;
+          DenormRespond <= AVU_C_Respond;
+        else
+          -- Not doing anything
+        
+          DenormValid <= '0';
+        end if;
       end if;
     end if;
   end process;
@@ -224,15 +230,8 @@ begin
 
       elsif DenormValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if to_integer(unsigned(DenormOperation(2 downto 0))) = 0 then
-            -- Complex multiply, normalize now
-
-              R := Complex(NormalizeFP16(DenormMultiplyResult(I).Real, MulPrec_C),
-                         NormalizeFP16(DenormMultiplyResult(I).Imag, MulPrec_C));
-          else
-            -- Complex add/sub/etc, was normalized during the previous stage
-            R := AddResult(I);
-          end if;
+          R := Complex(NormalizeFP16(DenormResult(I).Real, MulPrec_C),
+                       NormalizeFP16(DenormResult(I).Imag, MulPrec_C));
 
           AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= R;
 
