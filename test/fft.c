@@ -204,7 +204,7 @@ fp16_t fp16_norm(fp16_denorm_t a)
 
   if((mant>>INT_PREC) == 0) {
     // Underflow to 0
-    exp = -1;
+    exp = 0;
     
   } else {
     // Normalize so mantissa is between 0.5 and 1
@@ -217,7 +217,7 @@ fp16_t fp16_norm(fp16_denorm_t a)
 
   fp16_t result = 0;
   
-  if(exp >= 0) {
+  if(exp > 0) {
     // Not underflow
     
     if(exp > (1<<FP16_EXP_BITS)-1) {
