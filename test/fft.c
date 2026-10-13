@@ -69,6 +69,7 @@ typedef struct complex {
 
 // #define TEST_FP16        1
 // #define DEBUG_FP16       1
+#define INT_PREC    4
 
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
@@ -79,19 +80,18 @@ typedef struct complex {
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
 #define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
 
-#define MUL(a, b) fp16_mul(a, b)
+#define MUL(a, b) fp16_mul_denorm(a, b)
 #define ADD(a, b) fp16_add(a, b)
+#define ADD_DN(a, b) fp16_add_denorm(a, b)
 #define SUB(a, b) fp16_sub(a, b)
-#define MUL_DN(a, b, p) fp16_mul_denorm(a, b, p)
-#define ADD_DN(a, b, p) fp16_add_denorm(a, b, p)
-#define SUB_DN(a, b, p) fp16_sub_denorm(a, b, p)
-#define NORM(a, p) fp16_norm(a, p)
+#define SUB_DN(a, b) fp16_sub_denorm(a, b)
+#define NORM(a) fp16_norm(a)
+
 #define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
 #define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
-//#define COMPLEX_MUL(a, b) (complex_t) { SUB(MUL((a).real, (b).real), MUL((a).imag, (b).imag)), \
-//      ADD(MUL((a).real, (b).imag), MUL((a).imag, (b).real)) }
-#define COMPLEX_MUL(a, b) (complex_t) { NORM(SUB_DN(MUL_DN((a).real, (b).real, 0), MUL_DN((a).imag, (b).imag, 0), 0), 0), \
-      NORM(ADD_DN(MUL_DN((a).real, (b).imag, 0), MUL_DN((a).imag, (b).real, 0), 0), 0) }
+#define COMPLEX_MUL(a, b) (complex_t) { NORM(SUB_DN(MUL((a).real, (b).real), MUL((a).imag, (b).imag))), \
+      NORM(ADD_DN(MUL((a).real, (b).imag), MUL((a).imag, (b).real))) }
+
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) fp16_to_float(a))
 
@@ -101,10 +101,10 @@ typedef struct complex {
 #define FP16_PACK(s, e, m) ((((s) & 1)<<(FP16_MANT_BITS + FP16_EXP_BITS)) \
 			    | (((e) & MASK(FP16_EXP_BITS))<<FP16_MANT_BITS) \
 			    | ((m) & MASK(FP16_MANT_BITS)))
-#define FP16_PACK_DENORM(s, e, m, p) ((((s) & 1)<<(FP16_MANT_BITS + FP16_EXP_BITS+16)) \
+#define FP16_PACK_DENORM(s, e, m) ((((s) & 1)<<(FP16_MANT_BITS + FP16_EXP_BITS+16)) \
 				   | (((e) & MASK(FP16_EXP_BITS))<<(FP16_MANT_BITS+16)) \
-				   | ((m) & MASK(FP16_PRECISION+p)))
-#define DENORM_FROM_FP16(a, p) FP16_PACK_DENORM(FP16_SIGN(a), FP16_EXP(a), FP16_MANTISSA(a), p)
+				   | ((m) & MASK(FP16_PRECISION+INT_PREC)))
+#define DENORM_FROM_FP16(a) FP16_PACK_DENORM(FP16_SIGN(a), FP16_EXP(a), FP16_MANTISSA(a)<<INT_PREC)
 
 typedef uint16_t fp16_t;
 
@@ -157,7 +157,7 @@ float fp16_to_float(fp16_t a)
   return ldexpf(result, FP16_EXP(a) - FP16_EXP_BIAS);
 }
 
-fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b, int p)
+fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b)
 {
 #if DEBUG_FP16
   printf("\nmul %.4f x %.4f\n", TO_DOUBLE(a), TO_DOUBLE(b));
@@ -168,9 +168,9 @@ fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b, int p)
   
   int s = FP16_SIGN(a) ^ FP16_SIGN(b);
   int exp = FP16_EXP(a) + FP16_EXP(b) - FP16_EXP_BIAS;
-  int32_t mant = (FP16_MANTISSA(a) * FP16_MANTISSA(b)) >> (FP16_PRECISION - 1 - p);
+  uint32_t mant = (FP16_MANTISSA(a) * FP16_MANTISSA(b)) >> (FP16_PRECISION - 1 - INT_PREC);
 
-  if(mant > (1<<(FP16_PRECISION + p))) {
+  if(mant > (1<<(FP16_PRECISION + INT_PREC))) {
     exp ++;
     mant >>= 1;
   }
@@ -178,7 +178,7 @@ fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b, int p)
   if(exp > (1<<FP16_EXP_BITS)) {
     // Overflow
     exp = (1<<FP16_EXP_BITS);
-    mant = (1<<(FP16_PRECISION + p))-1;
+    mant = (1<<(FP16_PRECISION + INT_PREC))-1;
     
   }
 
@@ -186,35 +186,30 @@ fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b, int p)
   
   if(mant > 0 && exp > 1)
     // No underflow
-    result = FP16_PACK_DENORM(s, exp - 1, mant, p);
+    result = FP16_PACK_DENORM(s, exp - 1, mant);
 
 #if DEBUG_FP16
-  printf("  result mant = %.3f \n", (double) ((float) mant/(1<<(FP16_PRECISION+p))));
+  printf("  result mant = %.3f \n", (double) ((float) mant/(1<<(FP16_PRECISION+INT_PREC))));
   //  printf("  result = %.4f \n", TO_DOUBLE(result));
 #endif
   
   return result;
 }
 
-fp16_t fp16_norm(fp16_denorm_t a, int p)
+fp16_t fp16_norm(fp16_denorm_t a)
 {
   int s = FP16_SIGN(a>>16);
   int exp = FP16_EXP(a>>16);
   uint16_t mant = a & 0xFFFF;
 
-  if(mant > (1<<(FP16_PRECISION + p))-1) {
-    // Mantissa grew beyond 1, shift right
-    exp++;
-    mant >>= 1;
-    
-  } else if((mant>>p) == 0) {
+  if((mant>>INT_PREC) == 0) {
     // Underflow to 0
     exp = -1;
     
   } else {
     // Normalize so mantissa is between 0.5 and 1
     
-    while(mant < (1<<(FP16_PRECISION + p))/2) {
+    while(mant < (1<<(FP16_PRECISION + INT_PREC))/2) {
       exp--;
       mant <<= 1;
     }
@@ -228,10 +223,10 @@ fp16_t fp16_norm(fp16_denorm_t a, int p)
     if(exp > (1<<FP16_EXP_BITS)-1) {
       // Overflow
       exp = (1<<FP16_EXP_BITS)-1;
-      mant = (1<<(FP16_PRECISION + p))-1;
+      mant = (1<<(FP16_PRECISION + INT_PREC))-1;
     }
 
-    result = FP16_PACK(s, exp, mant>>p);
+    result = FP16_PACK(s, exp, mant>>INT_PREC);
   }
 
   return result;
@@ -239,10 +234,10 @@ fp16_t fp16_norm(fp16_denorm_t a, int p)
 
 fp16_t fp16_mul(fp16_t a, fp16_t b)
 {
-  return fp16_norm(fp16_mul_denorm(a, b, 0), 0);
+  return fp16_norm(fp16_mul_denorm(a, b));
 }
 
-fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
+fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b)
 {
   if(FP16_EXP(a>>16) < FP16_EXP(b>>16)) {
     // Swap so exp(a) is always >= exp(b)
@@ -273,15 +268,15 @@ fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
 
   if(s)
     mant_a = -mant_a;
-  
-  if(mant_a > (1<<(FP16_PRECISION+p))-1) {
+
+  if(mant_a > (1<<(FP16_PRECISION+INT_PREC))-1) {
     // Mantissa grew beyond 1, shift right
     exp_a++;
     mant_a >>= 1;
     
   }
 
-  return FP16_PACK_DENORM(s, exp_a, mant_a, p);
+  return FP16_PACK_DENORM(s, exp_a, mant_a);
   /*
   else if((mant_a == 0) {
     // Underflow to 0
@@ -321,7 +316,7 @@ fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
 
 fp16_t fp16_add(fp16_t a, fp16_t b)
 {
-  return fp16_norm(fp16_add_denorm(DENORM_FROM_FP16(a, 0), DENORM_FROM_FP16(b, 0), 0), 0);
+  return fp16_norm(fp16_add_denorm(DENORM_FROM_FP16(a), DENORM_FROM_FP16(b)));
 }
 
 fp16_denorm_t fp16_neg_denorm(fp16_denorm_t a)
@@ -339,9 +334,9 @@ fp16_t fp16_sub(fp16_t a, fp16_t b)
   return fp16_add(a, fp16_neg(b));
 }
 
-fp16_denorm_t fp16_sub_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
+fp16_denorm_t fp16_sub_denorm(fp16_denorm_t a, fp16_denorm_t b)
 {
-  return fp16_add_denorm(a, fp16_neg_denorm(b), p);
+  return fp16_add_denorm(a, fp16_neg_denorm(b));
 }
 
 #else
