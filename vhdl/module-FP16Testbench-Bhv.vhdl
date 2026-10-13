@@ -33,16 +33,28 @@ begin
   process
     variable OutLine : line;
     variable A, B, T : FP16_T;
+    variable GA, GB : GenericFP_T(Mantissa(11 downto 0));
+    variable GT : GenericFP_T(Mantissa(11 downto 0));
   begin
-    A := "0100000100110000";
-    B := "0011100100110000";
-    T := (others => '0');
+    A := "0010110011001100";
+    B := "1010110011001100";
 
-    PrintFP16("A", A);
+    GA := GenericFPFromFP16(A);
+    GB := GenericFPFromFP16(B);
     
-    T := FP16Add(T, A);
-    PrintFP16("T=T+A", T);
+    PrintGenericFP("GA", GA);
+    PrintGenericFP("GB", GB);
     
+    GT := SubtractGenericFP(GA, GB, 0);
+    
+    GT := FP16SubtractDenorm(A, B, 0);
+    
+    PrintGenericFP("GT=GA-GB", GT);
+
+    T := NormalizeFP16(GT, 0);
+    PrintFP16("T", T);
+    
+    T := (others => '0');
     T := FP16Add(T, A);
     PrintFP16("T=T+A", T);
 

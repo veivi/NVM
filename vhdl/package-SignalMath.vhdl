@@ -9,6 +9,7 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
+use std.textio.all;
 
 package SignalMath is
   function Saturate(A : std_logic_vector; W : natural) return std_logic_vector;
@@ -25,6 +26,8 @@ package SignalMath is
 
   subtype FP16_T is std_logic_vector(FP16Size_C-1 downto 0);
 
+  subtype ComplexFP16_T is std_logic_vector(2*FP16Size_C-1 downto 0);
+  
   constant FP16MantSize_C : integer := FP16Prec_C - 1;
 
   constant FP16ExpSize_C : integer := FP16Size_C - 1 - FP16MantSize_C;
@@ -47,17 +50,24 @@ package SignalMath is
   function FP16Exp(A : FP16_T) return FP16Exp_T;
   function FP16Mant(A : FP16_T) return FP16Mantissa_T;
   function FP16Make(Sign : std_logic; E : FP16Exp_T; M : FP16Mantissa_T) return FP16_T;
-  function FP16Neg(A : FP16_T) return FP16_T;
+  function FP16Negate(A : FP16_T) return FP16_T;
   function FP16Add(A : FP16_T; B : FP16_T) return FP16_T;
   function FP16Subtract(A : FP16_T; B : FP16_T) return FP16_T;
   function FP16Multiply(A : FP16_T; B : FP16_T) return FP16_T;
-  function FP16AddDenorm(A : FP16_T; B : FP16_T) return GenericFP_T;
-  function FP16SubtractDenorm(A : FP16_T; B : FP16_T) return GenericFP_T;
-  function FP16MultiplyDenorm(A : FP16_T; B : FP16_T) return GenericFP_T;
+  function FP16AddDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T;
+  function FP16SubtractDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T;
+  function FP16MultiplyDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T;
 
   function GenericFPFromFP16(A : FP16_t) return GenericFP_T;
-  function AddGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T;
-  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T;
+  function AddGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T;
+  function SubtractGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T;
+  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T;
   function NegateGenericFP(A : GenericFP_T) return GenericFP_T;
-  function NormalizeFP16(A : GenericFP_T; PrecDelta : integer) return FP16_T;
+  function NormalizeFP16(A : GenericFP_T; Prec : integer) return FP16_T;
+
+  procedure AppendFP16(L : inout line; T : in string; A : in FP16_T);
+  procedure AppendCFP16(L : inout line; T : in string; A : in ComplexFP16_T);
+  procedure Append(L : inout line; T : in string);
+  procedure PrintFP16(T : in string; A : in FP16_T);
+  procedure PrintGenericFP(T : in string; A : in GenericFP_T);
 end package;

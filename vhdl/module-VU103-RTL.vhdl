@@ -12,6 +12,7 @@ use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
 use WORK.SignalMath.all;
+use std.textio.all;
 
 entity VU103 is
   generic(Log2BPW_C : integer;
@@ -70,40 +71,29 @@ architecture RTL of VU103 is
 
   -- Non-normalized result of multiplication or addition
   
-  subtype MultiplyResult_T is GenericFP_T(Mantissa(2*Precision_C-1 downto 0));
-  
-  subtype AddResult_T is GenericFP_T(Mantissa(1+Precision_C-1 downto 0));
+  constant MulPrec_C : integer := 1;
+
+  subtype DenormResult_T is GenericFP_T(Mantissa(MulPrec_C+Precision_C-1 downto 0));
   
   type PartialComplexMultiplyResult_T is record
-    RealARealB : MultiplyResult_T;
-    ImagAImagB : MultiplyResult_T;
-    RealAImagB : MultiplyResult_T;
-    ImagARealB : MultiplyResult_T;
+    RealARealB : DenormResult_T;
+    ImagAImagB : DenormResult_T;
+    RealAImagB : DenormResult_T;
+    ImagARealB : DenormResult_T;
   end record;
 
-  subtype DenormMultiplyResult_T is GenericFP_T(Mantissa(1+2*Precision_C-1 downto 0));
-  
-  type DenormComplexMultiplyResult_T is record
-    Real : DenormMultiplyResult_T;
-    Imag : DenormMultiplyResult_T;
-  end record;
-
-  -- Non-normalized result of addition
-  
-  type DenormAddResult_T is record
-    Real : AddResult_T;
-    Imag : AddResult_T;
+  type DenormComplexResult_T is record
+    Real : DenormResult_T;
+    Imag : DenormResult_T;
   end record;
 
   type PartialMultiplyResultArray_T is array (natural range <>) of PartialComplexMultiplyResult_T;
 
-  type DenormMultiplyResultArray_T is array (natural range <>) of DenormComplexMultiplyResult_T;
-  
-  type DenormAddResultArray_T is array (natural range <>) of DenormAddResult_T;
+  type DenormResultArray_T is array (natural range <>) of DenormComplexResult_T;
   
   signal PartialMultiplyResult : PartialMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal DenormMultiplyResult : DenormMultiplyResultArray_T(0 to 2**Log2VecSize_C-1);
-  signal DenormAddResult : DenormAddResultArray_T(0 to 2**Log2VecSize_C-1);
+  signal DenormAddResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
+  signal DenormMultiplyResult : DenormResultArray_T(0 to 2**Log2VecSize_C-1);
   signal AddResult : WordArray_T(0 to 2**Log2VecSize_C-1);
   signal PartialValid, DenormValid : std_logic;
   signal PartialTag, DenormTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
@@ -131,34 +121,34 @@ begin
             when 0 =>
               -- A * B
             
-              PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B)),
-                                            FP16MultiplyDenorm(ImagPart(A), ImagPart(B)),
-                                            FP16MultiplyDenorm(RealPart(A), ImagPart(B)),
-                                            FP16MultiplyDenorm(ImagPart(A), RealPart(B)) );
+              PartialMultiplyResult(I) <= ( FP16MultiplyDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                            FP16MultiplyDenorm(ImagPart(A), ImagPart(B), MulPrec_C),
+                                            FP16MultiplyDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                            FP16MultiplyDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
 
             when 1 =>      
               -- A + B
             
-              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B)),
-                                       FP16AddDenorm(ImagPart(A), ImagPart(B)) );
+              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                       FP16AddDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
               
             when 2 =>      
               -- A - B
             
-              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B)),
-                                       FP16SubtractDenorm(ImagPart(A), ImagPart(B)) );
-              
+              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), RealPart(B), MulPrec_C),
+                                       FP16SubtractDenorm(ImagPart(A), ImagPart(B), MulPrec_C) );
+
             when 3 =>      
               -- A + iB
             
-              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B)),
-                                       FP16AddDenorm(ImagPart(A), RealPart(B)) );
+              DenormAddResult(I) <= ( FP16SubtractDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                       FP16AddDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
               
             when 4 =>      
               -- A - iB
             
-              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B)),
-                                       FP16SubtractDenorm(ImagPart(A), RealPart(B)) );
+              DenormAddResult(I) <= ( FP16AddDenorm(RealPart(A), ImagPart(B), MulPrec_C),
+                                       FP16SubtractDenorm(ImagPart(A), RealPart(B), MulPrec_C) );
               
             when others =>
               -- Invalid operation
@@ -195,17 +185,18 @@ begin
           if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
             -- Complex multiply, add partial terms with full precision
             
-            DenormMultiplyResult(I).Real <= AddGenericFP(PartialMultiplyResult(I).RealARealB,
-                                                     NegateGenericFP(PartialMultiplyResult(I).ImagAImagB));
-
-            DenormMultiplyResult(I).Imag <= AddGenericFP(PartialMultiplyResult(I).RealAImagB,
-                                                      PartialMultiplyResult(I).ImagARealB);
+            DenormMultiplyResult(I).Real <=
+              SubtractGenericFP(PartialMultiplyResult(I).RealARealB,
+                                PartialMultiplyResult(I).ImagAImagB, 0);
+            DenormMultiplyResult(I).Imag <=
+              AddGenericFP(PartialMultiplyResult(I).RealAImagB,
+                           PartialMultiplyResult(I).ImagARealB, 0);
           else
             -- Complex add/sub/etc, normalize already
             
             AddResult(I)
-              <= Complex(NormalizeFP16(DenormAddResult(I).Real, 0),
-                         NormalizeFP16(DenormAddResult(I).Imag, 0));
+              <= Complex(NormalizeFP16(DenormAddResult(I).Real, MulPrec_C),
+                         NormalizeFP16(DenormAddResult(I).Imag, MulPrec_C));
           end if;
         end loop;
 
@@ -224,7 +215,8 @@ begin
   --
   
   Normalizer_P : process(Clk)
-    variable A, B : Word_T;
+    variable R, R0 : Word_T;
+    variable O : line;
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
@@ -232,23 +224,62 @@ begin
 
       elsif DenormValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          if to_integer(unsigned(PartialOperation(2 downto 0))) = 0 then
+          if to_integer(unsigned(DenormOperation(2 downto 0))) = 0 then
             -- Complex multiply, normalize now
-            
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= Complex(NormalizeFP16(DenormMultiplyResult(I).Real, Precision_C),
-                         NormalizeFP16(DenormMultiplyResult(I).Imag, Precision_C));
+
+              R := Complex(NormalizeFP16(DenormMultiplyResult(I).Real, MulPrec_C),
+                         NormalizeFP16(DenormMultiplyResult(I).Imag, MulPrec_C));
           else
             -- Complex add/sub/etc, was normalized during the previous stage
-            
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= AddResult(I);
+            R := AddResult(I);
+          end if;
+
+          AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= R;
+
+          if I = 0 then
+            R0 := R;
           end if;
         end loop;
 
         AVU_R_Tag <= DenormTag;
         AVU_R_Present <= DenormRespond;
+
+        Append(O, "Result ");
+        write(O, to_integer(unsigned(DenormTag)));
+        AppendCFP16(O, " = ", R0);
+        
+        writeline(output, O);
       else
         AVU_R_Present <= '0';
+      end if;
+    end if;
+  end process;
+
+  Report_P : process(Clk)
+    variable O : line;
+  begin
+    if rising_edge(Clk) and Reset = '0' then
+      if AVU_C_Present = '1' then
+        case to_integer(unsigned(AVU_C_Operation)) is
+          when 0 =>
+            Append(O, "Multiply   ");
+          when 1 =>
+            Append(O, "Add        ");
+          when 2 =>
+            Append(O, "Subtract   ");
+          when 3 =>
+            Append(O, "Add rot i  ");
+          when 4 =>
+            Append(O, "Add rot -i ");
+          when others =>
+            Append(O, "Weird");
+        end case;
+
+        write(O, to_integer(unsigned(AVU_C_Tag)));
+        AppendCFP16(O, " A = ", AVU_C_OperandA(WordSize_C-1 downto 0));
+        AppendCFP16(O, " B = ", AVU_C_OperandB(WordSize_C-1 downto 0));
+        
+        writeline(output, O);
       end if;
     end if;
   end process;

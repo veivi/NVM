@@ -9,6 +9,7 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
+use std.textio.all;
 
 package body SignalMath is
   function Saturate(A : std_logic_vector; W : natural) return std_logic_vector is
@@ -95,49 +96,49 @@ package body SignalMath is
     return ( Sign => FP16Sign(A), Exp => FP16Exp(A), Mantissa => FP16Mant(A) );
   end function;
   
-  function FP16Neg(A : FP16_T) return FP16_T is
+  function FP16Negate(A : FP16_T) return FP16_T is
   begin
     return FP16Make(not FP16Sign(A), FP16Exp(A), FP16Mant(A));
   end function;
   
   function FP16Add(A : FP16_T; B : FP16_T) return FP16_T is
   begin
-    return NormalizeFP16(AddGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B)), 0);
+    return NormalizeFP16(AddGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B), 0), 0);
   end function;
   
   function FP16Subtract(A : FP16_T; B : FP16_T) return FP16_T is
   begin
-    return FP16Add(A, FP16Neg(B));
+    return FP16Add(A, FP16Negate(B));
   end function;
   
   function FP16Multiply(A : FP16_T; B : FP16_T) return FP16_T is
   begin
-    return NormalizeFP16(MultiplyGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B)), FP16Prec_C);
+    return NormalizeFP16(MultiplyGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B), 0), 0);
   end function;
   
-  function FP16AddDenorm(A : FP16_T; B : FP16_T) return GenericFP_T is
+  function FP16AddDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T is
   begin
-    return AddGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B));
+    return AddGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B), Prec);
   end function;
   
-  function FP16SubtractDenorm(A : FP16_T; B : FP16_T) return GenericFP_T is
+  function FP16SubtractDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T is
   begin
-    return FP16AddDenorm(A, FP16Neg(B));
+    return FP16AddDenorm(A, FP16Negate(B), Prec);
   end function;
   
-  function FP16MultiplyDenorm(A : FP16_T; B : FP16_T) return GenericFP_T is
+  function FP16MultiplyDenorm(A : FP16_T; B : FP16_T; Prec : integer) return GenericFP_T is
   begin
-    return MultiplyGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B));
+    return MultiplyGenericFP(GenericFPFromFP16(A), GenericFPFromFP16(B), Prec);
   end function;
   
   --
   -- Generic FP addition, result is not normalized
   --
     
-  function AddGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
+  function AddGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T is
     -- Extended mantissa must hold negative values and the result of addition,
     -- so two extra bits needed
-    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 3;
+    variable ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 3 + Prec;
     variable Bigger, Smaller : GenericFP_T(Mantissa(A.Mantissa'range));
     variable Exp, ExpSmall : FP16ExtExp_T;
     variable Mant, MantSmall : unsigned(ExtMantSize_C-1 downto 0);
@@ -152,10 +153,10 @@ package body SignalMath is
     end if;
 
     Exp := Bigger.Exp;
-    Mant := resize(Bigger.Mantissa, ExtMantSize_C);
+    Mant := shift_left(resize(Bigger.Mantissa, ExtMantSize_C), Prec);
     
     ExpSmall := Smaller.Exp;
-    MantSmall := shift_right(resize(Smaller.Mantissa, ExtMantSize_C), Exp - ExpSmall);
+    MantSmall := shift_right(shift_left(resize(Smaller.Mantissa, ExtMantSize_C), Prec), Exp - ExpSmall);
 
     if Bigger.Sign = '1' then
       Mant := unsigned(-signed(Mant));
@@ -173,25 +174,38 @@ package body SignalMath is
       Mant := unsigned(-signed(Mant));
     end if;
     
-    return ( Sign => Sign, Exp => Exp, Mantissa => Mant(ExtMantSize_C-2 downto 0) );
+    if unsigned(Mant(ExtMantSize_C-1 downto FP16Prec_C+Prec)) > 0 then
+      -- Bigger than one, shift one right and increment exponent
+      Exp := Exp + 1;
+      Mant := shift_right(Mant, 1);
+    end if;
+    
+    return ( Sign => Sign, Exp => Exp, Mantissa => Mant(ExtMantSize_C-3 downto 0));
   End;
 
-  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T) return GenericFP_T is
-    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1
-                                        + B.Mantissa'range'high - B.Mantissa'range'low + 1;
+  function SubtractGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T is
+  begin
+    return AddGenericFP(A, NegateGenericFP(B), Prec);
+  end function;
+  
+  function MultiplyGenericFP(A : GenericFP_T; B : GenericFP_T; Prec : integer) return GenericFP_T is
+    constant FullSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1
+                                     + B.Mantissa'range'high - B.Mantissa'range'low + 1;
+    constant ExtMantSize_C : integer := FullSize_C/2 + Prec;
     variable Exp : FP16ExtExp_T;
-    variable Mant : unsigned(ExtMantSize_C-1 downto 0);
+    variable Mant : unsigned(FullSize_C-1 downto 0);
   begin
     Exp := A.Exp + B.Exp - FP16ExpBias_C;
     Mant := unsigned(A.Mantissa) * unsigned(B.Mantissa);
 
-    if Exp < 1 or Mant = to_unsigned(0, ExtMantSize_C) then
+    if Exp < 1 or Mant = to_unsigned(0, FullSize_C) then
       -- Underflow
       Exp := 0;
       Mant := (others => '0');
     end if;
     
-    return ( Sign => A.Sign xor B.Sign, Exp => Exp, Mantissa => Mant);
+    return ( Sign => A.Sign xor B.Sign, Exp => Exp,
+             Mantissa => Mant(FullSize_C-1 downto FullSize_C/2 - Prec));
   end function;
   
   function NegateGenericFP(A : GenericFP_T) return GenericFP_T is
@@ -199,8 +213,8 @@ package body SignalMath is
     return ( Sign => not A.Sign, Exp => A.Exp, Mantissa => A.Mantissa );
   end function;
 
-  function NormalizeFP16(A : GenericFP_T; PrecDelta : integer) return FP16_T is
-    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 2;
+  function NormalizeFP16(A : GenericFP_T; Prec : integer) return FP16_T is
+    constant ExtMantSize_C : integer := A.Mantissa'range'high - A.Mantissa'range'low + 1;
     variable Exp : FP16ExtExp_T;
     variable Mant : unsigned(ExtMantSize_C-1 downto 0);
   begin
@@ -212,22 +226,10 @@ package body SignalMath is
       Exp := 2**FP16ExpSize_C-1;
       Mant := (others => '1');
       
-    elsif unsigned(Mant(ExtMantSize_C-1 downto FP16Prec_C+PrecDelta)) > 0 then
-      -- Bigger than one, shift one right and increment exponent
-      if Exp < 2**FP16ExpSize_C-1 then
-        -- We have room in the exponent
-        Exp := Exp + 1;
-        Mant := shift_right(Mant, 1);
-      else
-        -- Overflow to max
-        Exp := 2**FP16ExpSize_C-1;
-        Mant := (others => '1');
-      end if;
-    
     elsif Mant /= to_unsigned(0, ExtMantSize_C) then
       -- Not zero, normalize if needed by shifting left until between 0.5 and 1
 
-      while Mant(FP16Prec_C+PrecDelta-1) = '0' and Exp > 0 loop
+      while Mant(FP16Prec_C+Prec-1) = '0' and Exp > 0 loop
         Exp := Exp - 1;
         Mant := shift_left(Mant, 1);
       end loop;
@@ -242,7 +244,54 @@ package body SignalMath is
       Mant := (others => '0');
     end if;
     
-    return FP16Make(A.Sign, Exp, Mant(PrecDelta+FP16Prec_C-1 downto PrecDelta));
+    return FP16Make(A.Sign, Exp, Mant(Prec+FP16Prec_C-1 downto Prec));
   end function;
 
+  procedure AppendFP16(L : inout line; T : in string; A : in FP16_T) is
+  begin
+    write(L, T);
+    write(L, string'(" Sign="));
+    write(L, FP16Sign(A));
+    write(L, string'(" Exp="));
+    write(L, FP16Exp(A));
+    write(L, string'(" Mant="));
+    write(L, FP16Mant(A));
+  end procedure;
+  
+  procedure AppendGenericFP(L : inout line; T : in string; A : in GenericFP_T) is
+  begin
+    write(L, T);
+    write(L, string'(" Sign="));
+    write(L, A.Sign);
+    write(L, string'(" Exp="));
+    write(L, A.Exp);
+    write(L, string'(" Mant="));
+    write(L, A.Mantissa);
+  end procedure;
+  
+  procedure AppendCFP16(L : inout line; T : in string; A : in ComplexFP16_T) is
+  begin
+    write(L, T);
+    AppendFP16(L, "R: ", A(2*FP16Size_C-1 downto FP16Size_C));
+    AppendFP16(L, " I: ", A(FP16Size_C-1 downto 0));
+  end procedure;
+  
+  procedure PrintFP16(T : in string; A : in FP16_T) is
+    variable L : line;
+  begin
+    AppendFP16(L, T, A);
+    writeline(output, L);
+  end procedure;
+  
+  procedure PrintGenericFP(T : in string; A : in GenericFP_T) is
+    variable L : line;
+  begin
+    AppendGenericFP(L, T, A);
+    writeline(output, L);
+  end procedure;
+  
+  procedure Append(L : inout line; T : in string) is 
+  begin
+    write(L, T);
+  end procedure;
 end package body;
