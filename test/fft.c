@@ -80,18 +80,18 @@ typedef struct complex {
 #define COMPLEX_FROM_FLOAT(r, i) (complex_t) { .real = fp16_from_float(r), .imag = fp16_from_float(i) }
 
 #define MUL(a, b) fp16_mul(a, b)
-#define MUL_DN(a, b, p) fp16_mul_denorm(a, b, p)
 #define ADD(a, b) fp16_add(a, b)
 #define SUB(a, b) fp16_sub(a, b)
+#define MUL_DN(a, b, p) fp16_mul_denorm(a, b, p)
 #define ADD_DN(a, b, p) fp16_add_denorm(a, b, p)
 #define SUB_DN(a, b, p) fp16_sub_denorm(a, b, p)
 #define NORM(a, p) fp16_norm(a, p)
 #define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
 #define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
-#define COMPLEX_MUL(a, b) (complex_t) { SUB(MUL((a).real, (b).real), MUL((a).imag, (b).imag)), \
-      ADD(MUL((a).real, (b).imag), MUL((a).imag, (b).real)) }
-//#define COMPLEX_MUL(a, b) (complex_t) { NORM(SUB_DN(MUL_DN((a).real, (b).real, 1), MUL_DN((a).imag, (b).imag, 0), 0), 0), \
-//      NORM(ADD_DN(MUL_DN((a).real, (b).imag, 1), MUL_DN((a).imag, (b).real, 0), 0), 0) }
+//#define COMPLEX_MUL(a, b) (complex_t) { SUB(MUL((a).real, (b).real), MUL((a).imag, (b).imag)), \
+//      ADD(MUL((a).real, (b).imag), MUL((a).imag, (b).real)) }
+#define COMPLEX_MUL(a, b) (complex_t) { NORM(SUB_DN(MUL_DN((a).real, (b).real, 0), MUL_DN((a).imag, (b).imag, 0), 0), 0), \
+      NORM(ADD_DN(MUL_DN((a).real, (b).imag, 0), MUL_DN((a).imag, (b).real, 0), 0), 0) }
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) fp16_to_float(a))
 
@@ -239,7 +239,7 @@ fp16_t fp16_norm(fp16_denorm_t a, int p)
 
 fp16_t fp16_mul(fp16_t a, fp16_t b)
 {
-  return fp16_norm(fp16_mul_denorm(a, b, 4), 4);
+  return fp16_norm(fp16_mul_denorm(a, b, 0), 0);
 }
 
 fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
@@ -339,7 +339,7 @@ fp16_t fp16_sub(fp16_t a, fp16_t b)
   return fp16_add(a, fp16_neg(b));
 }
 
-fp16_t fp16_sub_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
+fp16_denorm_t fp16_sub_denorm(fp16_denorm_t a, fp16_denorm_t b, int p)
 {
   return fp16_add_denorm(a, fp16_neg_denorm(b), p);
 }
