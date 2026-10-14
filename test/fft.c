@@ -91,8 +91,9 @@ typedef struct complex {
 #define NORM(a) fp16_norm(a)
 #define COMPLEX_ADD(a, b) (complex_t) { ADD((a).real, (b).real), ADD((a).imag, (b).imag) }
 #define COMPLEX_SUB(a, b) (complex_t) { SUB((a).real, (b).real), SUB((a).imag, (b).imag) }
-#define COMPLEX_MUL(a, b) (complex_t) { NORM(SUB_DN(MUL_DN((a).real, (b).real), MUL_DN((a).imag, (b).imag))), \
-      NORM(ADD_DN(MUL_DN((a).real, (b).imag), MUL_DN((a).imag, (b).real))) }
+#define COMPLEX_MUL(a, b) (complex_t) { \
+    NORM(SUB_DN(MUL_DN((a).real, (b).real), MUL_DN((a).imag, (b).imag))), \
+    NORM(ADD_DN(MUL_DN((a).real, (b).imag), MUL_DN((a).imag, (b).real))) }
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
 #define TO_DOUBLE(a) ((double) fp16_to_float(a))
 #define DN_TO_DOUBLE(a) ((double) fp16_to_float(fp16_norm(a)))
@@ -207,19 +208,16 @@ fp16_t fp16_norm(fp16_denorm_t a)
   printf("norm %.3f exp = %d\n", (double) ((float) mant/(1<<(FP16DN_MANT_BITS))), exp);
 #endif
   
-  if(mant < (1<<INT_PREC)) {
-    // Underflow to 0
-    mant = 0;
-    exp = 0;
-    
-  } else {
+  if(mant > 0) {
     // Normalize so mantissa is between 0.5 and 1
     
     while(mant < (1<<FP16DN_MANT_BITS)/2) {
       exp--;
       mant <<= 1;
     }
-  }
+  } else
+    // It's zero
+    exp = 0;
 
   fp16_t result = 0;
   
@@ -1322,12 +1320,13 @@ int main()
     for(int j = -100; j < 100; j++) {
       fp16_t fa = fp16_from_float((float) i / 10.0f); 
       fp16_t fb = fp16_from_float((float) j / 100.0f); 
-      fp16_denorm_t a = fp16_add_denorm(DENORM_FROM_FP16(fa), DENORM_FROM_FP16(fb));
+      fp16_denorm_t a = fp16_sub_denorm(DENORM_FROM_FP16(fa), DENORM_FROM_FP16(fb));
       fp16_t r = fp16_norm(a);
 
-      printf("%.3f + %.3f = %.3f\n", TO_DOUBLE(fa), TO_DOUBLE(fb), TO_DOUBLE(r));
+      printf("%.3f - %.3f = %.3f (ref %.3f)\n", TO_DOUBLE(fa), TO_DOUBLE(fb), TO_DOUBLE(r),
+	     (float)i / 10.0f - (float) j / 100.0f);
 
-      float c = (float)i / 10.0f + (float) j / 100.0f;
+      float c = (float)i / 10.0f - (float) j / 100.0f;
       assert(fabsf(c - fp16_to_float(r)) < 0.01f);
     }
   }
@@ -1342,7 +1341,7 @@ int main()
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOAT(1.0f + 0.5f*cosf(i*2*pi/64) + 0.5f*cosf(i*2*pi/32), 1.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.05f + 0.05f*cosf(i*2*pi/8) + 0.05f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.02f*cosf(i*2*pi/8) + 0.02f*cosf(i*2*pi/32), 0);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
