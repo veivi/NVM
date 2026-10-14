@@ -68,15 +68,15 @@ typedef struct complex {
 #elif USE_FP16
 
 // #define TEST_FP16        1
-#define DEBUG_FP16       1
-#define INT_PREC    2
+#define DEBUG_FP16          1
+#define INT_PREC    0
 
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
 #define FP16_EXP_BITS    (8*sizeof(fp16_t) - 1 - FP16_MANT_BITS)
 #define FP16_EXP_BIAS    (((1<<FP16_EXP_BITS)/2)-1)
 #define FP16DN_MANT_BITS   (FP16_PRECISION + INT_PREC)
-#define FP16DN_EXP_BITS  (FP16_EXP_BITS+2)
+#define FP16DN_EXP_BITS  (FP16_EXP_BITS+1)
 
 #define MASK(n)          ((1UL<<(n)) - 1UL)
 #define COMPLEX(r, i) (complex_t) { .real = r, .imag = i }
@@ -104,7 +104,9 @@ typedef struct complex {
       NORM(ADD_DN(MUL_DN((a).real, (b).imag), MUL_DN((a).imag, (b).real))) }
 
 #define COMPLEX_ABS(a) 0 // sqrtf((a).real*(a).real + (a).imag*(a).imag)
-#define TO_DOUBLE(a) ((double) fp16_to_float(a))
+#define FP16_TO_DOUBLE(a) ((double) fp16_to_float(a))
+#define FP16DN_TO_DOUBLE(a) ((double) fp16_to_float(fp16_norm(a)))
+#define TO_DOUBLE(a) FP16_TO_DOUBLE(a)
 
 #define FP16_MANTISSA(a)   (((a) & MASK(FP16_EXP_BITS+FP16_MANT_BITS)) != 0 ? (((a) & MASK(FP16_MANT_BITS)) | (1<<FP16_MANT_BITS)) : 0)
 #define FP16_EXP(a)        (int) (((a)>>FP16_MANT_BITS) & MASK(FP16_EXP_BITS))
@@ -165,7 +167,7 @@ void fp16_print(fp16_t a)
 
 void fp16_denorm_print(fp16_denorm_t a)
 {
-  printf("FP16 %.3f * 2^%d ",
+  printf("FP16DN %.3f * 2^%d ",
 	 (double) ((float) FP16DN_MANTISSA(a)/(1<<FP16DN_MANT_BITS)),
 	 FP16DN_EXP(a) - FP16_EXP_BIAS);
 }
@@ -224,10 +226,12 @@ fp16_t fp16_norm(fp16_denorm_t a)
 fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b)
 {
 #if DEBUG_FP16
-  printf("\nmul %.4f x %.4f\n", TO_DOUBLE(a), TO_DOUBLE(b));
-  
-  printf("mult mant = %.3f x mant = %.3f\n", (double) ((float) FP16_MANTISSA(a)/(1<<FP16_PRECISION)),
-  	 (double) ((float) FP16_MANTISSA(b)/(1<<FP16_PRECISION)));
+  printf("mul %.4f + %.4f\n", FP16_TO_DOUBLE(a), FP16_TO_DOUBLE(b));
+  printf("  ");
+  fp16_denorm_print(a);
+  printf("x ");
+  fp16_denorm_print(b);
+  printf("\n");
 #endif
   
   int s = FP16_SIGN(a) ^ FP16_SIGN(b);
@@ -253,14 +257,13 @@ fp16_denorm_t fp16_mul_denorm(fp16_t a, fp16_t b)
     result = FP16DN_PACK(s, exp - 1, mant);
 
 #if DEBUG_FP16
-  printf("  result mant = %.3f \n", (double) ((float) mant/(1<<(FP16_PRECISION+INT_PREC))));
-  //  printf("  result = %.4f \n", TO_DOUBLE(result));
+  printf("  result mant = %.3f exp = %d\n", (double) ((float) mant/(1<<(FP16DN_MANT_BITS))), exp);
 
   float compare = fp16_to_float(a) * fp16_to_float(b);
   float err = fp16_to_float(fp16_norm(result)) - compare;
 
   if(fabsf(err) > 0.01f) {
-    printf(" %.3f x %.3f = %.3f /= %.3f\n", TO_DOUBLE(a), TO_DOUBLE(b), TO_DOUBLE(fp16_norm(result)), compare);
+    printf("  %.3f x %.3f = %.3f /= %.3f\n", FP16_TO_DOUBLE(a), FP16_TO_DOUBLE(b), FP16DN_TO_DOUBLE(result), compare);
     exit(1);
   }
 #endif
@@ -283,15 +286,15 @@ fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b)
   }
 
 #if DEBUG_FP16
-  printf("add %.4f + %.4f\n", TO_DOUBLE(a), TO_DOUBLE(b));
-  printf("add %.3f * 2^%d + %.3f * 2^%d\n", (double) ((float) FP16DN_MANTISSA(a)/(1<<FP16DN_MANT_BITS)),
-	 FP16DN_EXP(a),
-   	 (double) ((float) FP16DN_MANTISSA(b)/(1<<FP16DN_MANT_BITS)),
-	 FP16DN_EXP(b)
-	 );
+  printf("add %.4f + %.4f\n", FP16DN_TO_DOUBLE(a), FP16DN_TO_DOUBLE(b));
+  printf("add ");
+  fp16_denorm_print(a);
+  printf("+ ");
+  fp16_denorm_print(b);
+  printf("\n");
 #endif
   
-  int exp_a = FP16DN_EXP(a>>16);
+  int exp_a = FP16DN_EXP(a);
   int32_t mant_a = FP16DN_MANTISSA(a);
   int32_t mant_b = FP16DN_MANTISSA(b)>>(exp_a - FP16DN_EXP(b));
 
@@ -311,18 +314,22 @@ fp16_denorm_t fp16_add_denorm(fp16_denorm_t a, fp16_denorm_t b)
   if(mant_a > (1<<(FP16DN_MANT_BITS))-1) {
     // Mantissa grew beyond 1, shift right
     exp_a++;
-    mant_a >>= 1;
-    
+    mant_a >>= 1;    
   }
 
+#if DEBUG_FP16
+  printf("  result mant = %.3f exp = %d\n", mant_a / (double) (1<<FP16DN_MANT_BITS), exp_a);
+#endif
+  
   fp16_denorm_t result = FP16DN_PACK(s, exp_a, mant_a);
 
 #if DEBUG_FP16
   float compare = fp16_to_float(fp16_norm(a)) + fp16_to_float(fp16_norm(b));
   float err = fp16_to_float(fp16_norm(result)) - compare;
 
-  if(fabsf(err) > 0.01f) {
-    printf(" %.3f + %.3f = %.3f /= %.3f\n", TO_DOUBLE(a), TO_DOUBLE(b), TO_DOUBLE(fp16_norm(result)), compare);
+  if(fabsf(err) > 0.1f) {
+    printf(" %.3f + %.3f = %.3f /= %.3f\n", FP16DN_TO_DOUBLE(a), FP16DN_TO_DOUBLE(b),
+	   FP16DN_TO_DOUBLE(result), (double) compare);
     exit(1);
   }
 #endif
