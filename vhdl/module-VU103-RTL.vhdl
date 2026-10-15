@@ -12,7 +12,7 @@ use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
 use WORK.SignalMath.all;
-use std.textio.all;
+-- use std.textio.all;
 
 entity VU103 is
   generic(Log2BPW_C : integer;
@@ -217,8 +217,7 @@ begin
   --
   
   Normalizer_P : process(Clk)
-    variable R, R0 : Word_T;
-    variable O : line;
+    -- variable O : line;
   begin
     if rising_edge(Clk) then
       if Reset = '1' then
@@ -226,56 +225,55 @@ begin
 
       elsif DenormValid = '1' then
         for I in 0 to 2**Log2VecSize_C-1 loop
-          R := Complex(NormalizeFP16(DenormResult(I).Real, IntPrec_C),
+          AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <=
+            Complex(NormalizeFP16(DenormResult(I).Real, IntPrec_C),
                        NormalizeFP16(DenormResult(I).Imag, IntPrec_C));
 
-          AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= R;
-
-          if I = 0 then
-            R0 := R;
-          end if;
+          -- if I = 0 then
+          --   R0 := R;
+          -- end if;
         end loop;
 
         AVU_R_Tag <= DenormTag;
         AVU_R_Present <= DenormRespond;
 
-        Append(O, "Result ");
-        write(O, to_integer(unsigned(DenormTag)));
-        AppendCFP16(O, " = ", R0);
+        -- Append(O, "Result ");
+        -- write(O, to_integer(unsigned(DenormTag)));
+        -- AppendCFP16(O, " = ", R0);
         
-        writeline(output, O);
+        -- writeline(output, O);
       else
         AVU_R_Present <= '0';
       end if;
     end if;
   end process;
 
-  Report_P : process(Clk)
-    variable O : line;
-  begin
-    if rising_edge(Clk) and Reset = '0' then
-      if AVU_C_Present = '1' then
-        case to_integer(unsigned(AVU_C_Operation)) is
-          when 0 =>
-            Append(O, "Multiply   ");
-          when 1 =>
-            Append(O, "Add        ");
-          when 2 =>
-            Append(O, "Subtract   ");
-          when 3 =>
-            Append(O, "Add rot i  ");
-          when 4 =>
-            Append(O, "Add rot -i ");
-          when others =>
-            Append(O, "Weird");
-        end case;
+  -- Report_P : process(Clk)
+  --   variable O : line;
+  -- begin
+  --   if rising_edge(Clk) and Reset = '0' then
+  --     if AVU_C_Present = '1' then
+  --       case to_integer(unsigned(AVU_C_Operation)) is
+  --         when 0 =>
+  --           Append(O, "Multiply   ");
+  --         when 1 =>
+  --           Append(O, "Add        ");
+  --         when 2 =>
+  --           Append(O, "Subtract   ");
+  --         when 3 =>
+  --           Append(O, "Add rot i  ");
+  --         when 4 =>
+  --           Append(O, "Add rot -i ");
+  --         when others =>
+  --           Append(O, "Weird");
+  --       end case;
 
-        write(O, to_integer(unsigned(AVU_C_Tag)));
-        AppendCFP16(O, " A = ", AVU_C_OperandA(WordSize_C-1 downto 0));
-        AppendCFP16(O, " B = ", AVU_C_OperandB(WordSize_C-1 downto 0));
+  --       write(O, to_integer(unsigned(AVU_C_Tag)));
+  --       AppendCFP16(O, " A = ", AVU_C_OperandA(WordSize_C-1 downto 0));
+  --       AppendCFP16(O, " B = ", AVU_C_OperandB(WordSize_C-1 downto 0));
         
-        writeline(output, O);
-      end if;
-    end if;
-  end process;
+  --       writeline(output, O);
+  --     end if;
+  --   end if;
+  -- end process;
 end RTL;

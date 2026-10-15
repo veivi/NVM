@@ -69,7 +69,7 @@ typedef struct complex {
 
 // #define TEST_FP16        1
 #define DEBUG_FP16          1
-#define INT_PREC    3
+#define INT_PREC    0
 
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
@@ -157,7 +157,7 @@ fp16_t fp16_from_float(float a)
   
   f_exp += FP16_EXP_BIAS;
     
-  if(f_mant == 0.0f || f_exp < 0)
+  if(f_mant == 0.0f || f_exp < 1)
     // Underflow to zero
     return 0;
   
