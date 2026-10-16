@@ -31,7 +31,7 @@
 			 add sp, sp, 4
 
 //
-// Function prologue and epilogue for nested functions (LR saved on stack)
+// Function prologue and epilogue for nesting function calls (LR saved on stack)
 //   Parameter s specifies the register to be used as scratch
 //   System register z1 = link register
 //
