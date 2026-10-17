@@ -63,7 +63,7 @@ fft_dit_radix4_unroll4:
 	// for(s = 1; s <= EFF_LOG4V; s++) {
 	//    span = 1<<(2 * s);  // 4^s
 	//    quarter = span / 4;
-	//    index_mult = FFT_LEN / span;
+ 	//    index_mult = FFT_LEN / span;
 	
 #define _s           s3
 #define _span        s4
