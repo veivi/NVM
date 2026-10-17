@@ -260,6 +260,3 @@ begin
   
   Result <= ALUResult;
 end RTL;
-
-
-       
