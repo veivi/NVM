@@ -68,8 +68,8 @@ typedef struct complex {
 #elif USE_FP16
 
 // #define TEST_FP16        1
-#define DEBUG_FP16          1
-#define INT_PREC    0
+// #define DEBUG_FP16          1
+#define INT_PREC    3
 
 #define FP16_PRECISION   12  // Includes implicit '1'
 #define FP16_MANT_BITS   (FP16_PRECISION - 1)
@@ -1341,7 +1341,7 @@ int main()
     // fft_data[i] = COMPLEX_FROM_FLOATLEX(0.1 + 0.2f*cosf(i*2*pi/64), 0.1 + 0.2f*sinf(i*2*pi/64));
     // fft_data[i] = COMPLEX_FROM_FLOAT(1.0f + 0.5f*cosf(i*2*pi/64) + 0.5f*cosf(i*2*pi/32), 1.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.2f*cosf(i*2*pi/16), 0.0f);
-    fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.02f*cosf(i*2*pi/8) + 0.02f*cosf(i*2*pi/32), 0);
+    fft_data[i] = COMPLEX_FROM_FLOAT(0.01f + 0.01f*cosf(i*2*pi/8) + 0.01f*cosf(i*2*pi/32), 0.02f);
     //fft_data[i] = COMPLEX_FROM_FLOAT(0.02f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(i & 1 ? 1.0f : -1.0f, 0.0f);
     // fft_data[i] = COMPLEX_FROM_FLOAT(0.1, 0);
