@@ -217,10 +217,8 @@ for_kb_loop:
 
 	cvadd _y0, _s0, _s2
 	cvsub _y2, _s0, _s2
-	vrotc _r3, _s3, -1
-	cvadd _y1, _s1, _r3
-	vrotc _r3, _s3, 1
-	cvadd _y3, _s1, _r3
+	cvaddrni _y1, _s1, _s3
+	cvaddri _y3, _s1, _s3
 
 	/*
             VST [a + kb + j],            y0, stride=span
@@ -439,10 +437,8 @@ for_k_loop_late:
 
 	cvadd _y0, _s0, _s2
 	cvsub _y2, _s0, _s2
-	vrotc _r3, _s3, -1
-	cvadd _y1, _s1, _r3
-	vrotc _r3, _s3, 1
-	cvadd _y3, _s1, _r3
+	cvaddrni _y1, _s1, _s3
+	cvaddri _y3, _s1, _s3
 	
 	/*
                 VST [a + k+j],           y0
