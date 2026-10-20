@@ -69,11 +69,11 @@ fft_dit_radix4_unroll4:
 #define _span        s4
 #define _quarter     s5
 #define _index_mult  s6
-#define _w_table     s7
+#define _W           s7
 #define _fft_len     s8	
 	
 	ldi _s, 1               // s = 1
-	load_big(_w_table, w_table)
+	load_big(_W, w_table)
 	lsl _fft_len, _LOG4N, 1
 	lsl _fft_len, _s, _fft_len // fft_len = 1<<(2*log4(N))
 
@@ -114,11 +114,11 @@ for_j_loop_early:
 	lsl _delta, _delta, 1      // delta = 2*(log4(N) - s)
 	lsl _delta, _j, _delta  // delta = j<<(2*(log4(N) - s)) = j * index_mult
 
-	ldx _w1j, _w_table, _delta  // w1j = w_table[j * mult]
+	ldx _w1j, _W, _delta  // w1j = W[j * mult]
 	lsl _temp, _delta, 1           // temp = 2 * j * mult
-	ldx _w2j, _w_table, _temp   // w2j = w_table[2 * j * mult]
+	ldx _w2j, _W, _temp   // w2j = W[2 * j * mult]
 	add _temp, _temp, _delta    // temp = 3 * j * mul
-	ldx _w3j, _w_table, _temp   // w3j = w_table[3 * j * mult]
+	ldx _w3j, _W, _temp   // w3j = W[3 * j * mult]
 
 	lsl _delta, _quarter, 2     // delta = 4 * quarter
 	lsl _2delta, _delta, 1      // 2delta = 8 * quarter
@@ -444,7 +444,7 @@ for_j_loop_late:
 	  complex_vector_read(w3, w, j * 3*index_mult, 3*index_mult, 0x10000);
 	*/
 
-	add _temp, _w_table, _delta_j
+	add _temp, _W, _delta_j
 	move(_w_stride, _index_mult)
 	vld.4 _w1, _temp, _w_stride // complex_vector_read(w1, w, j * index_mult, index_mult)
 
