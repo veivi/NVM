@@ -90,7 +90,7 @@ for_j_loop_early:
 #define S_w2j       s11
 #define S_w3j       s12
 #define S_delta     s13
-#define S_2delta    s14
+#define S_2_x_delta    s14
 #define S_temp      s15	
 
 	// j * index_mult = j * FFT_LEN/4^s = j<<(2*log4(N))>>(2*s) = j<<(2*(log4(N) - s))
@@ -106,7 +106,7 @@ for_j_loop_early:
 	ldx S_w3j, S_W, S_temp   // w3j = W[3 * j * mult]
 
 	lsl S_delta, S_quarter, 2     // delta = 4 * quarter
-	lsl S_2delta, S_delta, 1      // 2delta = 8 * quarter
+	lsl S_2_x_delta, S_delta, 1      // 2_x_delta = 8 * quarter
 	
 	// for(kb = 0; kb < FFT_LEN; kb += V*span) {
 	//      printf("---\ns = %d j = %d, kb = %d\n---\n", s, j, kb);
@@ -313,7 +313,7 @@ for_kb_loop:
 	cvaddrni V_y1_3, V_s1_3, V_s3_3
 	cvaddrni V_y1_4, V_s1_4, V_s3_4
 	
-	add S_temp, S_temp, S_2delta // temp = &A[kb + j + 2*quarter]
+	add S_temp, S_temp, S_2_x_delta // temp = &A[kb + j + 2*quarter]
 	vst.4 V_y2, S_temp, S_span    // complex_vector_write(y2, A, kb + j + 2*quarter, span)
 	
 	cvaddri V_y3, V_s1, V_s3
@@ -336,7 +336,7 @@ for_kb_loop:
 	  complex_vector_write(y3, A, kb + j + 3*quarter, span, 0x130);
 	*/
 
-	add S_temp, S_temp, S_2delta // temp = &A[kb + j + 3*quarter]
+	add S_temp, S_temp, S_2_x_delta // temp = &A[kb + j + 3*quarter]
 
 	// end for(kb = 0; kb < FFT_LEN; kb += V*span)
 	
@@ -377,7 +377,7 @@ for_s_loop_late:
 	lsl S_span, S_quarter, S_span   // span = 1<<(2*s) = 4^s
 	lsr S_quarter, S_span, 2    // quarter = span/4
 	lsl S_delta, S_quarter, 2     // delta = 4 * quarter
-	lsl S_2delta, S_delta, 1     // 2delta = 8 * quarter
+	lsl S_2_x_delta, S_delta, 1     // 2_x_delta = 8 * quarter
 	lsl S_index_mult, S_s, 1    // index_mult = 2*s
 	lsr S_index_mult, S_fft_len, S_index_mult  // index_mult = FFT_LEN/4^s = FFT_LEN/span
 		
@@ -570,7 +570,7 @@ for_k_loop_late:
 	cvaddrni V_y1_3, V_s1_3, V_s3_3
 	cvaddrni V_y1_4, V_s1_4, V_s3_4
 
-	add S_temp, S_temp, S_2delta
+	add S_temp, S_temp, S_2_x_delta
 	vst.4 V_y2, S_temp, 1
 	
 	cvaddri V_y3, V_s1, V_s3
@@ -593,7 +593,7 @@ for_k_loop_late:
 	  complex_vector_write(y3, A, k + j + 3*quarter, 1, 0x130);
 	*/
 	
-	add S_temp, S_temp, S_2delta
+	add S_temp, S_temp, S_2_x_delta
 
 	// end for(k = 0; k < FFT_LEN; k += span)
 

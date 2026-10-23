@@ -239,7 +239,7 @@ write_neg_bytes:
 	ldi s3, 30
 
 neg_loop:
-	stb s3, s1 + 0
+	st.b s3, s1 + 0
 	add s1, s1, 1
 	sub s2, s2, 1
 	bgt (c0), neg_loop
@@ -252,10 +252,10 @@ read_neg_bytes:
 	ldi s2, 100
 	
 byte_read_loop:
-	ldb s3, s1 + 0
-	ldbu s4, s1 + 1
-	ldb s5, s1 + 2
-	ldbu s6, s1 + 3
+	ld.b s3, s1 + 0
+	ld.bu s4, s1 + 1
+	ld.b s5, s1 + 2
+	ld.bu s6, s1 + 3
 	sub s2, s2, 4
 	bgt (c0), byte_read_loop
 	add s1, s1, 4
@@ -269,10 +269,10 @@ read_neg_bytes2:
 	ldi s2, 100
 	
 byte_read_loop2:
-	ldb s3, s1 + 0
+	ld.b s3, s1 + 0
 	cmp c1, s3, -30
 	if lt(c1) sub s3, s3, s3
-	stb s3, s1 + 0
+	st.b s3, s1 + 0
 	sub s2, s2, 1
 	bgt (c0), byte_read_loop2
 	add s1, s1, 1
@@ -315,19 +315,19 @@ clear_vektori_loop:
 	
 	vand v1, v1, 0  // Clear v1
 	vor v1, v1, 3   
-	vstb v1, s1, 1  // Write as a sequence of bytes
-	vldb v2, s1, 1  // Read back into v2
+	vst.b v1, s1, 1  // Write as a sequence of bytes
+	vld.b v2, s1, 1  // Read back into v2
 	vadd v2, v2, 10
-	vstb v2, s1, 1
-	vldb v3, s1, 1
+	vst.b v2, s1, 1
+	vld.b v3, s1, 1
 	vadd v3, v3, 1
 	vadd v4, v3, 1
 	vadd v5, v4, 1
 	vadd v6, v5, 1
-	vstb v3, s1, 3
-	vstb v4, s1, 4
-	vstb v5, s1, 5
-	vstb v6, s1, 6
+	vst.b v3, s1, 3
+	vst.b v4, s1, 4
+	vst.b v5, s1, 5
+	vst.b v6, s1, 6
 
 	// Memory fence test, first without barriers
 
@@ -338,8 +338,8 @@ clear_vektori_loop:
 	vadd v3, v3, 16
 
 	debug 16
-	vstb v3, s1, 10
-	vldb v4, s1, 10
+	vst.b v3, s1, 10
+	vld.b v4, s1, 10
 	debug 17
 
 	// Then with write fence
@@ -347,9 +347,9 @@ clear_vektori_loop:
 	vadd v3, v3, 16
 	
 	debug 32	
-	vstb v3, s1, 10
+	vst.b v3, s1, 10
 	drain
-	vldb v4, s1, 10
+	vld.b v4, s1, 10
 	debug 33	
 	
 	// Then with read and write fence
@@ -358,9 +358,9 @@ clear_vektori_loop:
 	
 	sync
 	debug 48
-	vstb v5, s1, 10
+	vst.b v5, s1, 10
 	drain
-	vldb v6, s1, 10
+	vld.b v6, s1, 10
 	sync
 	debug 49
 
@@ -589,37 +589,37 @@ clear_vektori_loop:
 test_ldpc:
 	ldi s1, 0
 	ldi s2, 7
-	stb s2, s1, 0
+	st.b s2, s1, 0
 	ldi s2, 8
-	stb s2, s1, 1
+	st.b s2, s1, 1
 	ldi s2, 6
-	stb s2, s1, 2
+	st.b s2, s1, 2
 	ldi s2, 9
-	stb s2, s1, 3
+	st.b s2, s1, 3
 	ldi s2, 8
-	stb s2, s1, 4
+	st.b s2, s1, 4
 	ldi s2, -4
-	stb s2, s1, 5
+	st.b s2, s1, 5
 	ldi s2, 9
-	stb s2, s1, 6
+	st.b s2, s1, 6
 	ldi s2, 7
-	stb s2, s1, 7
+	st.b s2, s1, 7
 	ldi s2, 6
-	stb s2, s1, 8
+	st.b s2, s1, 8
 	ldi s2, 8
-	stb s2, s1, 9
+	st.b s2, s1, 9
 	ldi s2, 7
-	stb s2, s1, 10
+	st.b s2, s1, 10
 	ldi s2, 9
-	stb s2, s1, 11
+	st.b s2, s1, 11
 
 	drain
 
-	vldb v0, s1, 1
+	vld.b v0, s1, 1
 	add s1, s1, 4
-	vldb v1, s1, 1
+	vld.b v1, s1, 1
 	add s1, s1, 4
-	vldb v2, s1, 1
+	vld.b v2, s1, 1
 	
 	exta 0, v0, v0
 	
@@ -632,22 +632,22 @@ test_ldpc:
 	ext 2, v5, v2, v0
 
 	ldi s1, 0
-	vstb v3, s1, 1
+	vst.b v3, s1, 1
 	add s1, s1, 4
-	vstb v4, s1, 1
+	vst.b v4, s1, 1
 	add s1, s1, 4
-	vstb v5, s1, 1
+	vst.b v5, s1, 1
 	
 	vadd v6, v0, v3
 	vadd v7, v1, v4
 	vadd v8, v2, v5
 
 	ldi s1, 0
-	vstb v6, s1, 1
+	vst.b v6, s1, 1
 	add s1, s1, 4
-	vstb v7, s1, 1
+	vst.b v7, s1, 1
 	add s1, s1, 4
-	vstb v8, s1, 1
+	vst.b v8, s1, 1
 	
 	// Done
 	drain

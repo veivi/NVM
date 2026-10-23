@@ -9,7 +9,6 @@
 architecture: "NVM101"
 version: "1.0"
 iword_size_bits: 32
-minimum_opcode: 6
 
 #
 # INSTRUCTION FORMATS
@@ -622,49 +621,49 @@ instruction_set:
   BLNE:
     category: "cond_branch"
     opcode: 7
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_NE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] NE"
 
   BLEQ:
     category: "cond_branch"
     opcode: 8
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_EQ_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] EQ"
 
   BLLT:
     category: "cond_branch"
     opcode: 9
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_LT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LT"
 
   BLLE:
     category: "cond_branch"
     opcode: 10
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_LE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LE"
 
   BLGT:
     category: "cond_branch"
     opcode: 11
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_GT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GT"
 
   BLGE:
     category: "cond_branch"
     opcode: 12
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_GE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GE"
 
   BL:
     category: "branch"
     opcode: 13
-    operation: "FlowOp_BC_C"
+    operation: "FlowOp_BCL_C"
     predicate: "Pred_A_C"
     behaviour: "R0 = IP; IP = IP + sign_extend(offset)"
 
@@ -701,42 +700,42 @@ instruction_set:
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDL:
+  LD.L:
     category: "loadstore"
     opcode: 1
     size: 2
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDLU:
+  LD.LU:
     category: "loadstore"
     opcode: 2
     size: 2
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDS:
+  LD.S:
     category: "loadstore"
     opcode: 3
     size: 1
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDSU:
+  LD.SU:
     category: "loadstore"
     opcode: 4
     size: "1"
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDB:
+  LD.B:
     category: "loadstore"
     opcode: 5
     size: 0
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  LDBU:
+  LD.BU:
     category: "loadstore"
     opcode: 6
     size: 0
@@ -750,21 +749,21 @@ instruction_set:
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
-  STL:
+  ST.L:
     category: "loadstore"
     opcode: 8
     size: 2
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
-  STS:
+  ST.S:
     category: "loadstore"
     opcode: 9
     size: 1
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + zero_extend(offset)] = R[s2]"
     
-  STB:
+  ST.B:
     category: "loadstore"
     opcode: 10
     size: 0
@@ -782,42 +781,42 @@ instruction_set:
     size: "Log2BPW_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXL:
+  LDX.L:
     category: "loadstore_indexed"
     opcode: 1
     size: 2
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXLU:
+  LDX.LU:
     category: "loadstore_indexed"
     opcode: 2
     size: 2
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXS:
+  LDX.S:
     category: "loadstore_indexed"
     opcode: 3
     size: 1
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXSU:
+  LDX.SU:
     category: "loadstore_indexed"
     opcode: 4
     size: 1    
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXB:
+  LDX.B:
     category: "loadstore_indexed"
     opcode: 5
     size: 0
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s1] + R[s2]*scale]"
     
-  LDXBU:
+  LDX.BU:
     category: "loadstore_indexed"
     opcode: 6
     size: 0
@@ -831,21 +830,21 @@ instruction_set:
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
-  STXL:
+  STX.L:
     category: "loadstore_indexed"
     opcode: 8
     size: 2
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
-  STXS:
+  STX.S:
     category: "loadstore_indexed"
     opcode: 9
     size: 1
     operation: "LSOp_Store_C"
     behaviour: "MEM[R[s1] + R[s2]*scale] = R[d]"
     
-  STXB:
+  STX.B:
     category: "loadstore_indexed"
     opcode: 10
     size: 0
@@ -865,7 +864,7 @@ instruction_set:
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDL:
+  VLD.L:
     category: "loadstore_vec"
     opcode: 2
     variant-name: "imm"
@@ -874,7 +873,7 @@ instruction_set:
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDLU:
+  VLD.LU:
     category: "loadstore_vec"
     opcode: 4
     variant-name: "imm"
@@ -883,7 +882,7 @@ instruction_set:
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDS:
+  VLD.S:
     category: "loadstore_vec"
     opcode: 6
     variant-name: "imm"
@@ -892,7 +891,7 @@ instruction_set:
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDSU:
+  VLD.SU:
     category: "loadstore_vec"
     opcode: 8
     variant-name: "imm"
@@ -901,7 +900,7 @@ instruction_set:
     operation: "LSOp_LoadUnsigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDB:
+  VLD.B:
     category: "loadstore_vec"
     opcode: 10
     variant-name: "imm"
@@ -910,7 +909,7 @@ instruction_set:
     operation: "LSOp_LoadSigned_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VLDBU:
+  VLD.BU:
     category: "loadstore_vec"
     opcode: 12
     variant-name: "imm"
@@ -932,7 +931,7 @@ instruction_set:
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VSTL:
+  VST.L:
     category: "loadstore_vec"
     opcode: 16
     variant-name: "imm"
@@ -941,7 +940,7 @@ instruction_set:
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VSTS:
+  VST.S:
     category: "loadstore_vec"
     opcode: 18
     variant-name: "imm"
@@ -950,7 +949,7 @@ instruction_set:
     operation: "LSOp_Store_C"
     behaviour: "R[rd] = MEM[R[s] + zero_extend(offset)]"
     
-  VSTB:
+  VST.B:
     category: "loadstore_vec"
     opcode: 20
     variant-name: "imm"
