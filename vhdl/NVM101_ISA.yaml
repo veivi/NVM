@@ -344,6 +344,10 @@ instruction_categories:
 #
 
 instruction_set:
+#
+# Fence operations
+#
+
   DRAIN:
     category: "fence"
     opcode: 0
@@ -355,13 +359,21 @@ instruction_set:
     opcode: 1
     operation: "FenceOp_ReadFence_C"
     behaviour: "Memory Read fence"
-  
+
+#
+# Return From Subroutine
+#
+
   RET:
     category: "system"
     opcode: 2
     operation: "FlowOp_RET_C"
     behaviour: "Jump to LR"
-  
+
+#
+# Move To/From System Register
+#
+
   MTSYS:
     category: "move_to_system"
     opcode: 3
@@ -373,22 +385,38 @@ instruction_set:
     opcode: 4
     operation: "FlowOp_MvFrSys_C"
     behaviour: "Move from System"
-  
+
+#
+# Extension Unit Operation
+#
+
   EXT:
     category: "ext"
     opcode: 0
     behaviour: "Extension"
-    
+
+#
+# Extension Unit Operation with Broadcast
+#
+
   EXTB:
     category: "ext_bc"
     opcode: 0
     behaviour: "Extension"
-    
+
+#
+# Extension Unit Operation without result
+#
+
   EXTA:
     category: "ext_acc"
     opcode: 0
     behaviour: "Extension"
-    
+
+#
+# Arithmetic/Logic Operation
+#
+
   AND:
     category: "logic"
     opcode: 0
