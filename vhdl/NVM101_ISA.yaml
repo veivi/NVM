@@ -414,7 +414,7 @@ instruction_set:
     behaviour: "Extension"
 
 #
-# Arithmetic/Logic Operation
+# Scalar Arithmetic/Logic
 #
 
   AND:
