@@ -396,7 +396,7 @@ instruction_set:
     behaviour: "Extension"
 
 #
-# Extension Unit Operation with Broadcast
+# Extension Unit Operation, Broadcast Scalar
 #
 
   EXTB:
@@ -405,7 +405,7 @@ instruction_set:
     behaviour: "Extension"
 
 #
-# Extension Unit Operation without result
+# Extension Unit Accumulate (no result)
 #
 
   EXTA:
