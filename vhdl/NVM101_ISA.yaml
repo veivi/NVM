@@ -10,9 +10,11 @@ architecture: "NVM101"
 version: "1.0"
 iword_size_bits: 32
 
+################################################################################
 #
 # INSTRUCTION FORMATS
 #
+################################################################################
 
 instruction_formats:
   system_read: { opcode: 16, _: 4, zs: 6, rd: 6 }
@@ -39,9 +41,11 @@ instruction_formats:
   debug: { opcode: 10, rs: 6 }
   debug_imm: { opcode: 10, value: 22 }
 
+################################################################################
 #
 # INSTRUCTION CATEGORIES
 #
+################################################################################
 
 instruction_categories:
   logic:
@@ -339,9 +343,11 @@ instruction_categories:
     register-write: "rd"
     system-read: "zs"
     
+################################################################################
 #
 # INSTRUCTION SET
 #
+################################################################################
 
 instruction_set:
 #
@@ -412,7 +418,7 @@ instruction_set:
     category: "ext_acc"
     opcode: 0
     behaviour: "Extension"
-
+    
 #
 # Scalar Arithmetic/Logic
 #
@@ -1221,6 +1227,7 @@ instruction_set:
     opcode: 1
     operation: "DebugOp_DEBUG_C"
     behaviour: "Debug from register/immediate"
+
 
 
 
