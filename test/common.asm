@@ -19,7 +19,7 @@ stop_simulation:
 	debug -1
 
 stop_loop:
-	ba stop_loop
+	br stop_loop
 	nop
 
 fft_debug:	

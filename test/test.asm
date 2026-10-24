@@ -118,21 +118,21 @@ init_fft_loop:
 #ifdef RADIX4
 	ldi s2, LOG2FFT_LEN
 #if UNROLL_K < 2
-	jmpal fft_dit_radix4
+	br.l fft_dit_radix4
 #elif UNROLL_K < 4
-	jmpal fft_dit_radix4_unroll2
+	br.l fft_dit_radix4_unroll2
 #elif UNROLL_K < 8
-	jmpal fft_dit_radix4_unroll4
+	br.l fft_dit_radix4_unroll4
 #endif
 	lsr s2, s2, 1
 #elif UNROLL_K < 2
-	jmpal fft_decimation_in_time
+	br.l fft_decimation_in_time
 #elif UNROLL_K < 4
-	jmpal fft_dit_unroll2
+	br.l fft_dit_unroll2
 #elif UNROLL_K < 8
-	jmpal fft_dit_unroll4
+	br.l fft_dit_unroll4
 #else
-	jmpal fft_dit_unroll8
+	br.l fft_dit_unroll8
 #endif
 	ldi s2, LOG2FFT_LEN
 

@@ -641,7 +641,7 @@ instruction_set:
     predicate: "Pred_GE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GE"
 
-  BA:
+  BR:
     category: "branch"
     opcode: 6
     operation: "FlowOp_BC_C"
@@ -652,49 +652,49 @@ instruction_set:
 # Conditional Branch And Link
 #
 
-  BLNE:
+  BNE.L:
     category: "cond_branch"
     opcode: 7
     operation: "FlowOp_BCL_C"
     predicate: "Pred_NE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] NE"
 
-  BLEQ:
+  BEQ.L:
     category: "cond_branch"
     opcode: 8
     operation: "FlowOp_BCL_C"
     predicate: "Pred_EQ_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] EQ"
 
-  BLLT:
+  BLT.L:
     category: "cond_branch"
     opcode: 9
     operation: "FlowOp_BCL_C"
     predicate: "Pred_LT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LT"
 
-  BLLE:
+  BLE.L:
     category: "cond_branch"
     opcode: 10
     operation: "FlowOp_BCL_C"
     predicate: "Pred_LE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] LE"
 
-  BLGT:
+  BGT.L:
     category: "cond_branch"
     opcode: 11
     operation: "FlowOp_BCL_C"
     predicate: "Pred_GT_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GT"
 
-  BLGE:
+  BGE.L:
     category: "cond_branch"
     opcode: 12
     operation: "FlowOp_BCL_C"
     predicate: "Pred_GE_C"
     behaviour: "IP = IP + sign_extend(offset) IF CR[cr] GE"
 
-  BL:
+  BR.L:
     category: "branch"
     opcode: 13
     operation: "FlowOp_BCL_C"
@@ -1194,7 +1194,7 @@ instruction_set:
     operation: "FlowOp_JMPA_C"
     behaviour: "IP = zero_extend(target)"
     
-  JMPAL:
+  JMPA.L:
     category: "jump_imm"
     opcode: 1
     operation: "FlowOp_JMPAL_C"
@@ -1206,7 +1206,7 @@ instruction_set:
     operation: "FlowOp_JMP_C"
     behaviour: "IP = R[rs] + sign_extend(i_disp)"
     
-  JMPL:
+  JMP.L:
     category: "jump_ind"
     opcode: 3
     operation: "FlowOp_JMPL_C"
