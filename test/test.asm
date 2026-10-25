@@ -139,16 +139,16 @@ init_fft_loop:
 	// Read result
 
 	drain
-	debug 0x570B     // Stop
+	debug 0x570B     // Stop timer
 
 	load_big(s3, FFT_LEN)
 	load_big(s4, 0x800000)   // Store to a non-writable address so reported in the log file
 	
 read_loop:
 	ld.8 s8, s1, 0
-	st.8 s8, s4, 0    
 	add s1, s1, 32
 	sub s3, s3, 8
+	st.8 s8, s4, 0    
 	bgt (c0), read_loop
 	add s4, s4, 32
 	
