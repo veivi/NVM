@@ -140,15 +140,13 @@ init_fft_loop:
 
 	drain
 	debug 0x570B     // Stop
-	
-	ldi s3, 1
-	lsl s3, s3, s2
-	ldi s4, 0x80
-	lsl s4, s4, 16
+
+	load_big(s3, FFT_LEN)
+	load_big(s4, 0x800000)   // Store to a non-writable address so reported in the log file
 	
 read_loop:
 	ld.8 s8, s1, 0
-	st.8 s8, s4, 0     // Store to a non-writable address so reported in the log file
+	st.8 s8, s4, 0    
 	add s1, s1, 32
 	sub s3, s3, 8
 	bgt (c0), read_loop

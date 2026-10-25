@@ -155,7 +155,7 @@ def main():
     
             if symbol[0].isdigit():
                 # It's a literal
-                target = int(symbol)
+                target = int(symbol, 0)
                 # print(f"Literal {target}")
             else:
                 if symbol in imports[module] or symbol in exports[module]:
