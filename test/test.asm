@@ -121,7 +121,7 @@ init_fft_loop:
 	br.l fft_dit_radix4
 #elif UNROLL_K < 4
 	br.l fft_dit_radix4_unroll2
-#elif UNROLL_K < 8
+#else
 	br.l fft_dit_radix4_unroll4
 #endif
 	lsr s2, s2, 1
