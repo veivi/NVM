@@ -136,10 +136,10 @@ init_fft_loop:
 #endif
 	ldi s2, LOG2FFT_LEN
 
-	// Read result
-
 	drain
 	debug 0x570B     // Stop timer
+
+	// Read result. s1 still points at fft_data which now holds the result
 
 	load_big(s3, FFT_LEN)
 	load_big(s4, 0x800000)   // Store to a non-writable address so reported in the log file
