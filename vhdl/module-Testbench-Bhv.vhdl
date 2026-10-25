@@ -15,7 +15,7 @@ use std.textio.all;
 use std.env.finish;
 
 entity Testbench is
-  generic(VecSize_C : integer := 3;
+  generic(VecSize_C : integer;
           Contention_C : real := 0.1;
           Log2RAMSize_C : integer := 14;
           RAMSize_C : integer;
@@ -33,7 +33,6 @@ architecture Bhv of Testbench is
   constant WordSize_C : integer := ByteSize_C*BytesPerWord_C;
   constant TagSize_C : integer := 8;
   constant Log2NumOfRegs_C : integer := 6;
-  -- constant VecSize_C : integer := 2**Log2VecSize_C;
   
   function Log2(X : integer) return integer is
     variable T : integer := X;
@@ -115,7 +114,7 @@ begin
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
                 Log2NumOfRegs_C => Log2NumOfRegs_C,
-                Log2VecSIze_C => Log2(VecSIze_C) )
+                Log2VecSIze_C => Log2VecSize_C )
 
     port map(Clk => Clk,
              Reset => Reset,
@@ -155,9 +154,8 @@ begin
   
   AVU_I : entity WORK.VU103(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
-                Log2VecSIze_C => Log2VecSIze_C
-                , Precision_C => Precision_C
-                )
+                Log2VecSIze_C => Log2VecSize_C,
+                Precision_C => Precision_C)
 
     port map(Clk => Clk,
              Reset => Reset,

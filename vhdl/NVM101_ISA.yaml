@@ -172,7 +172,7 @@ instruction_categories:
     imm-unsigned: "value"
     vector-condition-write: "vcr"
     
-  imm_unsigned:
+  loadimm_unsigned:
     format: "imm"
     prefix: 34
     operands: [ "rd", "value" ]
@@ -180,7 +180,7 @@ instruction_categories:
     imm-unsigned: "value"
     register-write: "rd"
     
-  imm:
+  loadimm:
     format: "imm"
     prefix: 34
     operands: [ "rd", "value" ]
@@ -188,7 +188,7 @@ instruction_categories:
     imm-signed: "value"
     register-write: "rd"
     
-  imm_high:
+  loadimm_high:
     format: "imm"
     prefix: 34
     operands: [ "rd", "value" ]
@@ -706,19 +706,19 @@ instruction_set:
 #
 
   LDI:
-    category: "imm"
+    category: "loadimm"
     opcode: 0
     operation: "ImmOp_Load_C"
     behaviour: "R[rd] = sign_extend(value)"
 
   LDIU:
-    category: "imm_unsigned"
+    category: "loadimm_unsigned"
     opcode: 1
     operation: "ImmOp_Load_C"
     behaviour: "R[rd] = zero_extend(value)"
 
   LDIH:
-    category: "imm_high"
+    category: "loadimm_high"
     opcode: 2
     operation: "ImmOp_Load_C"
     behaviour: "R[rd] = zero_pad(value)"
