@@ -34,7 +34,7 @@ entity NVM101 is
        DebugActive : out std_logic;
        DebugOut : out std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0);
        
-       -- LCM initiative
+       -- Loosely Coupled Memory initiative
 
        LCI_Present : out std_logic_vector(2**Log2VecSize_C downto 0);
        LCI_Accept : in std_logic_vector(2**Log2VecSize_C downto 0);
@@ -44,7 +44,7 @@ entity NVM101 is
        LCI_ByteSel : out std_logic_vector(2**Log2BPW_C*(2**Log2VecSize_C+1)-1 downto 0);
        LCI_Data : out std_logic_vector(ByteSize_C*2**Log2BPW_C*(2**Log2VecSize_C+1)-1 downto 0);
 
-       -- LCM response
+       -- Loosely Coupled Memory response
 
        LCR_Present : in std_logic_vector(2**Log2VecSize_C downto 0);
        LCR_Tag : in std_logic_vector(TagSize_C*(2**Log2VecSize_C+1)-1 downto 0);
