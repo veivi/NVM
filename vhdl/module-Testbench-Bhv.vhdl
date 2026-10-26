@@ -122,7 +122,7 @@ begin
              I_Ready => I_Ready,
              I_Addr => I_Addr,
              I_Code => I_Code,
-
+ 
              DebugActive => DebugActive,
              DebugOut => DebugOut,
              
