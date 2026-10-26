@@ -60,7 +60,7 @@ entity NVM101 is
        AVU_C_OperandA : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
        AVU_C_OperandB : out std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
 
-       -- Vector Unit Result
+       -- Application Vector Unit Result
 
        AVU_R_Present : in std_logic;
        AVU_R_Tag : in std_logic_vector(Log2MaxRegs_C-1 downto 0);
