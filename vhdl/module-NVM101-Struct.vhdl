@@ -319,7 +319,7 @@ begin
   -- Scalar LSU
   --
 
-  LSU_I : entity WORK.VLSU(RTL)
+  LSU_I : entity WORK.LSU(RTL)
     generic map(AddrSize_C => AddrSize_C,
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
@@ -365,7 +365,7 @@ begin
   -- Scalar Register File
   --
 
-  RFU_I : entity WORK.VRFU(RTL)
+  RFU_I : entity WORK.RFU(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2NumOfRegs_C => Log2NumOfRegs_C)
 
@@ -515,7 +515,7 @@ begin
     -- Load/Store Unit
     --
     
-    VLSU_I : entity WORK.VLSU(RTL)
+    VLSU_I : entity WORK.LSU(RTL)
       generic map(AddrSize_C => AddrSize_C,
                   Log2BPW_C => Log2BPW_C,
                   TagSize_C => TagSize_C,
@@ -555,7 +555,7 @@ begin
     -- Register File
     --
     
-    VRFU_I : entity WORK.VRFU(RTL)
+    VRFU_I : entity WORK.RFU(RTL)
       generic map(Log2BPW_C => Log2BPW_C,
                   Log2NumOfRegs_C => Log2NumOfRegs_C)
 
@@ -600,7 +600,7 @@ begin
                LS_ReadIndex => VLS_ReadIndex(I),
                LS_ReadData => VLS_ReadData((I+1)*WordSize_C-1 downto I*WordSize_C),
                
-               -- Write B is used by the VLSU load results
+               -- Write B is used by the LSU load results
                
                LS_WriteActive => VLS_WriteActive(I),
                LS_WriteIndex => VLS_WriteIndex(I),
@@ -656,7 +656,7 @@ begin
     constant StubSize_C : integer := AddrSize_C - Log2VecSize_C;
     variable Stride : std_logic_vector(StubSize_C-1 downto 0);
   begin
-    -- Default: vector ALUs are under instruction control and operands come from VRFU
+    -- Default: vector ALUs are under instruction control and operands come from RFU
     
     VALU_Operation <= ExecuteWord.VALU_Operation;
     VALU_OperandA <= VRF_RA_Data;

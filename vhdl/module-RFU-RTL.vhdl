@@ -12,7 +12,7 @@ use IEEE.numeric_std.all;
 use WORK.NVM101Types.all;
 use WORK.NVM101Interface.all;
 
-entity VRFU is
+entity RFU is
   generic(Log2BPW_C : integer;
           Log2NumOfRegs_C : integer);
 
@@ -79,9 +79,9 @@ entity VRFU is
        LS_WriteActive : in std_logic;
        LS_WriteIndex : in RegIndex_T;
        LS_WriteData : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));      
-end VRFU;
+end RFU;
 
-architecture RTL of VRFU is
+architecture RTL of RFU is
   constant WordSize_C : integer := ByteSize_C * 2**Log2BPW_C;
   
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);

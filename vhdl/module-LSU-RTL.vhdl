@@ -12,7 +12,7 @@ use IEEE.numeric_std.all;
 use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
 
-entity VLSU is
+entity LSU is
   generic(AddrSize_C : integer;
           Log2BPW_C : integer;
           TagSize_C : integer;
@@ -65,9 +65,9 @@ entity VLSU is
        LCR_Present : in std_logic;
        LCR_Tag : in std_logic_vector(TagSize_C-1 downto 0);
        LCR_Data : in std_logic_vector(ByteSize_C*2**Log2BPW_C-1 downto 0));
-end VLSU;   
+end LSU;   
 
-architecture RTL of VLSU is
+architecture RTL of LSU is
   constant Log2BufferDepth_C : integer := 2;
 
   constant WordSize_C : integer := ByteSize_C*2**Log2BPW_C;
