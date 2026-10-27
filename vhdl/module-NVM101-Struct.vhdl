@@ -566,6 +566,8 @@ begin
                SB_Index => VRF_SB_Index,
                SB_Span => VRF_SB_Span,
                Scoreboard => VRF_Scoreboard((I+1)*2**Log2NumOfRegs_C-1 downto I*2**Log2NumOfRegs_C),
+
+               -- Control and status
                
                DecodeStall => DecodeStall,
                ExecuteStall => ExecuteStall,
@@ -592,13 +594,13 @@ begin
                WA_Index => VRF_WA_Index,
                WA_Data => VRF_WA_Data((I+1)*WordSize_C-1 downto I*WordSize_C),
 
-               -- Load/Store read port
+               -- Load/Store read port (data to be stored)
 
                LS_ReadActive => VLS_ReadActive(I),
                LS_ReadIndex => VLS_ReadIndex(I),
                LS_ReadData => VLS_ReadData((I+1)*WordSize_C-1 downto I*WordSize_C),
                
-               -- Write B is used by the LSU load results
+               -- Load/Store write port (load result)
                
                LS_WriteActive => VLS_WriteActive(I),
                LS_WriteIndex => VLS_WriteIndex(I),
