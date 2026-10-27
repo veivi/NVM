@@ -476,6 +476,11 @@ begin
   ALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RB_Data)
     variable Temp : std_logic_vector(WordSize_C-1 downto 0);
   begin
+    --
+    -- Default: ALU is under instruction control and the operands come out of RFU
+    --
+    
+    ALU_Operation <= ExecuteWord.ALU_Operation;
     Temp := RF_RB_Data;
     
     if ExecuteWord.LS_Operation /= LSOp_None_C then
@@ -494,9 +499,7 @@ begin
       end if;
     else
       -- No overriding, assume it's an ALU instruction
-      
-      ALU_Operation <= ExecuteWord.ALU_Operation;
-    
+          
       if ExecuteWord.ALU_Mode = ALU_RegImm_C then
         -- Possible ALU operation with immediate operand
         Temp := Execute_Imm_Data;
