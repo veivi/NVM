@@ -474,14 +474,13 @@ begin
   --
 
   ALUControl_P : process(ExecuteWord, Execute_Imm_Data, RF_RB_Data)
-    variable Temp : std_logic_vector(WordSize_C-1 downto 0);
   begin
     --
-    -- Default: ALU is under instruction control and the operands come out of RFU
+    -- Default: ALU is under instruction control with immediate operand
     --
     
     ALU_Operation <= ExecuteWord.ALU_Operation;
-    Temp := RF_RB_Data;
+    ALU_Operand <= Execute_Imm_Data;
     
     if ExecuteWord.LS_Operation /= LSOp_None_C then
       -- Override ALU operation for EA computation
@@ -492,21 +491,17 @@ begin
         -- Indexed addressing, calculate the actual offset taking account
         -- of operand size
 
-        Temp := std_logic_vector(shift_left(unsigned(Temp), ExecuteWord.LS_Log2Size));
-      else
-        -- immediatete displacement
-        Temp := Execute_Imm_Data;
+        ALU_Operand <=
+          std_logic_vector(shift_left(unsigned(RF_RB_Data), ExecuteWord.LS_Log2Size));
       end if;
     else
-      -- No overriding, assume it's an ALU instruction
+      -- Possibly an ALU instruction
           
-      if ExecuteWord.ALU_Mode = ALU_RegImm_C then
-        -- Possible ALU operation with immediate operand
-        Temp := Execute_Imm_Data;
+      if ExecuteWord.ALU_Mode = ALU_RegReg_C then
+        -- Register-register operation
+        ALU_Operand <= RF_RB_Data;
       end if;
     end if;
-  
-    ALU_Operand <= Temp;
   end process ALUControl_P;
   
   --
