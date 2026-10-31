@@ -64,9 +64,9 @@ architecture RTL of VU103 is
     return A(ScalarSize_C-1 downto 0);
   end function;
 
-  function Complex(RealPart : Scalar_T; ImagPart : Scalar_T) return Word_T is
+  function Complex(RP : Scalar_T; IP : Scalar_T) return Word_T is
   begin
-    return RealPart & ImagPart;
+    return RP & IP;
   end function;
 
   -- Non-normalized result of multiplication or addition
@@ -108,7 +108,7 @@ begin
       if Reset = '1' then
         PartialValid <= '0';
 
-      elsif AVU_C_Present = '1' and to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0then
+      elsif AVU_C_Present = '1' and to_integer(unsigned(AVU_C_Operation(2 downto 0))) = 0 then
         for I in 0 to 2**Log2VecSize_C-1 loop
           A := AVU_C_OperandA((I+1)*WordSize_C-1 downto I*WordSize_C);
           B := AVU_C_OperandB((I+1)*WordSize_C-1 downto I*WordSize_C);

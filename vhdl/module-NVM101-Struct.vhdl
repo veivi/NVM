@@ -13,11 +13,11 @@ use WORK.NVM101Interface.all;
 use WORK.NVM101Types.all;
 
 entity NVM101 is
-  generic(AddrSize_C : integer;
-          Log2BPW_C : integer;
-          TagSize_C : integer;
-          Log2NumOfRegs_C : integer;
-          Log2VecSize_C : integer);
+  generic(AddrSize_C : integer := 24;
+          Log2BPW_C : integer := 2;
+          TagSize_C : integer := 8;
+          Log2NumOfRegs_C : integer := 6;
+          Log2VecSize_C : integer := 4);
 
   port(Clk : in std_logic;
        Reset : in std_logic;
@@ -663,11 +663,13 @@ begin
     VALU_OperandB <= VRF_RB_Data;
 
     -- The stride can come from scalar RF_B or instruction word
-    
-    Stride :=
-      Execute_Imm_Data(StubSize_C-1 downto 0) when ExecuteWord.VLS_Mode = VLS_Imm_C
-      else RF_RB_Data(StubSize_C-1 downto 0);
 
+    if ExecuteWord.VLS_Mode = VLS_Imm_C then
+      Stride := Execute_Imm_Data(StubSize_C-1 downto 0);
+    else
+      Stride := RF_RB_Data(StubSize_C-1 downto 0);
+    end if;
+    
     -- Scale the stride by load/store operand size
     
     Stride := std_logic_vector(shift_left(unsigned(Stride), ExecuteWord.VLS_Log2Size));

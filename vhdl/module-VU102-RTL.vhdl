@@ -73,9 +73,9 @@ architecture RTL of VU102 is
     return A(PartSize_C-1 downto 0);
   end function;
 
-  function Complex(RealPart : Part_T; ImagPart : Part_T) return Word_T is
+  function Complex(RP : Part_T; IP : Part_T) return Word_T is
   begin
-    return RealPart & ImagPart;
+    return RP & IP;
   end function;
 
   function AddComplex(A : std_logic_vector; B : std_logic_vector) return std_logic_vector is
@@ -101,6 +101,7 @@ architecture RTL of VU102 is
   
   signal PartialResult : PartialResultArray_T(0 to 2**Log2VecSize_C-1);
   signal AdderResult, MultiplyResult : WordArray_T(0 to 2**Log2VecSize_C-1);
+  signal Result : std_logic_vector(ByteSize_C*2**Log2BPW_C*2**Log2VecSize_C-1 downto 0);
   signal PartialValid, MultiplyValid : std_logic;
   signal PartialTag, MultiplyTag : std_logic_vector(Log2MaxRegs_C-1 downto 0);
   signal PartialOperation, MultiplyOperation : std_logic_vector(ExtOpSize_C-1 downto 0);
@@ -223,12 +224,12 @@ begin
           if MultiplyOperation(3) = '1' then
             -- Add the previous result to the result
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C)
-              <= AddComplex(MultiplyResult(I), AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C));
+            Result((I+1)*WordSize_C-1 downto I*WordSize_C)
+              <= AddComplex(MultiplyResult(I), Result((I+1)*WordSize_C-1 downto I*WordSize_C));
           else
             -- Just output result of operation between A and B
             
-            AVU_R_Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
+            Result((I+1)*WordSize_C-1 downto I*WordSize_C) <= MultiplyResult(I);
           end if;
           AVU_R_Present <= MultiplyRespond;
           AVU_R_Tag <= MultiplyTag;
@@ -238,6 +239,7 @@ begin
       end if;
     end if;
   end process;
-  
+
+  AVU_R_Result <= Result;
   AVU_C_Accept <= '1';
 end RTL;

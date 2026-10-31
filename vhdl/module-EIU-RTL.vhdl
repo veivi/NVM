@@ -54,17 +54,17 @@ end EIU;
 
 architecture RTL of EIU is
 
-  function Fence(Operation : FenceOp_T; LoadsOutstanding : std_logic; StoresOutstanding : std_logic) return std_logic is
+  function Fence(Operation : FenceOp_T; Loads : std_logic; Stores : std_logic) return std_logic is
   begin
     case Operation is
       when FenceOp_ReadFence_C =>
-        return LoadsOutstanding;
+        return Loads;
         
       when FenceOp_WriteFence_C =>
-        return StoresOutstanding;
+        return Stores;
 
       when FenceOp_Fence_C =>
-        return  StoresOutstanding or LoadsOutstanding;
+        return  Stores or Loads;
 
       when others =>
         return '0';

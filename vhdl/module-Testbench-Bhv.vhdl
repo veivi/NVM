@@ -18,7 +18,7 @@ entity Testbench is
   generic(VecSize_C : integer;
           Contention_C : real := 0.1;
           Log2RAMSize_C : integer := 14;
-          RAMSize_C : integer;
+          RAMSize_C : integer := 10;
           Precision_C : integer := 12;
           Latency_C : integer := 3);
 end Testbench;
