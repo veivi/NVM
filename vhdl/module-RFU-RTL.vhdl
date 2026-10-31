@@ -87,7 +87,7 @@ architecture RTL of RFU is
   subtype Word_T is std_logic_vector(WordSize_C-1 downto 0);
   type WordArray_T is array(natural range <>) of Word_T;
 
-  signal Storage : WordArray_T(0 to 2**Log2NumOfRegs_C);
+  signal Storage : WordArray_T(0 to 2**Log2NumOfRegs_C-1);
   signal Set, Clear, State : std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
   
 begin

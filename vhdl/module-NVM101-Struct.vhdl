@@ -100,7 +100,7 @@ architecture Struct of NVM101 is
   
   signal RF_SB_Set : std_logic;
   signal RF_SB_Index : RegIndex_T;
-  signal RF_SB_Span : RegSpan_T;
+  signal RF_SB_Span : RegSpanSpec_T;
   signal RF_Scoreboard : std_logic_vector(2**Log2NumOfRegs_C-1 downto 0);
   signal RF_ReadValid : std_logic;
   signal RF_RA_Data : std_logic_vector(WordSize_C-1 downto 0);    
@@ -138,7 +138,7 @@ architecture Struct of NVM101 is
   
   signal VRF_SB_Set : std_logic;
   signal VRF_SB_Index : RegIndex_T;
-  signal VRF_SB_Span : RegSpan_T;
+  signal VRF_SB_Span : RegSpanSpec_T;
   signal VRF_Scoreboard : std_logic_vector(2**Log2NumOfRegs_C*VecSize_C-1 downto 0);
   signal VRF_ReadValid : std_logic_vector(VecSize_C-1 downto 0);
   signal VRF_WA_Active : std_logic;

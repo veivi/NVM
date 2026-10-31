@@ -13,8 +13,8 @@ source="design/vhdl/package-NVM101Interface.vhdl design/vhdl/package-SignalMath.
 
 for i in $source; do
     echo "Analyzing $i..."
-    nvc -a $i
-#    ghdl analyze --std=08 $i 
+#    nvc -a $i
+    ghdl analyze --std=08 $i 
     if [ $? -ne 0 ]; then
 	echo "Analysis of $i failed."
 	exit 10
