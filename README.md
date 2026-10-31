@@ -1,1 +1,1 @@
-NVM101 is an exercise in SIMD processor design. Old-fashioned handwritten VHDL, any vibes are in your head.
+NVM101 is an exercise in SIMD processor design. Old-fashioned handwritten VHDL, any vibes are in your head. This thing was created during an approximately two-week period of coding. More work would be needed for verification and physical design.
