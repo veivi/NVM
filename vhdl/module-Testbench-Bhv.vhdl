@@ -15,10 +15,10 @@ use std.textio.all;
 use std.env.finish;
 
 entity Testbench is
-  generic(VecSize_C : integer;
+  generic(VecSize_C : integer := 4;
           Contention_C : real := 0.1;
-          Log2RAMSize_C : integer := 14;
-          RAMSize_C : integer := 10;
+          Log2RAMSize_C : integer := 12;
+          RAMSize_C : integer := 1000;
           Precision_C : integer := 12;
           Latency_C : integer := 3);
 end Testbench;
@@ -152,7 +152,7 @@ begin
   -- Vector Unit
   --
   
-  AVU_I : entity WORK.VU103(RTL)
+  AVU_I : entity WORK.VU102(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSize_C,
                 Precision_C => Precision_C)
