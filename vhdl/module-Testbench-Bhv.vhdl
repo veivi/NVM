@@ -152,7 +152,7 @@ begin
   -- Vector Unit
   --
   
-  AVU_I : entity WORK.VU102(RTL)
+  AVU_I : entity WORK.VU103(RTL)
     generic map(Log2BPW_C => Log2BPW_C,
                 Log2VecSIze_C => Log2VecSize_C,
                 Precision_C => Precision_C)
@@ -176,10 +176,10 @@ begin
   --
 
   MPM_I : entity WORK.MPM(Bhv)
-    generic map(AddrSize_C => AddrSize_C - Log2BPW_C,
+    generic map(AddrSize_C => WordAddrSize_C,
                 Log2BPW_C => Log2BPW_C,
                 TagSize_C => TagSize_C,
-                NumOfPorts_C => 2**Log2VecSize_C + 1,
+                NumOfPorts_C => VecSize_C + 1,
                 Contention_C => Contention_C,
                 Latency_C => Latency_C,
                 Log2MemSize_C => Log2RAMSize_C,
